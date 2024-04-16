@@ -1,3 +1,6 @@
+![image](https://github.com/Get-Nerdio/NMM-SE/assets/52416805/5c8dd05e-84a7-49f9-8218-64412fdaffaf)
+
+
 ## NMM-SE Public Github Repository
 Welcome to the NMM-SE GitHub repository! This space is curated by the Sales Engineers at Nerdio, where we share a collection of useful scripts and tools designed to aid our clients in various operations. These resources are developed out of our experiences and insights gained from serving our clients' diverse needs.
 
