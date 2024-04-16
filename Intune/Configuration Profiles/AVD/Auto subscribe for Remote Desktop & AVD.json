@@ -1,7 +1,7 @@
 {
     "_wap_tags": "User Experience",
     "description": "Automatically signs in the user to the Remote Desktop application and registers to the Azure Virtual Desktop feed URL. Please note: this does not enable a full SSO experience.",
-    "name": "NMM Auto subscribe for Remote Desktop \u0026 AVD",
+    "name": "Auto subscribe for Remote Desktop AVD",
     "platforms": "windows10",
     "settingCount": 1,
     "technologies": "mdm",
