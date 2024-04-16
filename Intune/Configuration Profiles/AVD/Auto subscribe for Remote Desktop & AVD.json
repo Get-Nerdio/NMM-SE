@@ -1,0 +1,31 @@
+{
+    "_wap_tags": "User Experience",
+    "description": "Automatically signs in the user to the Remote Desktop application and registers to the Azure Virtual Desktop feed URL. Please note: this does not enable a full SSO experience.",
+    "name": "NMM Auto subscribe for Remote Desktop \u0026 AVD",
+    "platforms": "windows10",
+    "settingCount": 1,
+    "technologies": "mdm",
+    "templateReference": {
+        "templateId": "",
+        "templateFamily": "none",
+        "templateDisplayName": null,
+        "templateDisplayVersion": null
+    },
+    "settings": [
+        {
+            "id": "0",
+            "settingInstance": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance",
+                "settingDefinitionId": "user_vendor_msft_policy_config_remotedesktop_autosubscription",
+                "settingInstanceTemplateReference": null,
+                "simpleSettingCollectionValue": [
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "settingValueTemplateReference": null,
+                        "value": "https://rdweb.wvd.microsoft.com/api/arm/feeddiscovery"
+                    }
+                ]
+            }
+        }
+    ]
+}
