@@ -1,0 +1,133 @@
+"root":{72 items
+"allowedAndroidDeviceModels":[]0 items
+"appActionIfAndroidDeviceManufacturerNotAllowed":"block"
+"appActionIfAndroidDeviceModelNotAllowed":"block"
+"appActionIfAndroidSafetyNetAppsVerificationFailed":"block"
+"appActionIfAndroidSafetyNetDeviceAttestationFailed":"block"
+"appActionIfDeviceLockNotSet":"block"
+"approvedKeyboards":[11 items
+0:{2 items
+"name":"com.google.android.inputmethod.latin"
+"value":"Gboard - the Google Keyboard"
+}
+1:{2 items
+"name":"com.touchtype.swiftkey"
+"value":"SwiftKey Keyboard"
+}
+2:{2 items
+"name":"com.sec.android.inputmethod"
+"value":"Samsung Keyboard"
+}
+3:{2 items
+"name":"com.google.android.apps.inputmethod.hindi"
+"value":"Google Indic Keyboard"
+}
+4:{2 items
+"name":"com.google.android.inputmethod.pinyin"
+"value":"Google Pinyin Input"
+}
+5:{2 items
+"name":"com.google.android.inputmethod.japanese"
+"value":"Google Japanese Input"
+}
+6:{2 items
+"name":"com.google.android.inputmethod.korean"
+"value":"Google Korean Input"
+}
+7:{2 items
+"name":"com.google.android.apps.handwriting.ime"
+"value":"Google Handwriting Input"
+}
+8:{2 items
+"name":"com.google.android.googlequicksearchbox"
+"value":"Google voice typing"
+}
+9:{2 items
+"name":"com.samsung.android.svoiceime"
+"value":"Samsung voice input"
+}
+10:{2 items
+"name":"com.samsung.android.honeyboard"
+"value":"Samsung Keyboard"
+}
+]
+"biometricAuthenticationBlocked":false
+"blockAfterCompanyPortalUpdateDeferralInDays":0
+"connectToVpnOnLaunch":false
+"customBrowserDisplayName":""
+"customBrowserPackageId":""
+"customDialerAppDisplayName":""
+"customDialerAppPackageId":""
+"deployedAppCount":1
+"deviceLockRequired":false
+"disableAppEncryptionIfDeviceEncryptionIsEnabled":false
+"encryptAppData":true
+"exemptedAppPackages":[]0 items
+"fingerprintAndBiometricEnabled":true
+"keyboardsRestricted":true
+"minimumRequiredPatchVersion":"0000-00-00"
+"minimumWarningPatchVersion":"0000-00-00"
+"minimumWipePatchVersion":"0000-00-00"
+"requireClass3Biometrics":false
+"requiredAndroidSafetyNetAppsVerificationType":"none"
+"requiredAndroidSafetyNetDeviceAttestationType":"none"
+"requiredAndroidSafetyNetEvaluationType":"basic"
+"requirePinAfterBiometricChange":false
+"screenCaptureBlocked":true
+"warnAfterCompanyPortalUpdateDeferralInDays":0
+"wipeAfterCompanyPortalUpdateDeferralInDays":0
+"apps":[1 item
+0:{3 items
+"mobileAppIdentifier":{2 items
+"packageId":"com.microsoft.office.outlook"
+"@odata.type":"#microsoft.graph.androidMobileAppIdentifier"
+}
+"version":"1146701235"
+"id":"com.microsoft.office.outlook.android"
+}
+]
+"appGroupType":"selectedPublicApps"
+"targetedAppManagementLevels":"unspecified"
+"allowedDataIngestionLocations":[4 items
+0:"oneDriveForBusiness"
+1:"sharePoint"
+2:"camera"
+3:"photoLibrary"
+]
+"allowedDataStorageLocations":[]0 items
+"allowedInboundDataTransferSources":"managedApps"
+"allowedOutboundClipboardSharingExceptionLength":0
+"allowedOutboundClipboardSharingLevel":"managedAppsWithPasteIn"
+"allowedOutboundDataTransferDestinations":"allApps"
+"appActionIfDeviceComplianceRequired":"block"
+"appActionIfMaximumPinRetriesExceeded":"block"
+"blockDataIngestionIntoOrganizationDocuments":false
+"contactSyncBlocked":false
+"dataBackupBlocked":true
+"deviceComplianceRequired":true
+"dialerRestrictionLevel":"allApps"
+"disableAppPinIfDevicePinIsSet":false
+"fingerprintBlocked":false
+"managedBrowser":"microsoftEdge"
+"managedBrowserToOpenLinksRequired":true
+"maximumAllowedDeviceThreatLevel":"notConfigured"
+"maximumPinRetries":5
+"minimumPinLength":6
+"mobileThreatDefenseRemediationAction":"block"
+"notificationRestriction":"allow"
+"organizationalCredentialsRequired":false
+"periodBeforePinReset":"PT0S"
+"periodOfflineBeforeAccessCheck":"PT12H"
+"periodOfflineBeforeWipeIsEnforced":"P90D"
+"periodOnlineBeforeAccessCheck":"PT15M"
+"pinCharacterSet":"numeric"
+"pinRequired":true
+"previousPinBlockCount":0
+"printBlocked":false
+"saveAsBlocked":false
+"simplePinBlocked":false
+"description":""
+"displayName":"Microsoft Outlook Policy - Android"
+"version":""1f024d88-0000-0800-0000-649a073b0000""
+"@odata.type":"microsoft.graph.androidManagedAppProtection"
+}

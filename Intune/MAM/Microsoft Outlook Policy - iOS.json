@@ -1,0 +1,114 @@
+"root":{10 items
+"appGroupType":"selectedPublicApps"
+"deployedAppCount":1
+"isAssigned":true
+"targetedAppManagementLevels":"unspecified"
+"apps":[1 item
+0:{3 items
+"mobileAppIdentifier":{2 items
+"bundleId":"com.microsoft.office.outlook"
+"@odata.type":"#microsoft.graph.iosMobileAppIdentifier"
+}
+"version":"-518090279"
+"id":"com.microsoft.office.outlook.ios"
+}
+]
+"customSettings":[23 items
+0:{2 items
+"name":"com.microsoft.outlook.Mail.BlockExternalImagesEnabled"
+"value":"true"
+}
+1:{2 items
+"name":"com.microsoft.outlook.Mail.BlockExternalImagesEnabled.UserChangeAllowed"
+"value":"true"
+}
+2:{2 items
+"name":"com.microsoft.outlook.Mail.DefaultSignatureEnabled"
+"value":"false"
+}
+3:{2 items
+"name":"com.microsoft.intune.mam.areWearablesAllowed"
+"value":"true"
+}
+4:{2 items
+"name":"com.microsoft.outlook.Auth.Biometric"
+"value":"true"
+}
+5:{2 items
+"name":"com.microsoft.outlook.Auth.Biometric.UserChangeAllowed"
+"value":"true"
+}
+6:{2 items
+"name":"com.microsoft.outlook.Contacts.LocalSyncEnabled"
+"value":"true"
+}
+7:{2 items
+"name":"com.microsoft.outlook.Contacts.LocalSyncEnabled.UserChangeAllowed"
+"value":"true"
+}
+8:{2 items
+"name":"com.microsoft.outlook.Calendar.Notifications.IntuneMAMOnly"
+"value":"0"
+}
+9:{2 items
+"name":"com.microsoft.outlook.Calendar.NativeSyncEnabled"
+"value":"true"
+}
+10:{2 items
+"name":"com.microsoft.outlook.Calendar.NativeSyncEnabled.UserChangeAllowed"
+"value":"true"
+}
+11:{2 items
+"name":"com.microsoft.outlook.Calendar.NativeSyncAvailable.IntuneMAMOnly"
+"value":"true"
+}
+12:{2 items
+"name":"com.microsoft.outlook.Mail.PlayMyEmailsEnabled"
+"value":"false"
+}
+13:{2 items
+"name":"com.microsoft.outlook.ContactSync.AddressAllowed"
+"value":"true"
+}
+14:{2 items
+"name":"com.microsoft.outlook.ContactSync.CompanyAllowed"
+"value":"true"
+}
+15:{2 items
+"name":"com.microsoft.outlook.ContactSync.DepartmentAllowed"
+"value":"true"
+}
+16:{2 items
+"name":"com.microsoft.outlook.ContactSync.EmailAllowed"
+"value":"true"
+}
+17:{2 items
+"name":"com.microsoft.outlook.ContactSync.JobTitleAllowed"
+"value":"true"
+}
+18:{2 items
+"name":"com.microsoft.outlook.ContactSync.NicknameAllowed"
+"value":"true"
+}
+19:{2 items
+"name":"com.microsoft.outlook.ContactSync.PhoneMobileAllowed"
+"value":"true"
+}
+20:{2 items
+"name":"com.microsoft.outlook.ContactSync.PhoneWorkAllowed"
+"value":"true"
+}
+21:{2 items
+"name":"com.microsoft.outlook.ContactSync.PrefixAllowed"
+"value":"true"
+}
+22:{2 items
+"name":"com.microsoft.outlook.ContactSync.SuffixAllowed"
+"value":"true"
+}
+]
+"description":""
+"displayName":"Microsoft Outlook Policy - iOS"
+"@odata.type":"microsoft.graph.targetedManagedAppConfiguration"
+"@odata.context":"https://graph.microsoft.com/beta/$metadata#deviceAppManagement/targetedManagedAppConfigurations(apps())/$entity"
+}
