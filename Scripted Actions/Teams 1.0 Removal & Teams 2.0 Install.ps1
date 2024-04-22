@@ -64,10 +64,19 @@ if ($null -ne $GetTeams){
 }
 
 # WebRTC uninstall logic
-$GetWebRTC = get-wmiobject Win32_Product | Where-Object IdentifyingNumber -match "{FB41EDB3-4138-4240-AC09-B5A184E8F8E4}"
+$GetWebRTC = get-wmiobject Win32_Product | Where-Object Name -match "Remote Desktop WebRTC Redirector Service"
 if ($null -ne $GetWebRTC){
-    Start-Process C:\Windows\System32\msiexec.exe -ArgumentList '/x "{FB41EDB3-4138-4240-AC09-B5A184E8F8E4}" /qn /norestart' -Wait 2>&1
+    $WebRTCProductCode = $GetWebRTC | Select-Object -ExpandProperty IdentifyingNumber
+    Start-Process C:\Windows\System32\msiexec.exe -ArgumentList "/x $WebRTCProductCode /qn /norestart" -Wait 2>&1
     Write-Host "INFO: WebRTC Install Found, uninstalling Current version of WebRTC"
+}
+
+# Teams Meeting add-in uninstall logic
+$GetAddIn = get-wmiobject Win32_Product | Where-Object Name -match "Microsoft Teams Meeting Add-in for Microsoft Office"
+if ($null -ne $GetAddIn){
+    $AddInProductCode = $GetAddIn | Select-Object -ExpandProperty IdentifyingNumber
+    Start-Process C:\Windows\System32\msiexec.exe -ArgumentList "/x $AddInProductCode /qn /norestart" -Wait 2>&1
+    Write-Host "INFO: Teams Meeting Add-in Found, uninstalling Current version of Teams Meeting Add-in"
 }
 
 # make directories to hold new install 
@@ -91,6 +100,16 @@ Invoke-WebRequest -Uri $DLink2 -OutFile "C:\Windows\Temp\msteams_sa\install\MsRd
 Write-Host "INFO: Installing WebRTC component"
 Start-Process C:\Windows\System32\msiexec.exe `
 -ArgumentList '/i C:\Windows\Temp\msteams_sa\install\MsRdcWebRTCSvc_x64.msi /l*v C:\Windows\temp\NerdioManagerLogs\ScriptedActions\msteams\WebRTC_install_log.txt /qn /norestart' -Wait 2>&1
+
+# install Teams Meeting add-in
+$TeamsVersion = Get-AppXPackage -Name "*msteams*" | Select-Object -ExpandProperty Version
+$TeamsPath = "C:\Program Files\WindowsApps\MSTeams_" + $TeamsVersion + "_x64__8wekyb3d8bbwe\"
+$TeamsMeetingVersionLong = Get-AppLockerFileInformation -Path $TeamsPath\MicrosoftTeamsMeetingAddinInstaller.msi | Select -ExpandProperty Publisher | select BinaryVersion | Out-String
+$TeamsMeetingVersion = $TeamsMeetingVersionLong.Substring(32).Trim()
+$TeamsMeetingPath = "C:\Program Files (x86)\Microsoft\TeamsMeetingAddin\" + "$TeamsMeetingVersion"
+Write-Host "INFO: Installing Teams Meeting add-in"
+Start-Process C:\Windows\System32\msiexec.exe `
+-ArgumentList "/i ""$TeamsPath\MicrosoftTeamsMeetingAddinInstaller.msi"" /l*v C:\Windows\temp\NerdioManagerLogs\ScriptedActions\msteams\TeamsMeeting_install_log.txt ALLUSERS=1 /qn /norestart TARGETDIR=""$TeamsMeetingPath""" -Wait
 Write-Host "INFO: Finished running installers. Check C:\Windows\Temp\msteams_sa for logs on the MSI installations."
 Write-Host "INFO: All Commands Executed; script is now finished. Allow 5 minutes for teams to appear" -ForegroundColor Green
 
