@@ -1,0 +1,119 @@
+{
+    "description": "by Tony Cai",
+    "name": "NMM FSLogix Exclusions",
+    "platforms": "windows10",
+    "settingCount": 2,
+    "technologies": "mdm, microsoftSense",
+    "templateReference": {
+        "templateDisplayName": "Microsoft Defender Antivirus exclusions",
+        "templateDisplayVersion": "Version 1",
+        "templateFamily": "endpointSecurityAntivirus",
+        "templateId": "45fea5e9-280d-4da1-9792-fb5736da0ca9_1"
+    },
+    "settings": [
+        {
+            "settingInstance": {
+                "simpleSettingCollectionValue": [
+                    {
+                        "value": "%ProgramFiles%\\FSLogix\\Apps\\frxdrv.sys",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    },
+                    {
+                        "value": "%ProgramFiles%\\FSLogix\\Apps\\frxdrvvt.sys",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    },
+                    {
+                        "value": "%ProgramFiles%\\FSLogix\\Apps\\frxccd.sys",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    },
+                    {
+                        "value": "%TEMP%\\*\\*.VHD",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    },
+                    {
+                        "value": "%TEMP%\\*\\*.VHDX",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    },
+                    {
+                        "value": "%Windir%\\TEMP\\*\\*.VHD",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    },
+                    {
+                        "value": "%Windir%\\TEMP\\*\\*.VHDX",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    },
+                    {
+                        "value": "\\\\server-name\\share-name\\*\\*.VHD",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    },
+                    {
+                        "value": "\\\\server-name\\share-name\\*\\*.VHD.lock",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    },
+                    {
+                        "value": "\\\\server-name\\share-name\\*\\*.VHD.meta",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    },
+                    {
+                        "value": "\\\\server-name\\share-name\\*\\*.VHD.metadata",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    },
+                    {
+                        "value": "\\\\server-name\\share-name\\*\\*.VHDX",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    },
+                    {
+                        "value": "\\\\server-name\\share-name\\*\\*.VHDX.lock",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    },
+                    {
+                        "value": "\\\\server-name\\share-name\\*\\*.VHDX.meta",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    },
+                    {
+                        "value": "\\\\server-name\\share-name\\*\\*.VHDX.metadata",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    },
+                    {
+                        "value": "%ProgramData%\\FSLogix\\Cache\\*",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    },
+                    {
+                        "value": "%ProgramData%\\FSLogix\\Proxy\\*",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    }
+                ],
+                "settingDefinitionId": "device_vendor_msft_policy_config_defender_excludedpaths",
+                "settingInstanceTemplateReference": {
+                    "settingInstanceTemplateId": "aaf04adc-c639-464f-b4a7-152e784092e8"
+                },
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance"
+            },
+            "id": "0"
+        },
+        {
+            "settingInstance": {
+                "simpleSettingCollectionValue": [
+                    {
+                        "value": "%ProgramFiles%\\FSLogix\\Apps\\frxccd.exe",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    },
+                    {
+                        "value": "%ProgramFiles%\\FSLogix\\Apps\\frxccds.exe",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    },
+                    {
+                        "value": "%ProgramFiles%\\FSLogix\\Apps\\frxsvc.exe",
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                    }
+                ],
+                "settingDefinitionId": "device_vendor_msft_policy_config_defender_excludedprocesses",
+                "settingInstanceTemplateReference": {
+                    "settingInstanceTemplateId": "96b046ed-f138-4250-9ae0-b0772a93d16f"
+                },
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance"
+            },
+            "id": "1"
+        }
+    ]
+}
