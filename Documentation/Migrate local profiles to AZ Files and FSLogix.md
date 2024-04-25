@@ -76,11 +76,11 @@ Add some text here..
 
 ### Tools and Scripts
 
-- [Builtin FSLogix Command Line Utilities](https://learn.microsoft.com/en-us/fslogix/utilities/frx/frx#frx-copy-profile) -> Using the builtin FSLogix Command Line Utilities is a solid solution, but the current docs don't describe bulk actions. So the ```frx copy-profile``` command is within proper scripting a single profile action migration.
-<br>
-- [Microsoft FSLogix Migration Private Preview Module](https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RE4k26R) -> This is a script maintained by Microsoft Engineers, when downloading the module from the follow the steps in the Readme doc.
-<br>
-- [FSLogix Migration Powershell Module](https://github.com/gregdod/FSLogixMigration) -> Currently a good supported and maintained tool to convert the user profiles and UPD disks to FSLogix containers. ***"This is a fork of the Microsoft Migration Private Preview Module linked above."***
+- [Builtin FSLogix Command Line Utilities](https://learn.microsoft.com/en-us/fslogix/utilities/frx/frx#frx-copy-profile) -> Using the builtin FSLogix Command Line Utilities is a solid solution, but the current docs don't describe bulk actions. So the ```frx copy-profile``` command is within proper scripting a single profile action migration.   
+
+- [Microsoft FSLogix Migration Private Preview Module](https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RE4k26R) -> This is a script maintained by Microsoft Engineers, when downloading the module from the follow the steps in the Readme doc.  
+
+- [FSLogix Migration Powershell Module](https://github.com/gregdod/FSLogixMigration) -> Currently a good supported and maintained tool to convert the user profiles and UPD disks to FSLogix containers. ***"This is a fork of the Microsoft Migration Private Preview Module linked above."***  
 
 ### Common Issues and Troubleshooting
 
