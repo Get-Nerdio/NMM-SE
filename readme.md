@@ -24,7 +24,7 @@ This repository is a collaborative space and not a product with a defined roadma
 ### Disclaimer
 While we strive to provide valuable and workable solutions, please note the following:
 
-- **Best Effort Maintenance:** The scripts in this repository are maintained on a best-effort basis by the contributing Sales Engineers. Updates and improvements may be made periodically, subject to the availability and capacity of the contributors.
+- **Best Effort Maintenance:** The scripts and documents in this repository are maintained on a best-effort basis by the contributing Sales Engineers. Updates and improvements may be made periodically, subject to the availability and capacity of the contributors.
 
 - **No Official Support:** This repository is not an officially supported service of Nerdio. As such, Nerdio does not offer formal support for the tools and scripts shared here. Users are encouraged to review and test scripts thoroughly before deployment.
 
