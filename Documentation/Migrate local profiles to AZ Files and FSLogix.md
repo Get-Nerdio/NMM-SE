@@ -55,7 +55,32 @@ When needing to migrate you profiles you could typically think of these kind of 
 
 - Scenario 3: Migrate UPD from a RDSH environment to FSLogix  
 
-*Outline the use of the tools to get the job done*
+##### Workarounds
+
+**Using the FSLogix Commandline Utilities:**    
+
+For smaller-scale migrations, such as when you have only a handful of profiles, and if you're less familiar with PowerShell, the FSLogix command-line utility frx copy-profile offers a straightforward alternative. Ensure you have FSLogix software installed on the machine where the command will be executed. For guidance on installing FSLogix on non-NMM managed machines, see [Microsoft Docs: How to download and install FSLogix manually on not NMM managed machines](https://learn.microsoft.com/en-us/fslogix/how-to-install-fslogix)
+
+- Steps to Migrate a User Profile:
+
+    - Open a PowerShell terminal as Administrator.
+    - Navigate to the FSLogix Apps directory:
+
+```
+cd 'C:\Program Files\FSLogix\Apps'
+```
+- Execute the following command to copy and configure the profile:
+
+```
+frx copy-profile -filename C:\Profile.vhdx -username CONTOSO\msmith -size-mbs 30000 -dynamic 1 -verbose
+```
+This command does the following:
+
+- Saves the FSLogix profile container to C:\Profile.vhdx.
+- Converts the domain profile for user CONTOSO\msmith.
+- Sets the VHDX file to dynamic, allowing the disk to resize automatically up to a maximum of 30GB.
+
+Note: For profiles that are not domain-joined, specify the username without the domain prefix, e.g., -username msmith.
 
 ##### Global Workarounds:
 
