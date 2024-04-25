@@ -45,7 +45,7 @@ This guide provides step-by-step instructions for migrating local user profiles 
 
 ### Scenario's
 
-When needing to migrate you profiles you could typically think of these kind of scenario's  
+When migrateting profiles you could typically think of these kind of scenario's  
 
 - Scenario 1: Migration of Local Machine Profiles to Azure Files with FSLogix  
 
@@ -79,6 +79,50 @@ This command does the following:
 - Sets the VHDX file to dynamic, allowing the disk to resize automatically up to a maximum of 30GB.
 
 Note: For profiles that are not domain-joined, specify the username without the domain prefix, e.g., -username msmith.
+
+**Using the FSLogix Migration Powershell Module:** 
+
+First of all extensive documentation and troubleshooting the module can be found in their [Github: FSLogixMigration](https://github.com/gregdod/FSLogixMigration)
+
+**Main Functions:**
+
+- Convert-RoamingProfile – Converts a roaming profile to an FSLogix Profile Container
+
+- Convert-UPDProfile – Converts a user profile disk to an FSLogix Profile Container
+
+- Convert-UPMProfile - Converts a UPM Profile to an FSLogix Profile Container. UPM Conversion has had minimal testing in small environments.
+
+**Syntax and Examples:**
+
+- **Convert-RoamingProfile (Bulk e.g. all users in C:\Users)**
+
+*Syntax:*
+
+```powershell
+Convert-RoamingProfile -ParentPath <String> -Target <String> -VHDMaxSizeGB <UInt64> -VHDLogicalSectorSize <String> [-VHD] [-IncludeRobocopyDetail] [-LogPath <String>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+*Example:*
+
+```powershell
+Convert-RoamingProfile -ParentPath "C:\Users\" -Target "\\Server\FSLogixProfiles$" -MaxVHDSize 20 -VHDLogicalSectorSize 512
+```
+
+- **Convert-RoamingProfile (Single User Profile)**
+
+*Syntax:*
+
+```powershell
+Convert-RoamingProfile -ProfilePath <String> -Target <String> -VHDMaxSizeGB <UInt64> -VHDLogicalSectorSize <String> [-VHD] [-IncludeRobocopyDetail] [-LogPath <String>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+*Example:*
+
+```powershell
+Convert-RoamingProfile -ProfilePath "C:\Users\User1" -Target "\\Server\FSLogixProfiles$" -MaxVHDSize 20 -VHDLogicalSectorSize 512 -VHD -IncludeRobocopyDetails -LogPath C:\temp\Log.txt
+```
+
+
 
 ##### Global Workarounds:
 
@@ -120,10 +164,9 @@ Specifies a log file name and path where the output of the robocopy commands (fo
 Example Value: C:\NMM\Logs\FSLogixRoboLogs.txt
 ```  
 
+- [FSLogix Migration Powershell Module](https://github.com/gregdod/FSLogixMigration) -> Currently a good supported and maintained Powershell module to convert the user profiles and UPD disks to FSLogix containers. ***"This is a fork of the Microsoft Migration Private Preview Module linked below."***  
 
 - [Microsoft FSLogix Migration Private Preview Module](https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RE4k26R) -> This is a script maintained by Microsoft Engineers, when downloading the module from the follow the steps in the Readme doc.  
-
-- [FSLogix Migration Powershell Module](https://github.com/gregdod/FSLogixMigration) -> Currently a good supported and maintained tool to convert the user profiles and UPD disks to FSLogix containers. ***"This is a fork of the Microsoft Migration Private Preview Module linked above."***  
 
 ### Common Issues and Troubleshooting
 
