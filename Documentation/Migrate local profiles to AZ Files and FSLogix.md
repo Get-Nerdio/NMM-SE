@@ -47,24 +47,15 @@ This guide provides step-by-step instructions for migrating local user profiles 
 
 ### Scenario's
 
-##### Scenario 1: Migration of Local Machine Profiles to Azure Files with FSLogix
+When needing to migrate you profiles you could typically think of these kind of scenario's  
 
-Organizations often seek to migrate user profiles from individual local machines to a centralized Azure Files storage solution. 
+- Scenario 1: Migration of Local Machine Profiles to Azure Files with FSLogix  
 
-- Workaround 1:
-- Workaround 2:
+- Scenario 2: Migration of Profiles from an On-Premises File Server to Azure Files with FSLogix  
 
-##### Scenario 2: Migration of Profiles from an On-Premises File Server to Azure Files with FSLogix
-Describe scenario...
+- Scenario 3: Migrate UPD from a RDSH environment to FSLogix  
 
-- Workaround 1:
-- Workaround 2:
-
-##### Scenario 3: Migrate UPD from a RDSH environment to FSLogix
-Describe scenario...
-
-- Workaround 1:
-- Workaround 2:
+*Outline the use of the tools to get the job done*
 
 ##### Global Workarounds:
 
