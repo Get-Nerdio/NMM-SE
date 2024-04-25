@@ -64,12 +64,12 @@ For smaller-scale migrations, such as when you have only a handful of profiles, 
     - Open a PowerShell terminal as Administrator.
     - Navigate to the FSLogix Apps directory:
 
-```
+```powershell
 cd 'C:\Program Files\FSLogix\Apps'
 ```
 - Execute the following command to copy and configure the profile:
 
-```
+```powershell
 frx copy-profile -filename C:\Profile.vhdx -username CONTOSO\msmith -size-mbs 30000 -dynamic 1 -verbose
 ```
 This command does the following:
