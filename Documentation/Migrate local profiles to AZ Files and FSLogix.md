@@ -75,8 +75,9 @@ For user data such as documents, pictures, and desktop files, migrating to OneDr
     - **Browser Settings Migration:**
 Automate the backup and migration of browser settings. Common practice involves setting Microsoft Edge as the default browser, transferring settings from the previous browser, and enforcing Entra SSO sign-in. This ensures that browser settings are synchronized with the user’s profile. Enable Enterprise State Roaming in the Entra portal to support this process.  
     - **Email Signatures:**
-Transition from manual email signatures to a managed solution like Exclaimer Cloud to simplify signature management. Alternatively, guide users on setting up their signatures in Outlook web, which allows signatures to roam with their Microsoft 365 profile.  
-    - **Considerations:**
+Transition from manual email signatures to a managed solution like Exclaimer Cloud to simplify signature management. Alternatively, guide users on setting up their signatures in Outlook web, which allows signatures to roam with their Microsoft 365 profile.   
+
+**Considerations:**
 These migration strategies are best suited for environments where the design is straightforward and a full profile migration is unnecessary. This approach minimizes complexity and enhances user transition to the AVD setup.
 
 ### Best Practices
