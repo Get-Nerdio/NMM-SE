@@ -48,7 +48,8 @@ This guide provides step-by-step instructions for migrating local user profiles 
 ### Scenario's
 
 ##### Scenario 1: Migration of Local Machine Profiles to Azure Files with FSLogix
-Describe scenario...
+
+Organizations often seek to migrate user profiles from individual local machines to a centralized Azure Files storage solution. 
 
 - Workaround 1:
 - Workaround 2:
@@ -65,8 +66,18 @@ Describe scenario...
 - Workaround 1:
 - Workaround 2:
 
+##### Global Workarounds:
 
+- When migrating user profiles to Azure Virtual Desktop (AVD), considerations vary based on the number of users and the specific data involved. In some cases, it may be advantageous to start with a fresh profile, especially when setting up a new AVD environment. This approach is often favored by many MSPs and IT companies.  
 
+    - **File Migration to OneDrive:**
+For user data such as documents, pictures, and desktop files, migrating to OneDrive is efficient. Utilize migration tools to transfer this data in the background. Perform a final delta sync on the migration day so that when users log into their new AVD desktop, all their files are readily accessible.  
+    - **Browser Settings Migration:**
+Automate the backup and migration of browser settings. Common practice involves setting Microsoft Edge as the default browser, transferring settings from the previous browser, and enforcing Entra SSO sign-in. This ensures that browser settings are synchronized with the user’s profile. Enable Enterprise State Roaming in the Entra portal to support this process.  
+    - **Email Signatures:**
+Transition from manual email signatures to a managed solution like Exclaimer Cloud to simplify signature management. Alternatively, guide users on setting up their signatures in Outlook web, which allows signatures to roam with their Microsoft 365 profile.  
+    - **Considerations:**
+These migration strategies are best suited for environments where the design is straightforward and a full profile migration is unnecessary. This approach minimizes complexity and enhances user transition to the AVD setup.
 
 ### Best Practices
 
