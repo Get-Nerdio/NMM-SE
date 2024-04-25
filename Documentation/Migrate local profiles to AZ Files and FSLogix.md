@@ -10,9 +10,7 @@
 1. [Introduction](#introduction)
 2. [Prerequisites](#Prerequisites)
 3. [Scenarios](#scenarios)
-   - [Scenario 1: Migration of Local Machine Profiles to Azure Files with FSLogix](#scenario-1-migrating-from-local-profiles-on-physical-devices)
-   - [Scenario 2: Migration of Profiles from an On-Premises File Server to Azure Files with FSLogix](#scenario-2-migrating-from-on-premises-ad-to-azure-ad-with-fslogix)
-   - [Scenario 3: Handling Mixed Environments](#scenario-3-handling-mixed-environments)
+4. [Workardound](#workarounds)
 4. [Best Practices](#best-practices)
 5. [Tools and Scripts](#tools-and-scripts)
 6. [Common Issues and Troubleshooting](#common-issues-and-troubleshooting)
@@ -55,7 +53,7 @@ When needing to migrate you profiles you could typically think of these kind of 
 
 - Scenario 3: Migrate UPD from a RDSH environment to FSLogix  
 
-##### Workarounds
+### Workarounds
 
 **Using the FSLogix Commandline Utilities:**    
 
