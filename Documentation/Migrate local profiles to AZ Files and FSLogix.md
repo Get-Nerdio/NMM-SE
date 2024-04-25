@@ -8,13 +8,13 @@
 ## Table of Contents
 
 1. [Introduction](#introduction)
-2. [Prerequisites](#Prerequisites)
+2. [Prerequisites](#prerequisites)
 3. [Scenarios](#scenarios)
-4. [Workardound](#workarounds)
-4. [Best Practices](#best-practices)
-5. [Tools and Scripts](#tools-and-scripts)
-6. [Common Issues and Troubleshooting](#common-issues-and-troubleshooting)
-7. [Conclusion](#conclusion)
+4. [Workarounds](#workarounds)
+5. [Best Practices](#best-practices)
+6. [Tools and Scripts](#tools-and-scripts)
+7. [Common Issues and Troubleshooting](#common-issues-and-troubleshooting)
+8. [Conclusion](#conclusion)
 
 ***
 ### Introduction
@@ -82,7 +82,7 @@ Note: For profiles that are not domain-joined, specify the username without the 
 
 **Using the FSLogix Migration Powershell Module:** 
 
-First of all extensive documentation and troubleshooting the module can be found in their [Github: FSLogixMigration](https://github.com/gregdod/FSLogixMigration)
+For detailed documentation and troubleshooting guides, refer to the [FSLogixMigration repository on GitHub](https://github.com/gregdod/FSLogixMigration). This migration approach is typically favored in somewhat larger environments due to its automation capabilities, which reduce the likelihood of human error and increase efficiency.
 
 **Main Functions:**
 
@@ -105,7 +105,7 @@ Convert-RoamingProfile -ParentPath <String> -Target <String> -VHDMaxSizeGB <UInt
 *Example:*
 
 ```powershell
-Convert-RoamingProfile -ParentPath "C:\Users\" -Target "\\Server\FSLogixProfiles$" -MaxVHDSize 20 -VHDLogicalSectorSize 512
+Convert-RoamingProfile -ParentPath "C:\Users\" -Target "\\Server\FSLogixProfiles$" -MaxVHDSize 20 -VHDLogicalSectorSize 512 -IncludeRobocopyDetails -LogPath C:\temp\Log.txt
 ```
 
 - **Convert-RoamingProfile (Single User Profile)**
@@ -122,6 +122,7 @@ Convert-RoamingProfile -ProfilePath <String> -Target <String> -VHDMaxSizeGB <UIn
 Convert-RoamingProfile -ProfilePath "C:\Users\User1" -Target "\\Server\FSLogixProfiles$" -MaxVHDSize 20 -VHDLogicalSectorSize 512 -VHD -IncludeRobocopyDetails -LogPath C:\temp\Log.txt
 ```
 
+For more information on what Syntax switches are support check the [Github Repository](https://github.com/gregdod/FSLogixMigration)
 
 
 ##### Global Workarounds:
@@ -170,10 +171,14 @@ Example Value: C:\NMM\Logs\FSLogixRoboLogs.txt
 
 ### Common Issues and Troubleshooting
 
-Add some text here..
+TBA
 
 ### Conclusion
 
-Add some text here..
+In conclusion, migrating local profiles to Azure Files and managing them with FSLogix offers a robust solution for enhancing the scalability, reliability, and performance of user profile management in cloud environments. This guide outlines several strategies and tools designed to facilitate this process across various scenarios, whether dealing with small-scale migrations or larger, more complex environments.
+
+Through careful planning, leveraging automation, and employing best practices, organizations can ensure a smooth transition that minimizes downtime and enhances user experience. It is critical to consider the specific needs and infrastructure of your organization to choose the most effective migration approach.
+
+As cloud technologies evolve, continuing to update your migration strategies and troubleshooting methodologies will be crucial in maintaining efficiency and addressing new challenges. By following the guidelines in this document and staying informed about new tools and best practices, your organization can effectively manage its digital workspace transformation, ensuring that user data remains secure, accessible, and efficiently managed.
 
 
