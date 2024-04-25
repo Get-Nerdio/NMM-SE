@@ -76,7 +76,24 @@ Add some text here..
 
 ### Tools and Scripts
 
-- [Builtin FSLogix Command Line Utilities](https://learn.microsoft.com/en-us/fslogix/utilities/frx/frx#frx-copy-profile) -> Using the builtin FSLogix Command Line Utilities is a solid solution, but the current docs don't describe bulk actions. So the ```frx copy-profile``` command is within proper scripting a single profile action migration.   
+- [Builtin FSLogix Command Line Utilities](https://learn.microsoft.com/en-us/fslogix/utilities/frx/frx#frx-copy-profile) -> Using the builtin FSLogix Command Line Utilities is a solid solution, but the current docs don't describe bulk actions. So the ```frx copy-profile``` command is within proper scripting a single profile action migration. A good practice when using this tool is to set the **RobocopyLogPath** regkey.
+[Microsoft Docs link FSLogix settings](https://learn.microsoft.com/en-us/fslogix/reference-configuration-settings?tabs=logging#robocopylogpath)  
+```
+
+Registry Hive: HKEY_LOCAL_MACHINE
+
+Registry Path: SOFTWARE\FSLogix\Logging
+
+Value Name: RobocopyLogPath
+
+Value Type: REG_SZ
+
+Default Value: None
+
+Specifies a log file name and path where the output of the robocopy commands (for example, during mirroring of data in or out of a VHD) are stored. If the value is nonexistent, then the robocopy results aren't logged at all. This setting is recommended for troubleshooting only.
+Example Value: C:\NMM\Logs\FSLogixRoboLogs.txt
+```  
+
 
 - [Microsoft FSLogix Migration Private Preview Module](https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RE4k26R) -> This is a script maintained by Microsoft Engineers, when downloading the module from the follow the steps in the Readme doc.  
 
