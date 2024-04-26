@@ -169,6 +169,9 @@ Copy and paste the following JSON into the test body field:
 
 Now, hit Run. If everything is set up correctly, you will see a new ticket created in HaloPSA. For troubleshooting, you can use the Function App's logging feature to pinpoint any issues.
 
+![CleanShot 2024-04-26 at 10 54 07@2x](https://github.com/Get-Nerdio/NMM-SE/assets/52416805/3b1c2b4f-b0e1-44ab-962e-60b45e0a003b)
+
+
 ## Disclaimer
 
 "Please note that our main policy, as outlined in the [Disclaimer](https://github.com/Get-Nerdio/NMM-SE/blob/main/readme.md#disclaimer), also applies to this document."
