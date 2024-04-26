@@ -65,7 +65,7 @@ $env:HaloSecretID
 ``` 
 This approach retrieves the HaloAPI Secret from the Key Vault, eliminating the need to embed it directly in the script.
 
-### Setup NMM Notifications
+## Setup NMM Notifications
 
 5. **Setup Custom Notification API:**
 
@@ -80,7 +80,7 @@ That copied url needs to be pasted into the custom notification url field shown 
 
 ![CleanShot 2024-04-26 at 09 47 59@2x](https://github.com/Get-Nerdio/NMM-SE/assets/52416805/1c28342a-367f-4eee-bc17-6ad44c376ca6)
 
-### Halo PSA Settings and Prerequisites
+## Halo PSA Settings and Prerequisites
 
 6. **HaloPSA Setup:**
 
@@ -117,10 +117,10 @@ customfields  = @(
 ```
 How to create these customfields you can look up the [HaloPSA Custom Fields Documentation](https://halopsa.com/guides/article/?kbid=1938)
 
-Last part I recommend is setup a ticket type that is for NMM Alerts, this is not a hard must. But would you allow to segment your NMM tickets more easily.
+Last part I recommend is setup a ticket type that is for NMM Alerts, this is not a hard requirement. But would you allow to segment your NMM tickets.
 How to create these ticket types you can look up the [HaloPSA Create Ticket Types Documentation](https://halopsa.com/guides/article/?kbid=1938)
 
-When creating the new ticket type take note of the ID you need to specify this in the script here: 
+When creating the new ticket type take note of the ID you need to specify this in the PSCustomObject within the script here: 
 
 ```powershell
 $HaloObj = [PSCustomObject]@{
@@ -133,7 +133,7 @@ $HaloObj = [PSCustomObject]@{
 ```
 As you can see **tickettype_id** had an ID number attached, this number is the ID of the ticket type you created earlier. If you dont want to specify this you can always leave this empty like this ''
 
-### Testing the Function App
+## Testing the Function App
 
 7. **Manual Testing**
 
