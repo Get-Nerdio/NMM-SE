@@ -67,7 +67,14 @@ This approach retrieves the HaloAPI Secret from the Key Vault, eliminating the n
 
 5. **Setup NMM Custom Notification API:**
 
-Text Here
+Within the NMM Portal you need to setup the Alert Nofications section to allow your Function app to receive those json structure Custom API Notifications.
+Documentation how to setup the basics you can find here [NMM Alerts and Notifications Setup](https://nmmhelp.getnerdio.com/hc/en-us/articles/25498222093709-Alerts-and-Notifications)
+
+One you set this up correctly you need to paste in your FunctionApp url that is attached to the HTTP trigger function you created earlier. You can find this here:
+Screenshot
+
+That url you needs to be pasted into the custom notification url field shown here:
+Screenshot
 
 6. **HaloPSA Setup:**
 
