@@ -35,12 +35,12 @@ Deploy these changes to the Function App, and give it a restart. Note that it mi
 3. **Managed Identity and Azure Key Vault:**
 
 - **Enable Managed Identity:**
-Go to the Azure portal, navigate to your Function App settings.
-Under the "Identity" section, enable the "System-assigned managed identity". This action will create an identity in Azure Active Directory that is directly tied to your Function App. Take note of the Object ID shown here you will need this later in you keyvault Access Policy.  
+    - Go to the Azure portal, navigate to your Function App settings.
+    - Under the "Identity" section, enable the "System-assigned managed identity". This action will create an identity in Azure Active Directory that is directly tied to your Function App. Take note of the Object ID shown here you will need this later in you keyvault Access Policy.  
 
 - **Set up Azure Key Vault:**
-Create or use an existing Azure Key Vault.
-Add your *"HaloClientID"* (API key) and *"HaloSecretID"* as secrets in the Key Vault.
+    - Create or use an existing Azure Key Vault.
+    - Add your *"HaloClientID"* (API key) and *"HaloSecretID"* as secrets in the Key Vault.
 - **Configure Access Policies Azure Keyvault:**
 In the Azure Key Vault settings, adjust the *"Access Policies"* to allow the managed identity of your Function App to use *"Get"* and *"List"* permissions for secrets.
 
@@ -50,3 +50,15 @@ In the Azure Key Vault settings, adjust the *"Access Policies"* to allow the man
 - **Configure Environmental Variables:**
 In the Function App settings, configure the environment variables HaloClientID and HaloSecretID to fetch values from Azure Key Vault using the managed identity. Use the Azure Key Vault references for application settings. The configuration should look something like this:
 ![CleanShot 2024-04-26 at 08 57 50@2x](https://github.com/Get-Nerdio/NMM-SE/assets/52416805/83e3b32b-593b-4ce8-88bb-f6c8f9cd90ef)
+
+The format for incorporating Key Vault entries is as follows:
+```
+@Microsoft.KeyVault(SecretUri=https://vaultname.vault.azure.net/secrets/HaloSecretID/secretid)
+```
+Essentially, this provides a secure method to access the API key and secret through environment variables within the script, like this:
+```
+$env:HaloSecretID
+``` 
+This approach retrieves the HaloAPI Secret from the Key Vault, eliminating the need to embed it directly in the script.
+
+5. **Setup NMM Custom Notification API:**
