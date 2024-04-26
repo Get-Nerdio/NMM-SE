@@ -16,6 +16,8 @@ It will be able to sort out that data and use the HaloPSA powershell module to c
 Create an Azure Function App: You need an existing Azure Function App where you can deploy this script. This Function App should be configured to handle PowerShell-based functions. And the type of function you create for this is HTTP Trigger.
 ![CleanShot 2024-04-26 at 09 29 42@2x](https://github.com/Get-Nerdio/NMM-SE/assets/52416805/e2b77d92-3f97-4b0b-8fc9-a15a84f01f01)
 
+Afther that you paste in the code content from: NMM_To_HaloPSA.ps1 into the function and save.
+
 
 3. **HaloAPI Module Installation:**
 Edit the requirements.psd1 file in your Azure Function App to include the following line: **'HaloAPI' = '1.*'** this will add the HaloAPI PS Module to your Function App
@@ -64,3 +66,26 @@ $env:HaloSecretID
 This approach retrieves the HaloAPI Secret from the Key Vault, eliminating the need to embed it directly in the script.
 
 5. **Setup NMM Custom Notification API:**
+
+
+6. **Manual Testing**
+
+Open the the HTTP Trigger in the Function App you created earlier and click the top button Test/Run.
+
+Copy paste this JSON:
+
+```json
+{
+    "AccountId": null,
+    "ActionId": 6,
+    "ConditionId": 18,
+    "Job": {
+        "Id": 288471,
+        "AccountId": null,
+        "CreationDateUtc": "2024-04-15T09:36:50.9472011+00:00",
+        "JobType": "CloneMspWindowsScriptedAction",
+        "JobStatus": "Completed",
+        "JobRunMode": "Default"
+    }
+}
+```
