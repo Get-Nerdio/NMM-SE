@@ -8,6 +8,12 @@
 This is an Azure Function app that is able to receive the Custom API Notifications JSON structure from the NMM portal.
 It will be able to sort out that data and use the HaloPSA powershell module to connect to the HaloPSA API and create a ticket for that specific notification.
 
+## Roadmap
+
+- [ ] Add in NMM API Integration for additional information lookup to enrich ticket details
+- [ ] Wrap main code into a PS Function and add configurable parameters
+- [ ] More logic functions, e.g. type of job will set ticket type to inicident or service request.
+
 ## Prerequisites
 
 #### Setup Azure Function App and Keyvault:
