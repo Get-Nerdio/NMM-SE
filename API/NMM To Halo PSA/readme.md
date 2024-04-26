@@ -84,7 +84,7 @@ That copied url needs to be pasted into the custom notification url field shown 
 
 6. **HaloPSA Setup:**
 
-Most imporant step here is to configure the Halo CustomFields so the Function app can post additional data from the JSON data structure in Halo CustomFields. Fields we currently use are:
+The most important step here is to configure the Halo CustomFields so that the Function app can post additional data extracted from the JSON data structure. The fields we currently use are:
 
 ```text
 Nerdio Action ID
@@ -97,7 +97,7 @@ Nerdio Job Status
 Nerdio Job Type
 ```
 
-When creating those fields in Halo PSA they will get an ID assigned, you need to map those ID's in the main script. They currently are filled with ID numbers that correnspond with our test environment. Below an example of what ID number within the Custom Fields object need to be changed.
+When these fields are created in Halo PSA, each will be assigned an ID. You need to map these IDs in the main script. Currently, they are filled with ID numbers that correspond to our test environment. Below is an example of which ID numbers within the Custom Fields object need to be changed:
 
 ```powershell
 customfields  = @(
@@ -115,12 +115,12 @@ customfields  = @(
         }
     )
 ```
-How to create these customfields you can look up the [HaloPSA Custom Fields Documentation](https://halopsa.com/guides/article/?kbid=1938)
+For instructions on how to create these custom fields, refer to the [HaloPSA Custom Fields Documentation](https://halopsa.com/guides/article/?kbid=1938).
 
-Last part I recommend is setup a ticket type that is for NMM Alerts, this is not a hard requirement. But would you allow to segment your NMM tickets.
-How to create these ticket types you can look up the [HaloPSA Create Ticket Types Documentation](https://halopsa.com/guides/article/?kbid=1938)
+I also recommend setting up a specific ticket type for NMM alerts. While this isn’t a strict requirement, it allows you to segment your NMM tickets more effectively. You can find guidance on creating these ticket types in the [HaloPSA Create Ticket Types Documentation](https://halopsa.com/guides/article/?kbid=876).
 
-When creating the new ticket type take note of the ID you need to specify this in the PSCustomObject within the script here: 
+When you create the new ticket type, take note of the ID assigned to it. You will need to specify this ID in the PSCustomObject within the script, as shown in the example below:
+
 
 ```powershell
 $HaloObj = [PSCustomObject]@{
@@ -131,18 +131,18 @@ $HaloObj = [PSCustomObject]@{
     summary       = "NMM: $(($NMMObj.Job.JobType -creplace '([A-Z])',' $1').Trim())"
     details       = 'Details of the NMM Alert in Additional Fields'
 ```
-As you can see **tickettype_id** had an ID number attached, this number is the ID of the ticket type you created earlier. If you dont want to specify this you can always leave this empty like this ''
+As you can see, *tickettype_id* has an ID number attached, which is the ID of the ticket type you created earlier. If you prefer not to specify this, you can leave it empty like this: ''.
 
 ## Testing the Function App
 
 7. **Manual Testing**
 
-Open the the HTTP Trigger in the Function App you created earlier and click the top button Test/Run.
+Open the HTTP Trigger in the Function App you created earlier and click the Test/Run button at the top.
 
 ![CleanShot 2024-04-26 at 09 35 52@2x](https://github.com/Get-Nerdio/NMM-SE/assets/52416805/6a941a1e-7245-491b-8c2b-035ef2c62ba4)
 
 
-Copy paste this JSON in test body field:
+Copy and paste the following JSON into the test body field:
 
 ```json
 {
@@ -161,4 +161,16 @@ Copy paste this JSON in test body field:
 ```
 ![CleanShot 2024-04-26 at 09 37 22@2x](https://github.com/Get-Nerdio/NMM-SE/assets/52416805/5a435839-e3c5-4532-9e58-c4a054b5573a)
 
-Now Hit Run, if everything is setup correctly you would see a new ticket created in HaloPSA. For Trouble shooting you can use the Function App logging feature to pinpoint any issue's
+Now, hit Run. If everything is set up correctly, you will see a new ticket created in HaloPSA. For troubleshooting, you can use the Function App's logging feature to pinpoint any issues.
+
+## Disclaimer
+
+"Please note that our main policy, as outlined in the [Disclaimer](https://github.com/Get-Nerdio/NMM-SE/blob/main/readme.md#disclaimer), also applies to this document."
+
+## Contributing
+
+We highly encourage contributions from the community! If you have made improvements or modifications to this script that have been effective in your environment and you believe it could benefit others, please consider contributing. Here’s how you can do it:
+
+- Fork the Repository: Start by forking the repository where this script is hosted and make your modifications or additions.
+- Submit a Pull Request: After you've made your changes, submit a pull request to the main branch. Please provide a detailed description of what the script does and any other information that might be helpful.
+- Code Review: One of our Sales Engineers will review the submission. If everything checks out, it will be merged into the main repository.
