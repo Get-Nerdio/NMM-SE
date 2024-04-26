@@ -12,7 +12,7 @@ Credits to Mikey O'Toole (also known as [Homotechsual](https://homotechsual.dev/
 
 ## Roadmap
 
-- [ ] Add in the NMM API Integration for additional information lookup, to enrich ticket details
+- [ ] Add in the NMM API Integration for additional information lookup, to enrich ticket details. Like Customer name etc.
 - [ ] Wrap main code into a PS Function and add configurable parameters
 - [ ] More logic functions, e.g. type of job will set ticket type to inicident or service request.
 - [ ] Community feature requests...?
