@@ -46,5 +46,7 @@ In the Azure Key Vault settings, adjust the *"Access Policies"* to allow the man
 
 4. **Environmental Variables:**
 
+
 - **Configure Environmental Variables:**
 In the Function App settings, configure the environment variables HaloClientID and HaloSecretID to fetch values from Azure Key Vault using the managed identity. Use the Azure Key Vault references for application settings. The configuration should look something like this:
+![CleanShot 2024-04-26 at 08 57 50@2x](https://github.com/Get-Nerdio/NMM-SE/assets/52416805/83e3b32b-593b-4ce8-88bb-f6c8f9cd90ef)
