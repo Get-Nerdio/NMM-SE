@@ -67,8 +67,13 @@ This approach retrieves the HaloAPI Secret from the Key Vault, eliminating the n
 
 5. **Setup NMM Custom Notification API:**
 
+Text Here
 
-6. **Manual Testing**
+6. **HaloPSA Setup:**
+
+Text here
+
+7. **Manual Testing**
 
 Open the the HTTP Trigger in the Function App you created earlier and click the top button Test/Run.
 
@@ -94,3 +99,4 @@ Copy paste this JSON in test body field:
 ```
 ![CleanShot 2024-04-26 at 09 37 22@2x](https://github.com/Get-Nerdio/NMM-SE/assets/52416805/5a435839-e3c5-4532-9e58-c4a054b5573a)
 
+Now Hit Run, if everything is setup correctly you would see a new ticket created in HaloPSA. For Trouble shooting you can use the Function App logging feature to pinpoint any issue's
