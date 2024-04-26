@@ -65,22 +65,73 @@ $env:HaloSecretID
 ``` 
 This approach retrieves the HaloAPI Secret from the Key Vault, eliminating the need to embed it directly in the script.
 
-5. **Setup NMM Custom Notification API:**
+### Setup NMM Notifications
+
+5. **Setup Custom Notification API:**
 
 Within the NMM Portal you need to setup the Alert Nofications section to allow your Function app to receive those json structure Custom API Notifications.
 Documentation how to setup the basics you can find here [NMM Alerts and Notifications Setup](https://nmmhelp.getnerdio.com/hc/en-us/articles/25498222093709-Alerts-and-Notifications)
 
 One you set this up correctly you need to paste in your FunctionApp url that is attached to the HTTP trigger function you created earlier. You can find the url endpoint here:
+
 ![CleanShot 2024-04-26 at 09 45 54@2x](https://github.com/Get-Nerdio/NMM-SE/assets/52416805/e2c18198-fff8-4c97-ae8f-13f94bc4da52)
 
 That copied url needs to be pasted into the custom notification url field shown here:
+
 ![CleanShot 2024-04-26 at 09 47 59@2x](https://github.com/Get-Nerdio/NMM-SE/assets/52416805/1c28342a-367f-4eee-bc17-6ad44c376ca6)
 
+### Halo PSA Settings and Prerequisites
 
 6. **HaloPSA Setup:**
 
-Text here
+Most imporant step here is to configure the Halo CustomFields so the Function app can post additional data from the JSON data structure in Halo CustomFields. Fields we currently use are:
 
+```text
+Nerdio Action ID
+Nerdio Condition ID
+Nerdio Creation Date
+Nerdio Customer ID
+Nerdio Incident ID
+Nerdio Job Run Mode
+Nerdio Job Status
+Nerdio Job Type
+```
+
+When creating those fields in Halo PSA they will get an ID assigned, you need to map those ID's in the main script. They currently are filled with ID numbers that correnspond with our test environment. Below an example of what ID number within the Custom Fields object need to be changed.
+
+```powershell
+customfields  = @(
+        [PSCustomObject]@{
+            id    = 178 #Change this ID accordingly to your Halo environment
+            value = if ($null -ne $NMMObj.AccountId){"$($NMMObj.AccountId)"}else{"Global MSP"}
+        },
+        [PSCustomObject]@{
+            id    = 179 #Change this ID accordingly to your Halo environment 
+            value = $NMMObj.Job.Id
+        },
+        [PSCustomObject]@{
+            id    = 180 #Change this ID accordingly to your Halo environment 
+            value = $NMMObj.Job.CreationDateUtc  
+        }
+    )
+```
+How to create these customfields you can look up the [HaloPSA Custom Fields Documentation](https://halopsa.com/guides/article/?kbid=1938)
+
+Last part I recommend is setup a ticket type that is for NMM Alerts, this is not a hard must. But would you allow to segment your NMM tickets more easily.
+How to create these ticket types you can look up the [HaloPSA Create Ticket Types Documentation](https://halopsa.com/guides/article/?kbid=1938)
+
+When creating the new ticket type take note of the ID you need to specify this in the script here: 
+
+```powershell
+$HaloObj = [PSCustomObject]@{
+    oppjobtitle   = 'New NMM Alert'
+    tickettype_id = '27' #This is the ticket type ID you created earlier
+    priority_id   = if ($NMMObj.Job.JobStatus -eq 'Completed'){'4'}else{'2'}
+    supplier_name = 'Nerdo Manager MSP'
+    summary       = "NMM: $(($NMMObj.Job.JobType -creplace '([A-Z])',' $1').Trim())"
+    details       = 'Details of the NMM Alert in Additional Fields'
+```
+As you can see **tickettype_id** had an ID number attached, this number is the ID of the ticket type you created earlier. If you dont want to specify this you can always leave this empty like this ''
 7. **Manual Testing**
 
 Open the the HTTP Trigger in the Function App you created earlier and click the top button Test/Run.
