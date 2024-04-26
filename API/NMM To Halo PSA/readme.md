@@ -132,6 +132,9 @@ $HaloObj = [PSCustomObject]@{
     details       = 'Details of the NMM Alert in Additional Fields'
 ```
 As you can see **tickettype_id** had an ID number attached, this number is the ID of the ticket type you created earlier. If you dont want to specify this you can always leave this empty like this ''
+
+### Testing the Function App
+
 7. **Manual Testing**
 
 Open the the HTTP Trigger in the Function App you created earlier and click the top button Test/Run.
