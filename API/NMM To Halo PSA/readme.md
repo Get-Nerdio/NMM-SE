@@ -72,7 +72,10 @@ This approach retrieves the HaloAPI Secret from the Key Vault, eliminating the n
 
 Open the the HTTP Trigger in the Function App you created earlier and click the top button Test/Run.
 
-Copy paste this JSON:
+![CleanShot 2024-04-26 at 09 35 52@2x](https://github.com/Get-Nerdio/NMM-SE/assets/52416805/6a941a1e-7245-491b-8c2b-035ef2c62ba4)
+
+
+Copy paste this JSON in test body field:
 
 ```json
 {
@@ -89,3 +92,5 @@ Copy paste this JSON:
     }
 }
 ```
+![CleanShot 2024-04-26 at 09 37 22@2x](https://github.com/Get-Nerdio/NMM-SE/assets/52416805/5a435839-e3c5-4532-9e58-c4a054b5573a)
+
