@@ -13,9 +13,11 @@ It will be able to sort out that data and use the HaloPSA powershell module to c
 #### Setup Azure Function App and Keyvault:
 
 1. **Azure Function App Setup:**
-Create an Azure Function App: You need an existing Azure Function App where you can deploy this script. This Function App should be configured to handle PowerShell-based functions. And the type of function you create for this is HTTP Trigger.  
+Create an Azure Function App: You need an existing Azure Function App where you can deploy this script. This Function App should be configured to handle PowerShell-based functions. And the type of function you create for this is HTTP Trigger.
+![CleanShot 2024-04-26 at 09 29 42@2x](https://github.com/Get-Nerdio/NMM-SE/assets/52416805/e2b77d92-3f97-4b0b-8fc9-a15a84f01f01)
 
-2. **HaloAPI Module Installation:**
+
+3. **HaloAPI Module Installation:**
 Edit the requirements.psd1 file in your Azure Function App to include the following line: **'HaloAPI' = '1.*'** this will add the HaloAPI PS Module to your Function App
 So you **requirements.psd1** would look something like this:
 
