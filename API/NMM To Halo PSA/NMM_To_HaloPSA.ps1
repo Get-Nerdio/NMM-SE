@@ -22,39 +22,15 @@ try {
         supplier_name = 'Nerdo Manager MSP'
         summary       = "NMM: $(($NMMObj.Job.JobType -creplace '([A-Z])',' $1').Trim())"
         details       = 'Details of the NMM Alert in Additional Fields'
-        customfields  = @(
-            [PSCustomObject]@{
-                id    = 178 
-                value = if ($null -ne $NMMObj.AccountId) { "$($NMMObj.AccountId)" }else { "Global MSP" }
-            },
-            [PSCustomObject]@{
-                id    = 179  
-                value = $NMMObj.Job.Id
-            },
-            [PSCustomObject]@{
-                id    = 180  
-                value = $NMMObj.Job.CreationDateUtc  
-            },
-            [PSCustomObject]@{
-                id    = 181 
-                value = ($NMMObj.Job.JobType -creplace '([A-Z])', ' $1').Trim()
-            },
-            [PSCustomObject]@{
-                id    = 182
-                value = $NMMObj.Job.JobStatus
-            },
-            [PSCustomObject]@{
-                id    = 183 
-                value = $NMMObj.Job.JobRunMode
-            },
-            [PSCustomObject]@{
-                id    = 184
-                value = $NMMObj.ConditionId
-            },
-            [PSCustomObject]@{
-                id    = 185
-                value = $NMMObj.ActionId
-            }
+        customFields  = @(
+            @{ id = 178; value = if ($NMMObj.AccountId) { $NMMObj.AccountId } else { "Global MSP" } },
+            @{ id = 179; value = $NMMObj.Job.Id },
+            @{ id = 180; value = $NMMObj.Job.CreationDateUtc },
+            @{ id = 181; value = ($NMMObj.Job.JobType -creplace '([A-Z])', ' $1').Trim() },
+            @{ id = 182; value = $NMMObj.Job.JobStatus },
+            @{ id = 183; value = $NMMObj.Job.JobRunMode },
+            @{ id = 184; value = $NMMObj.ConditionId },
+            @{ id = 185; value = $NMMObj.ActionId }
         )
     }
 
