@@ -1,0 +1,78 @@
+"root":{4 items
+"omaSettings":[8 items
+0:{7 items
+"isReadOnly":false
+"value":0
+"description":"Manages a Windows app's ability to share data between users who have installed the app. Data is shared through the SharedLocal folder. This folder is available through the Windows.Storage API"
+"displayName":"Allow a Windows app to share application data between users' is set to 'Disabled'"
+"isEncrypted":false
+"omaUri":"./Device/Vendor/MSFT/Policy/Config/ApplicationManagement/AllowSharedUserAppDa ta"
+"@odata.type":"#microsoft.graph.omaSettingInteger"
+}
+1:{7 items
+"isReadOnly":false
+"value":0
+"description":"This policy setting determines whether users can enable the following WLAN settings: "Connect to suggested open hotspots," "Connect to networks shared by my contacts," and "Enable paid services""
+"displayName":"Allow Windows to automatically connect to suggested open hotspots, to networks shared by contacts, and to hotspots offering paid services' is set to 'Disabled'"
+"isEncrypted":false
+"omaUri":"./Device/Vendor/MSFT/Policy/Config/Wifi/AllowAutoConnectToWiFiSenseHotspots"
+"@odata.type":"#microsoft.graph.omaSettingInteger"
+}
+2:{7 items
+"isReadOnly":false
+"value":1
+"description":"This policy setting controls whether the Connected User Experience and Telemetry service can automatically use an authenticated proxy to send data back to Microsoft."
+"displayName":"Configure Authenticated Proxy usage for the Connected User Experience and Telemetry service' is set to 'Enabled: Disable Authenticated Proxy usage"
+"isEncrypted":false
+"omaUri":"./Device/Vendor/MSFT/Policy/Config/System/DisableEnterpriseAuthProxy"
+"@odata.type":"#microsoft.graph.omaSettingInteger"
+}
+3:{7 items
+"isReadOnly":false
+"value":0
+"description":"This policy is intended to provide additional security against external DMA-capable devices. It allows for more control over the enumeration of external DMA-capable devices that are not compatible with DMA Remapping/device memory isolation and sandboxing."
+"displayName":"Enumeration policy for external devices incompatible with Kernel DMA Protection' is set to 'Enabled: Block All'"
+"isEncrypted":false
+"omaUri":"./Device/Vendor/MSFT/Policy/Config/DmaGuard/DeviceEnumerationPolicy"
+"@odata.type":"#microsoft.graph.omaSettingInteger"
+}
+4:{7 items
+"isReadOnly":false
+"value":1
+"description":"This setting manages non-Administrator users' ability to install Windows app packages."
+"displayName":"Prevent non-admin users from installing packaged Windows apps' is set to 'Enabled'"
+"isEncrypted":false
+"omaUri":"./Device/Vendor/MSFT/Policy/Config/ApplicationManagement/BlockNonAdminUserIns tall"
+"@odata.type":"#microsoft.graph.omaSettingInteger"
+}
+5:{7 items
+"isReadOnly":false
+"value":0
+"description":"This policy setting turns off the location feature for the computer"
+"displayName":"Turn off location is set to 'Enabled'"
+"isEncrypted":false
+"omaUri":"./Device/Vendor/MSFT/Policy/Config/System/AllowLocation"
+"@odata.type":"#microsoft.graph.omaSettingInteger"
+}
+6:{7 items
+"isReadOnly":false
+"value":0
+"description":"This policy setting turns off experiences that help consumers make the most of their devices and Microsoft account."
+"displayName":"Turn off Microsoft consumer experiences' is set to 'Enabled''"
+"isEncrypted":false
+"omaUri":"./Device/Vendor/MSFT/Policy/Config/Experience/AllowWindowsConsumerFeatures"
+"@odata.type":"#microsoft.graph.omaSettingInteger"
+}
+7:{7 items
+"isReadOnly":false
+"value":1
+"description":"This policy setting blocks applications from using the network to send notifications to update tiles, tile badges, toast, or raw notifications. This policy setting turns off the connection between Windows and the Windows Push Notification Service (WNS). This policy setting also stops applications from being able to poll application services to update tiles."
+"displayName":"Turn off notifications network usage' is set to 'Enabled'"
+"isEncrypted":false
+"omaUri":"./Device/Vendor/MSFT/Policy/Config/Notifications/DisallowCloudNotification"
+"@odata.type":"#microsoft.graph.omaSettingInteger"
+}
+]
+"description":"Custom configurations needed for CIS Microsoft Intune for Windows 10 Benchmarks"
+"displayName":"CIS Microsoft Intune for Windows 10 - Custom"
+"@odata.type":"#microsoft.graph.windows10CustomConfiguration"
