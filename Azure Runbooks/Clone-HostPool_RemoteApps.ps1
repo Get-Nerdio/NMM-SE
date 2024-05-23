@@ -2,10 +2,10 @@ Install-Module -Name Az.DesktopVirtualization -AllowClobber -Force
 
 
 # Parameters
-$subscriptionId = "111-111-111-11-1111"
+$subscriptionId = "subscriptionId"
 $resourceGroupName = "NMM-SalesDemos-WinHart"
 $existingHostPoolName = "AVD Demo"
-$newHostPoolName = "HostPoolClone"
+$newHostPoolName = "AVD Demo Clone"
 $location = "centralus"
 
 $begin = Get-Date
