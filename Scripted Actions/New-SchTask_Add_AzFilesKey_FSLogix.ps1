@@ -57,7 +57,7 @@ try {
     # Syntax -> https://learn.microsoft.com/en-us/powershell/module/scheduledtasks/new-scheduledtaskaction?view=windowsserver2022-ps
     $actionParams = @{
         Execute  = "PowerShell.exe"
-        Argument = "-File `"$newScriptPath`""
+        Argument = "-ExecutionPolicy Bypass -File `"$newScriptPath`""
     }
 
     $action = New-ScheduledTaskAction @actionParams
