@@ -33,7 +33,7 @@ try {
     
     # Store credentials to access the storage account
     cmdkey.exe /add:$AzFiles /user:$($user) /pass:$($secret)
-    # Disable Windows Defender Credential Guard (only needed for Windows 11 22H2)
+    # Disable Windows Defender Credential Guard (only needed for Windows 11 22H2 and later)
     New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LsaCfgFlags" -Value 0 -force
     
     }
