@@ -179,7 +179,7 @@ function SetOneDriveFilesToCloud {
                     if ((Get-FilePinnedStatus -filePath $filePath) -eq $false) {
                         [void]$fileDetails.Remove($fileDetail)
                         $totalSize = ($fileDetails | Measure-Object -Property Size -Sum).Sum
-                        Write-Output "Updated local size: $totalSize bytes"
+                        Write-Output ("Initial local size: {0} GB" -f ([math]::Round($totalSize / 1GB, 2)))
                     }
                 }
             }
