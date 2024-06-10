@@ -1,8 +1,6 @@
 ![image](https://github.com/Get-Nerdio/NMM-SE/assets/52416805/5c8dd05e-84a7-49f9-8218-64412fdaffaf)
 
-# (Draft) Migrate local profiles to AZ Files and FSLogix
-
-<span style="color:red">*Note: This document is not yet finished and is still in draft.*</span>
+# Migrate local profiles to AZ Files and FSLogix
 
 
 ## Table of Contents
@@ -55,7 +53,7 @@ When migrateting profiles you could typically think of these kind of scenario's
 
 ### Workarounds
 
-**Using the FSLogix Commandline Utilities:**    
+#### **Using the FSLogix Commandline Utilities:**    
 
 For smaller-scale migrations, such as when you have only a handful of profiles, and if you're less familiar with PowerShell, the FSLogix command-line utility frx copy-profile offers a straightforward alternative. Ensure you have FSLogix software installed on the machine where the command will be executed. For guidance on installing FSLogix on non-NMM managed machines, see [Microsoft Docs: How to download and install FSLogix manually on not NMM managed machines](https://learn.microsoft.com/en-us/fslogix/how-to-install-fslogix)
 
@@ -80,7 +78,7 @@ This command does the following:
 
 Note: For profiles that are not domain-joined, specify the username without the domain prefix, e.g., -username msmith.
 
-**Using the FSLogix Migration Powershell Module:** 
+#### **Using the FSLogix Migration Powershell Module:** 
 
 For detailed documentation and troubleshooting guides, refer to the [FSLogixMigration repository on GitHub](https://github.com/gregdod/FSLogixMigration). This migration approach is typically favored in somewhat larger environments due to its automation capabilities, which reduce the likelihood of human error and increase efficiency.
 
@@ -124,8 +122,23 @@ Convert-RoamingProfile -ProfilePath "C:\Users\User1" -Target "\\Server\FSLogixPr
 
 For more information on what Syntax switches are support check the [Github Repository](https://github.com/gregdod/FSLogixMigration)
 
+#### **Using Sharepoint Migration Tool (SPMT) or other 3rd Party Similar Tools:**
 
-##### Global Workarounds:
+For larger-scale migrations, especially when dealing with multiple users and complex environments, migration tools like the Sharepoint Migration Tool (SPMT) or similar third-party tools can be beneficial. These tools offer advanced features for managing user profiles, including scheduling, reporting, and error handling. The Microsoft docs provide detailed guidance on using the SPMT for migrating user profiles to Azure Files / M365.
+
+- https://learn.microsoft.com/en-us/sharepointmigration/introducing-the-sharepoint-migration-tool
+
+Other mentionalbe tools are:
+
+- **MigrationWiz:** A popular migration tool that supports a wide range of migration scenarios, including user profile migrations to Azure Files. MigrationWiz offers advanced features for managing large-scale migrations, such as scheduling, reporting, and error handling. For more information, refer to the [MigrationWiz](https://www.bittitan.com/).
+    - Youtube step by step instructions: [MigrationWiz Series](https://www.youtube.com/watch?v=7pq9f2uhsD0&list=PLpYpTEFW-ThKPUXdvh2OIclqX_hesVzKv)
+<br>
+
+- **AvePoint Fly:** Offers advanced features for managing large-scale migrations, such as scheduling, reporting, and error handling. For more information, refer to the [AvePoint Fly](https://www.avepoint.com/
+    - Youtube step by step instructions: [How to Fly Series](https://www.youtube.com/watch?v=Sk_QicfCDYo&list=PLyJFOtpJV3wOQtB6l59eAluqgHDpMt0Un)
+
+
+#### Global Workarounds:
 
 - When migrating user profiles to Azure Virtual Desktop (AVD), considerations vary based on the number of users and the specific data involved. In some cases, it may be advantageous to start with a fresh profile, especially when setting up a new AVD environment. This approach is often favored by many MSPs and IT companies.  
 
