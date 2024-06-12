@@ -171,7 +171,7 @@ function SetDefaultLanguage {
     $stopwatch.Stop()
     $elapsedTime = $stopwatch.Elapsed
     Write-Output "Set default Language - Exit Code: $LASTEXITCODE"
-    Write-Output "AVD AIB CUSTOMIZER PHASE: Set default Language - Time taken: $elapsedTime"
+    Write-Output "Set default Language - Time taken: $elapsedTime"
 }
 
 SetDefaultLanguage -Language $InheritedVars.SetDefaultLanguage
