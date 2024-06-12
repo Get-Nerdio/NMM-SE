@@ -22,6 +22,9 @@ Dutch (Netherlands)
 ```
 Don't put any "" around the values and separate them with a comma without a whitespace between languages.
 
+![NMM-ScreenShotInheritedVars](https://github.com/Get-Nerdio/NMM-SE/assets/52416805/34880301-b384-44e3-82b4-351eab5ee87d)
+
+
 ## Language Packs Syntax
 
 As you can see in the example above, the language packs are separated by a comma. The language packs are in the format of "Language (Country)". Ignore the acronym country codes, as they are not used in the script. The script will automatically convert the language packs to the correct format.
