@@ -10,23 +10,20 @@ public class Kernel32 {
 "@
 
 # Function to get the actual size on disk
-function Get-ActualSizeOnDisk {
+function Get-FilePinnedStatus {
     param (
         [string]$filePath
     )
-    
-    $highSize = 0
-    $lowSize = [Kernel32]::GetCompressedFileSize($filePath, [ref]$highSize)
 
-    if ($lowSize -eq 0xFFFFFFFF) {
-        $errorCode = [Runtime.InteropServices.Marshal]::GetLastWin32Error()
-        if ($errorCode -ne 0) {
-            Write-Output "Error getting size for $filePath : $errorCode"
-            return 0
-        }
+    $fileInfo = [System.IO.FileInfo]::new($filePath)
+    $attributes = $fileInfo.Attributes
+
+    if ($attributes.HasFlag([System.IO.FileAttributes]::SparseFile)) {
+        return $false # File is unpinned
     }
-
-    return ($highSize -shl 32) -bor $lowSize
+    else {
+        return $true  # File is pinned
+    }
 }
 
 function SetOneDriveFilesToCloud {
@@ -58,7 +55,7 @@ function SetOneDriveFilesToCloud {
         # Get all files in the OneDrive path and add their details to the list
         Get-ChildItem -Path $UserOneDrivePath -Recurse -File | ForEach-Object {
             $actualSize = Get-ActualSizeOnDisk -filePath $_.FullName
-            $fileDetails.Add([PSCustomObject]@{Path = $_.FullName; Size = $actualSize}) | Out-Null
+            $fileDetails.Add([PSCustomObject]@{Path = $_.FullName; Size = $actualSize }) | Out-Null
         }
     
         # Calculate the total size by summing the elements of the list
