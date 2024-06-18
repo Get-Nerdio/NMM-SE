@@ -105,9 +105,66 @@ function SetACLShare {
         $_.Exception.Message
     }
 }
+
+function SetRBACAzFiles {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$EntraGroupName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$EntraGroupDescription,
+
+        [Parameter(Mandatory = $true)]
+        [string]$AzureRoleName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ResourceGroupName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$StorageAccountName
+    )
+
+    #Install the Graph module
+    EnsureModuleInstalled -moduleName 'Microsoft.Graph.Authentication' -MinVersion 2.19.0
+
+    EnsureModuleInstalled -moduleName 'Microsoft.Graph.Groups' -MinVersion 2.19.0
+
+    # Connect to Microsoft Graph
+    if ($ServicePrincipal -eq $true) {
+        $SecurePassword = ConvertTo-SecureString -String $ClientSecret -AsPlainText -Force
+        $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $ClientId, $SecurePassword
+        Connect-MgGraph -TenantId $TenantId -ClientSecretCredential $Credential
+    }
+    else {
+        
+        Connect-MgGraph -UseDeviceCode -TenantId $TenantId -Scopes "Group.ReadWrite.All"
+    }
+
+    # Check if the Entra group exists
+    $EntraGroup = Get-MgGroup -Filter "displayName eq '$EntraGroupName'" -ConsistencyLevel eventual -ErrorAction SilentlyContinue
+
+    # If the Entra group does not exist, create it
+    if (-not $EntraGroup) {
+        $EntraGroup = New-MgGroup -DisplayName $EntraGroupName -MailEnabled:$false -SecurityEnabled -MailNickname $EntraGroupName -Description $EntraGroupDescription
+    }
+
+    # Get the storage account
+    $StorageAccount = Get-AzStorageAccount -ResourceGroupName $ResourceGroupName -Name $StorageAccountName
+
+    # Get the role definition
+    $RoleDefinition = Get-AzRoleDefinition -Name $AzureRoleName
+
+    # Assign the role to the Entra group
+    New-AzRoleAssignment -ObjectId $EntraGroup.Id -RoleDefinitionId $RoleDefinition.Id -Scope $StorageAccount.Id
+
+    Write-Output "Role assignment completed successfully."
+}
  
 function JoinAzFilesToADDS {
     param (
+        $ClientId,
+        $ClientSecret,
+        $ServicePrincipal,
         $SubscriptionId,
         $ResourceGroupName,
         $StorageAccountName,
@@ -115,6 +172,10 @@ function JoinAzFilesToADDS {
         $StorageAccountKey,
         $OrganizationUnit,
         $EncryptionType,
+        $SetRBACAzFiles,
+        $EntraGroupName,
+        $EntraGroupDescription,
+        $AzureRoleName,
         $TenantID
     )
     
@@ -132,10 +193,19 @@ function JoinAzFilesToADDS {
 
 
     try {
-        #Connect to Azure
-        Update-AzConfig -EnableLoginByWam $false
-        Connect-AzAccount -UseDeviceAuthentication -TenantID $TenantID -SubscriptionId $SubscriptionId
-        Select-AzSubscription -SubscriptionId $SubscriptionId
+        if ($ServicePrincipal -eq $true) {
+
+            $SecurePassword = ConvertTo-SecureString -String $ClientSecret -AsPlainText -Force
+            $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $ClientId, $SecurePassword
+            Connect-AzAccount -ServicePrincipal -TenantId $TenantId -Credential $Credential -SubscriptionId $SubscriptionId
+            Select-AzSubscription -SubscriptionId $SubscriptionId
+        }
+        else {
+            #Connect to Azure with DeviceCode
+            Update-AzConfig -EnableLoginByWam $false
+            Connect-AzAccount -UseDeviceAuthentication -TenantID $TenantID -SubscriptionId $SubscriptionId
+            Select-AzSubscription -SubscriptionId $SubscriptionId
+        }
 
         if ((Get-AzSubscription).Id -eq $SubscriptionId) {
             Write-Output 'Successfully connected to Azure'
@@ -182,6 +252,11 @@ function JoinAzFilesToADDS {
 
         # Set the Kerberos encryption type to AES256 for the computer account
         Set-ADComputer -Identity $StorageAccountName -Server (Get-ADDomain).DNSRoot -KerberosEncryptionType $EncryptionType
+
+        if ($SetRBACAzFiles -eq $true) {
+            SetRBACAzFiles -EntraGroupName $EntraGroupName -EntraGroupDescription $EntraGroupDescription -AzureRoleName $AzureRoleName -ResourceGroupName $ResourceGroupName -StorageAccountName $StorageAccountName
+
+        }
     }
     catch {
         $_.Exception.Message
@@ -221,15 +296,22 @@ function JoinAzFilesToADDS {
 
 #Example how to run the script or just set the params statically
 $JoinAzFilesParams = @{
-    SubscriptionId     = 'Azure Subscription ID'
-    ResourceGroupName  = 'Resource Group Name'
-    StorageAccountName = 'Name of Strorage Account'
-    FileShareName      = 'Name of File Share in Storage Account'
-    StorageAccountKey  = 'Storage Account Key'
-    OrganizationUnit   = 'OU=AzFiles,OU=Nerdio Sales,DC=nerdiosales,DC=local' #Example value
-    EncryptionType     = 'AES256'
-    TenantID           = 'Tenant ID'
-    Debug              = $false
+    ServicePrincipal      = $false
+    SubscriptionId        = 'Azure Subscription ID'
+    ResourceGroupName     = 'Resource Group Name'
+    StorageAccountName    = 'Name of Strorage Account'
+    FileShareName         = 'Name of File Share in Storage Account'
+    StorageAccountKey     = 'Storage Account Key'
+    OrganizationUnit      = 'OU=AzFiles,OU=Nerdio Sales,DC=nerdiosales,DC=local' #Example value
+    EncryptionType        = 'AES256'
+    TenantID              = 'Tenant ID'
+    Debug                 = $false
+    ClientSecret          = 'Client Secret'
+    ClientId              = 'Client ID'
+    SetRBACAzFiles        = $false
+    EntraGroupName        = 'AzFiles-TestGroup'
+    EntraGroupDescription = 'Test Group for AzFiles'
+    AzureRoleName         = 'Storage File Data SMB Share Contributor'
 }
 
 JoinAzFilesToADDS @JoinAzFilesParams
