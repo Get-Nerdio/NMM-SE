@@ -1,4 +1,4 @@
-Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope LocalMachine
+Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
@@ -160,8 +160,14 @@ function SetRBACAzFiles {
         # Get the role definition
         $RoleDefinition = Get-AzRoleDefinition -Name $AzureRoleName
 
+        #Check if the Role already is assigned to the group
+        $RoleAssignment = Get-AzRoleAssignment -Scope $StorageAccount.Id -RoleDefinitionName $AzureRoleName -ObjectId $EntraGroup.id -ErrorAction SilentlyContinue
+
         # Assign the role to the Entra group
-        New-AzRoleAssignment -ObjectId $EntraGroup.Id -RoleDefinitionId $RoleDefinition.Id -Scope $StorageAccount.Id
+        if (-not $RoleAssignment) {
+            New-AzRoleAssignment -ObjectId $EntraGroup.Id -RoleDefinitionId $RoleDefinition.Id -Scope $StorageAccount.Id
+            Write-Output "Role assigned to $($EntraGroup.DisplayName) group."
+        }
 
         Write-Output "Role assignment completed successfully."
     }
@@ -186,6 +192,7 @@ function JoinAzFilesToADDS {
         $EntraGroupName,
         $EntraGroupDescription,
         $AzureRoleName,
+        $DomainAccountType,
         $TenantID
     )
     
@@ -204,7 +211,7 @@ function JoinAzFilesToADDS {
 
     try {
         if ($ServicePrincipal -eq $true) {
-
+            #Connect to Azure with Service Principal
             $SecurePassword = ConvertTo-SecureString -String $ClientSecret -AsPlainText -Force
             $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $ClientId, $SecurePassword
             Connect-AzAccount -ServicePrincipal -TenantId $TenantId -Credential $Credential -SubscriptionId $SubscriptionId
@@ -235,7 +242,7 @@ function JoinAzFilesToADDS {
         $joinAzStorageAccountParams = @{
             ResourceGroupName                   = $ResourceGroupName
             StorageAccountName                  = $StorageAccountName
-            DomainAccountType                   = 'ComputerAccount'
+            DomainAccountType                   = $DomainAccountType
             OrganizationalUnitDistinguishedName = $OrganizationUnit
         } 
 
@@ -244,7 +251,7 @@ function JoinAzFilesToADDS {
         # Update the storage account to use AES256 encryption
         Update-AzStorageAccountAuthForAES256 -ResourceGroupName $ResourceGroupName -StorageAccountName $StorageAccountName
 
-        Write-Output 'Get the target storage account'
+        Write-Output "Get the target storage account $($StorageAccountName)"
 
         $getAzStorageAccountParams = @{
             ResourceGroupName = $ResourceGroupName
@@ -254,10 +261,12 @@ function JoinAzFilesToADDS {
         $storageaccount = Get-AzStorageAccount @getAzStorageAccountParams
 
         if ($storageAccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -and $storageAccount.AzureFilesIdentityBasedAuth.ActiveDirectoryProperties) {
-            'Storage account joined to AD'
+            Write-Output 'Storage account joined to AD'
         }
         else {
-            'Something went wrong'
+            Write-Output 'Something went wrong, storage account not joined to AD'
+            $_.Exception.Message
+            break
         }
 
         # Set the Kerberos encryption type to AES256 for the computer account
@@ -291,13 +300,6 @@ function JoinAzFilesToADDS {
     catch {
         $_.Exception.Message
     }
-    try {
-        
-        
-    }
-    catch {
-        $_.Exception.Message
-    }
 
 }
 
@@ -313,6 +315,7 @@ $JoinAzFilesParams = @{
     FileShareName         = 'Name of File Share in Storage Account'
     StorageAccountKey     = 'Storage Account Key'
     OrganizationUnit      = 'OU=AzFiles,OU=Nerdio Sales,DC=nerdiosales,DC=local' #Example value
+    DomainAccountType     = 'ComputerAccount' #ComputerAccount or ServiceLogonAccount default is ComputerAccount
     EncryptionType        = 'AES256'
     TenantID              = 'Tenant ID'
     Debug                 = $false
@@ -321,7 +324,7 @@ $JoinAzFilesParams = @{
     SetRBACAzFiles        = $false
     EntraGroupName        = 'AzFiles-TestGroup'
     EntraGroupDescription = 'Test Group for AzFiles'
-    AzureRoleName         = 'Storage File Data SMB Share Contributor'
+    AzureRoleName         = 'Storage File Data SMB Share Contributor' #Role needed for assigned Group to have access to the Storage Account
 }
 
 JoinAzFilesToADDS @JoinAzFilesParams
