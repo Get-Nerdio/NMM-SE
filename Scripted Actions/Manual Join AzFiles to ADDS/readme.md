@@ -31,3 +31,8 @@ Afther all the parameters are set, you can select all the code and run it in the
 It will first check if the needed modules are installed, if not it will install them. Keep in mind that sometimes you need to restart you Powershell ISE or Visual Studio Code to make sure the modules are loaded correctly.
 
 You can also set **Debug** to **$true** to run the Debug feature of the AzFilesHybrid module, and do a extra checkup if everything is set correctly.
+
+## Note
+
+If somehow any issue arrise with this script you can always use the steps described in the official Microsoft documentation to join the Azure Files to the ADDS domain. [Join Azure Files to a Windows Server AD domain](https://learn.microsoft.com/en-us/azure/storage/files/storage-files-identity-ad-ds-enable)
+This approach involves a few additional manual steps but serves as a reliable alternative if the script fails due to potential changes from Microsoft. It’s also advisable to consult the official documentation for the most up-to-date information.
