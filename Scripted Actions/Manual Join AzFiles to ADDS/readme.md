@@ -8,6 +8,12 @@ This script is designed to manually join an Azure Files share to an Active Direc
 
 You need to run this script from a machine that is joined to the domain. Best is to save the **ManualJoinAzFilesToADDS.ps1** script file to a local folder on the machine and open it from Powershell ISE or Visual Studio Code.
 
+Creating a Service Princial you can follow the steps in the following Microsoft documentation: [Create a Service Principal](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal)
+
+In this script we use the Secret and ID of the Service Principal to authenticate to Azure and Microsoft Graph. You can generate a new Secret in the Entra Portal under the Service Principal. Ather generating the Secret you can copy the ID and Secret to the script.
+
+
+
 If you want to use a Service Principal to authenticate to Azure and Microsoft Graph, you need to have the following permissions setup for the Service Principal:
 
 **Azure Portal:**
@@ -77,3 +83,7 @@ It will first check if the needed modules are installed, if not it will install 
 
 If somehow any issue arrise with this script you can always use the steps described in the official Microsoft documentation to join the Azure Files to the ADDS domain. [Join Azure Files to a Windows Server AD domain](https://learn.microsoft.com/en-us/azure/storage/files/storage-files-identity-ad-ds-enable)
 This approach involves a few additional manual steps but serves as a reliable alternative if the script fails due to potential changes from Microsoft. It’s also advisable to consult the official documentation for the most up-to-date information.
+
+## Housekeeping
+
+Please consider to remove the Service Principal permissions or the full Service Principal after the script has been run successfully. This is to ensure that the Service Principal does not have unnecessary permissions in the Azure Portal and Microsoft Graph.
