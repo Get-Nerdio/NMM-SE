@@ -18,6 +18,9 @@ If you want to use a Service Principal to authenticate to Azure and Microsoft Gr
 **Entra Portal:**
 - Microsoft Graph: **Group.ReadWrite.All**
     - Look for the Service Principal in the **App Registrations** section, under API permissions you can add the permission. Dont forget to grant admin consent.
+ 
+      ![CleanShot 2024-06-18 at 21 28 54@2x](https://github.com/Get-Nerdio/NMM-SE/assets/52416805/e8e492f3-89fd-465b-ae68-5df6aed1b8f6)
+
 
 ## How to Use
 
