@@ -115,8 +115,7 @@ function JoinAzFilesToADDS {
         $StorageAccountKey,
         $OrganizationUnit,
         $EncryptionType,
-        $TenantID,
-        $ApplicationSecret #Only needed when using $ServicePrincipal = $true
+        $TenantID
     )
     
     try {
