@@ -124,40 +124,50 @@ function SetRBACAzFiles {
         [string]$StorageAccountName
     )
 
-    #Install the Graph module
-    EnsureModuleInstalled -moduleName 'Microsoft.Graph.Authentication' -MinVersion 2.19.0
+    try {
+        #Install the Graph module
+        EnsureModuleInstalled -moduleName 'Microsoft.Graph.Authentication' -MinVersion 2.19.0
 
-    EnsureModuleInstalled -moduleName 'Microsoft.Graph.Groups' -MinVersion 2.19.0
-
-    # Connect to Microsoft Graph
-    if ($ServicePrincipal -eq $true) {
-        $SecurePassword = ConvertTo-SecureString -String $ClientSecret -AsPlainText -Force
-        $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $ClientId, $SecurePassword
-        Connect-MgGraph -TenantId $TenantId -ClientSecretCredential $Credential
+        EnsureModuleInstalled -moduleName 'Microsoft.Graph.Groups' -MinVersion 2.19.0
+ 
+        # Connect to Microsoft Graph
+        if ($ServicePrincipal -eq $true) {
+            $SecurePassword = ConvertTo-SecureString -String $ClientSecret -AsPlainText -Force
+            $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $ClientId, $SecurePassword
+            Connect-MgGraph -TenantId $TenantId -ClientSecretCredential $Credential
+        }
+        else {
+         
+            Connect-MgGraph -UseDeviceCode -TenantId $TenantId -Scopes "Group.ReadWrite.All"
+        }
     }
-    else {
-        
-        Connect-MgGraph -UseDeviceCode -TenantId $TenantId -Scopes "Group.ReadWrite.All"
-    }
-
-    # Check if the Entra group exists
-    $EntraGroup = Get-MgGroup -Filter "displayName eq '$EntraGroupName'" -ConsistencyLevel eventual -ErrorAction SilentlyContinue
-
-    # If the Entra group does not exist, create it
-    if (-not $EntraGroup) {
-        $EntraGroup = New-MgGroup -DisplayName $EntraGroupName -MailEnabled:$false -SecurityEnabled -MailNickname $EntraGroupName -Description $EntraGroupDescription
+    catch {
+        $_.Exception.Message
     }
 
-    # Get the storage account
-    $StorageAccount = Get-AzStorageAccount -ResourceGroupName $ResourceGroupName -Name $StorageAccountName
+    try {
+        # Check if the Entra group exists
+        $EntraGroup = Get-MgGroup -Filter "displayName eq '$EntraGroupName'" -ConsistencyLevel eventual -ErrorAction SilentlyContinue
 
-    # Get the role definition
-    $RoleDefinition = Get-AzRoleDefinition -Name $AzureRoleName
+        # If the Entra group does not exist, create it
+        if (-not $EntraGroup) {
+            $EntraGroup = New-MgGroup -DisplayName $EntraGroupName -MailEnabled:$false -SecurityEnabled -MailNickname $EntraGroupName -Description $EntraGroupDescription
+        }
 
-    # Assign the role to the Entra group
-    New-AzRoleAssignment -ObjectId $EntraGroup.Id -RoleDefinitionId $RoleDefinition.Id -Scope $StorageAccount.Id
+        # Get the storage account
+        $StorageAccount = Get-AzStorageAccount -ResourceGroupName $ResourceGroupName -Name $StorageAccountName
 
-    Write-Output "Role assignment completed successfully."
+        # Get the role definition
+        $RoleDefinition = Get-AzRoleDefinition -Name $AzureRoleName
+
+        # Assign the role to the Entra group
+        New-AzRoleAssignment -ObjectId $EntraGroup.Id -RoleDefinitionId $RoleDefinition.Id -Scope $StorageAccount.Id
+
+        Write-Output "Role assignment completed successfully."
+    }
+    catch {
+        $_.Exception.Message
+    }
 }
  
 function JoinAzFilesToADDS {
