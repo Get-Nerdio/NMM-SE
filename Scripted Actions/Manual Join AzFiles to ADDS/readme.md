@@ -12,9 +12,10 @@ Creating a Service Princial you can follow the steps in the following Microsoft 
 
 In this script we use the Secret and ID of the Service Principal to authenticate to Azure and Microsoft Graph. You can generate a new Secret in the Entra Portal under the Service Principal. Ather generating the Secret you can copy the ID and Secret to the script.
 
+![CleanShot 2024-06-18 at 21 40 15@2x](https://github.com/Get-Nerdio/NMM-SE/assets/52416805/19548017-0cf4-4a40-8ae8-19beb8ba010c)
 
 
-If you want to use a Service Principal to authenticate to Azure and Microsoft Graph, you need to have the following permissions setup for the Service Principal:
+To use a Service Principal to authenticate to Azure and Microsoft Graph, you need to have the following permissions setup for the Service Principal:
 
 **Azure Portal:**
 - Azure Subscription: **Contributor** and **Role Based Access Control Administrator**
