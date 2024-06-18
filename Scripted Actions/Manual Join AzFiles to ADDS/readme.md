@@ -24,6 +24,9 @@ If you want to use a Service Principal to authenticate to Azure and Microsoft Gr
 **Entra Portal:**
 - Microsoft Graph: **Group.ReadWrite.All**
     - Look for the Service Principal in the **App Registrations** section, under API permissions you can add the permission. Dont forget to grant admin consent.
+ 
+      ![CleanShot 2024-06-18 at 21 28 54@2x](https://github.com/Get-Nerdio/NMM-SE/assets/52416805/e8e492f3-89fd-465b-ae68-5df6aed1b8f6)
+
 
 ## How to Use
 
@@ -83,7 +86,3 @@ It will first check if the needed modules are installed, if not it will install 
 
 If somehow any issue arrise with this script you can always use the steps described in the official Microsoft documentation to join the Azure Files to the ADDS domain. [Join Azure Files to a Windows Server AD domain](https://learn.microsoft.com/en-us/azure/storage/files/storage-files-identity-ad-ds-enable)
 This approach involves a few additional manual steps but serves as a reliable alternative if the script fails due to potential changes from Microsoft. It’s also advisable to consult the official documentation for the most up-to-date information.
-
-## Housekeeping
-
-Please consider to remove the Service Principal permissions or the full Service Principal after the script has been run successfully. This is to ensure that the Service Principal does not have unnecessary permissions in the Azure Portal and Microsoft Graph.
