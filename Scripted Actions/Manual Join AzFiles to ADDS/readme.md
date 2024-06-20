@@ -8,6 +8,14 @@ This script is designed to manually join an Azure Files share to an Active Direc
 
 You need to run this script from a machine that is joined to the domain. Best is to save the **ManualJoinAzFilesToADDS.ps1** script file to a local folder on the machine and open it from Powershell ISE or Visual Studio Code.
 
+You have 2 ways of authenticating to Azure and Microsoft Graph, you can use the current logged in user with devicecode or use a Service Principal. **Default is set to use a user that is Entra Global Admin and Azure subscription Ownwer with a devicecode.**
+
+If you want to use a Service Principal you need to set the **ServicePrincipal** parameter to **$true** and follow the steps below to create a Service Principal in Entra.
+
+Otherwise you can skip the Setting up the Service Principal section and follow the instructions in the [How to Use section](#how-to-use).
+
+### Optional: Setting up the Service Principal
+
 Creating a Service Princial you can follow the steps in the following Microsoft documentation: [Create a Service Principal](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal)
 
 In this script we use the Secret and ID of the Service Principal to authenticate to Azure and Microsoft Graph. You can generate a new Secret in the Entra Portal under the Service Principal. Ather generating the Secret you can copy the ID and Secret to the script.
