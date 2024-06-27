@@ -1,5 +1,3 @@
-
-
 $SaveVerbosePreference = $VerbosePreference
 $VerbosePreference = 'continue'
 $folderPath = "$env:TEMP\NerdioManagerLogs"
