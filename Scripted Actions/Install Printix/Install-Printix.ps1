@@ -2,7 +2,7 @@
     .SYNOPSIS
         Install Printix with NMM Scripted Actions
     .DESCRIPTION
-        Uses NMM INherited Variables to install the Printix client on a Windows machine.
+        Uses NMM Inherited Variables to install the Printix client on a Windows machine.
     .NOTES
         You need to set NMM Inhertiad Variables for the Printix Tenant ID and Domain.
     .LINK
@@ -131,7 +131,7 @@ try {
 
     # Set the MSI name and download path
     $PrintixMSI = "CLIENT_${PrintixTenantDomain}_$PrintixTenantId.msi"
-    $DownloadPath = 'C:\MDM\Printix'
+    $DownloadPath = "$env:TEMP\Printix"
 
     # Check if the download directory exists, if not create it
     if (-not (Test-Path $DownloadPath)) {
@@ -146,6 +146,9 @@ try {
     Get-PrintixInstaller -TenantId $PrintixTenantId -Path $InstallerPath
 
     Install-PrintixClient -Path $InstallerPath -TenantId $PrintixTenantId
+
+    #Cleanup the downloaded installer
+    Remove-Item -Path $DownloadPath -Recurse -Force
 
 }
 catch {

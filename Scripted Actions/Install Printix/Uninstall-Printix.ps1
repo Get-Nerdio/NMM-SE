@@ -82,6 +82,14 @@ else {
 try {
     $result = Uninstall-PrintixClient -ProductName 'Printix Client'
     Write-Output $result
+
+    #Check if download files are still present
+    $DownloadPath = "$env:TEMP\Printix"
+
+    if (Test-Path $DownloadPath) {
+        Write-Verbose "Cleaning up download directory: $DownloadPath"
+        Remove-Item -Path $DownloadPath -Recurse -Force
+    }
 }
 catch {
     $_.Exception.Message
