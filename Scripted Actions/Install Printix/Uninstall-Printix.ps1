@@ -44,15 +44,15 @@ function Uninstall-PrintixClient {
     )
 
     try {
-        # Get the product information using WMI with a filter
-        $product = Get-WmiObject -Class Win32_Product -Filter "Name = '$ProductName'"
+        # Get the product information using CIM with a filter
+        $product = Get-CimInstance -ClassName Win32_Product -Filter "Name = '$ProductName'"
 
         if (-not $product) {
             throw "Product '$ProductName' is not installed or could not be found."
         }
 
-        # Uninstall the product
-        $uninstallResult = $product.Uninstall()
+        # Uninstall the product using CIM method
+        $uninstallResult = Invoke-CimMethod -InputObject $product -MethodName Uninstall
 
         if ($uninstallResult.ReturnValue -eq 0) {
             return 'Successfully uninstalled the Printix Client'
