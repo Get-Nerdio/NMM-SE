@@ -118,16 +118,16 @@ try {
         break
     }
 
-    #Get The Printix Tenant ID and Domain from Inherited Variables set in NMM
+    #Get The Printix Tenant ID and Domain from Secure Variables set in NMM
     $PrintixTenantId = $SecureVars.printixTenantId
     $PrintixTenantDomain = $SecureVars.printixTenantDomain
 
     # Check if the variables are populated
     if ([string]::IsNullOrEmpty($PrintixTenantId) -or [string]::IsNullOrEmpty($PrintixTenantDomain)) {
-        throw 'Missing Printix Tenant ID or Domain in Inherited Variables'
+        throw 'Missing Printix Tenant ID or Domain in Secure Variables'
     }
 
-    Write-Verbose "Inherited Variables Succefully populated: $PrintixTenantId ($PrintixTenantDomain)"
+    Write-Verbose "Secure Variables Succefully populated: $PrintixTenantId ($PrintixTenantDomain)"
 
     # Set the MSI name and download path
     $PrintixMSI = "CLIENT_${PrintixTenantDomain}_$PrintixTenantId.msi"
