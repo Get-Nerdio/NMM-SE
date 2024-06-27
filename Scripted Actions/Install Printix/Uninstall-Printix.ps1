@@ -3,7 +3,7 @@
         Uninstall the Printix client.
 
     .LINK
-        Github: Link to Github SE repo
+        Github: https://github.com/Get-Nerdio/NMM-SE/blob/main/Scripted%20Actions/Install%20Printix/Uninstall-Printix.ps1
 #>
 
 $SaveVerbosePreference = $VerbosePreference

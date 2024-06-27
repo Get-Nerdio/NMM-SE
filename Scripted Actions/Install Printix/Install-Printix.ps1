@@ -6,7 +6,7 @@
     .NOTES
         You need to set NMM Inhertiad Variables for the Printix Tenant ID and Domain.
     .LINK
-        Github: Link to Github SE repo
+        Github: https://github.com/Get-Nerdio/NMM-SE/blob/main/Scripted%20Actions/Install%20Printix/Install-Printix.ps1
 #>
 
 $SaveVerbosePreference = $VerbosePreference
