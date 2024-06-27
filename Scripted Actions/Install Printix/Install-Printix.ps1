@@ -2,9 +2,9 @@
     .SYNOPSIS
         Install Printix with NMM Scripted Actions
     .DESCRIPTION
-        Uses NMM Inherited Variables to install the Printix client on a Windows machine.
+        Uses NMM Secure Variables to install the Printix client on a Windows machine.
     .NOTES
-        You need to set NMM Inhertiad Variables for the Printix Tenant ID and Domain.
+        You need to set NMM Secure Variables for the Printix Tenant ID and Domain.
     .LINK
         Github: https://github.com/Get-Nerdio/NMM-SE/blob/main/Scripted%20Actions/Install%20Printix/Install-Printix.ps1
 #>
@@ -119,8 +119,8 @@ try {
     }
 
     #Get The Printix Tenant ID and Domain from Inherited Variables set in NMM
-    $PrintixTenantId = $InheritedVars.printixTenantId
-    $PrintixTenantDomain = $InheritedVars.printixTenantDomain
+    $PrintixTenantId = $SecureVars.printixTenantId
+    $PrintixTenantDomain = $SecureVars.printixTenantDomain
 
     # Check if the variables are populated
     if ([string]::IsNullOrEmpty($PrintixTenantId) -or [string]::IsNullOrEmpty($PrintixTenantDomain)) {
