@@ -6,35 +6,78 @@
         Github: https://github.com/Get-Nerdio/NMM-SE/blob/main/Scripted%20Actions/Install%20Printix/Uninstall-Printix.ps1
 #>
 
-$SaveVerbosePreference = $VerbosePreference
-$VerbosePreference = 'continue'
-$folderPath = "$env:TEMP\NerdioManagerLogs"
-$LognameTXT = "Uninstall-Printix.txt"
+function NMMLogOutput {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("Information", "Warning", "Error")]
+        [string]$Level,
+        
+        [Parameter(Mandatory = $true)]
+        [string]$Message,
+        
+        [string]$LogFilePath = "$env:TEMP\NerdioManagerLogs",
 
-if (-not (Test-Path $folderPath)) {
-    New-Item -ItemType Directory $folderPath -Force
-    Write-Output "$folderPath has been created."
+        [string]$LogName = "Uninstall-Printix.txt",
+
+        [bool]$throw = $false,
+
+        [bool]$break = $false,
+
+        [bool]$return = $false,
+
+        [bool]$exit = $false
+    )
+    
+    if (-not (Test-Path $LogFilePath)) {
+        New-Item -ItemType Directory $LogFilePath -Force
+        Write-Output "$LogFilePath has been created."
+    }
+    
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $logEntry = "$timestamp [$Level]: $Message"
+    
+    try {
+        Add-Content -Path "$($LogFilePath)\$($LogName)" -Value $logEntry
+
+        if ($throw -eq $true) {
+            throw $Message
+        }
+
+        if ($break -eq $true) {
+            break
+        }
+
+        if ($return -eq $true) {
+            return $Message
+        }
+
+        if ($exit -eq $true) {
+            Write-Output $($Message)
+            exit
+        }
+    }
+    catch {
+        $_.Exception.Message
+    }
 }
-else {
-    Write-Output "$folderPath already exists, continue script"
-}
-
-Start-Transcript -Path (Join-Path $folderPath -ChildPath $LognameTXT) -Append -IncludeInvocationHeader
-
-Write-Output "################# New Script Run #################"
-Write-Output "Current time (UTC-0): $((Get-Date).ToUniversalTime())"
 
 function Get-AdminElevation {
-    # Get the current Windows identity
-    $currentIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
-    $principal = New-Object Security.Principal.WindowsPrincipal($currentIdentity)
+    try {
+        # Get the current Windows identity
+        $currentIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
+        $principal = New-Object Security.Principal.WindowsPrincipal($currentIdentity)
 
-    # Check if the current identity has the administrator role or is the system account
-    $isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator) -or
-    $currentIdentity.Name -eq 'NT AUTHORITY\SYSTEM'
+        # Check if the current identity has the administrator role or is the system account
+        $isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator) -or
+        $currentIdentity.Name -eq 'NT AUTHORITY\SYSTEM'
 
-    # Return the result
-    return $isAdmin
+        # Return the result
+        return $isAdmin
+    }
+    catch {
+        NMMLogOutput -Level 'Error' -Message "Failed to check for admin privileges: $($_.Exception.Message)" -throw
+    }
 }
 
 function Uninstall-PrintixClient {
@@ -48,34 +91,37 @@ function Uninstall-PrintixClient {
         $product = Get-CimInstance -ClassName Win32_Product -Filter "Name = '$ProductName'"
 
         if (-not $product) {
-            throw "Product '$ProductName' is not installed or could not be found."
+            NMMLogOutput -Level Warning -Message "Product '$ProductName' is not installed or could not be found." -throw $true
         }
 
         # Uninstall the product using CIM method
         $uninstallResult = Invoke-CimMethod -InputObject $product -MethodName Uninstall
 
         if ($uninstallResult.ReturnValue -eq 0) {
-            return 'Successfully uninstalled the Printix Client'
+
+            NMMLogOutput -Level Information -Message "Successfully uninstalled the Printix Client" -return $true
         }
         else {
-            throw "Uninstallation failed with error code: $($uninstallResult.ReturnValue)"
+            NMMLogOutput -Level Error -Message "Uninstallation failed with error code: $($uninstallResult.ReturnValue)" -throw $true
         }
     }
     catch {
-        throw "Something went wrong uninstalling the Printix Client: $($_.Exception.Message)"
+        NMMLogOutput -Level Error -Message "Something went wrong uninstalling the Printix Client: $($_.Exception.Message)" -throw $true
     }
 }
 
 
 # Check if the script is running with admin privileges
-if (Get-AdminElevation) {
-    Write-Output 'You are running this script with administrative privileges.'
+try {
+    if (Get-AdminElevation) {
+        NMMLogOutput -Level Information -Message 'You are running this script with administrative privileges.' -return $true
+    }
+    else {
+        NMMLogOutput -Level Warning -Message 'You are NOT running this script with administrative privileges, please run as administrator or SYSTEM' -throw $true
+    }
 }
-else {
-    Write-Output 'You are NOT running this script with administrative privileges, please run as administrator or SYSTEM'
-    Stop-Transcript
-    $VerbosePreference = $SaveVerbosePreference
-    break
+catch {
+    NMMLogOutput -Level Error -Message "Failed to check for admin privileges: $($_.Exception.Message)" -throw $true
 }
 
 # Uninstall the Printix client
@@ -87,13 +133,11 @@ try {
     $DownloadPath = "$env:TEMP\Printix"
 
     if (Test-Path $DownloadPath) {
-        Write-Verbose "Cleaning up download directory: $DownloadPath"
+        NMMLogOutput -Level Information -Message "Cleaning up download directory: $DownloadPath"
         Remove-Item -Path $DownloadPath -Recurse -Force
     }
 }
 catch {
-    $_.Exception.Message
+    NMMLogOutput -Level Error -Message "Failed to uninstall the Printix Client: $($_.Exception.Message)" -throw $true
 }
 
-Stop-Transcript
-$VerbosePreference = $SaveVerbosePreference
