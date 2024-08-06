@@ -1,0 +1,29 @@
+{
+    "advancedThreatProtectionRequiredSecurityLevel": "unavailable",
+    "deviceThreatProtectionEnabled": false,
+    "deviceThreatProtectionRequiredSecurityLevel": "unavailable",
+    "passwordMinimumLength": 8,
+    "passwordMinutesOfInactivityBeforeLock": 60,
+    "passwordPreviousPasswordCountToBlock": 3,
+    "passwordRequired": true,
+    "passwordRequiredType": "alphanumeric",
+    "securityRequireSafetyNetAttestationBasicIntegrity": true,
+    "securityRequireSafetyNetAttestationCertifiedDevice": false,
+    "storageRequireEncryption": true,
+    "description": "",
+    "displayName": "Android Compliance Policy - Corporate Owned",
+    "version": 1,
+    "scheduledActionsForRule": [
+        {
+            "scheduledActionConfigurations": [
+                {
+                    "actionType": "block",
+                    "gracePeriodHours": 0,
+                    "notificationMessageCCList": [],
+                    "notificationTemplateId": "00000000-0000-0000-0000-000000000000"
+                }
+            ]
+        }
+    ],
+    "@odata.type": "#microsoft.graph.androidDeviceOwnerCompliancePolicy"
+}

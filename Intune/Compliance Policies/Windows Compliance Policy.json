@@ -1,48 +1,48 @@
-"root":{35 items
-"activeFirewallRequired":true
-"antiSpywareRequired":true
-"antivirusRequired":true
-"bitLockerEnabled":true
-"codeIntegrityEnabled":false
-"configurationManagerComplianceRequired":false
-"defenderEnabled":true
-"deviceThreatProtectionEnabled":false
-"deviceThreatProtectionRequiredSecurityLevel":"unavailable"
-"earlyLaunchAntiMalwareDriverEnabled":false
-"firmwareProtectionEnabled":false
-"kernelDmaProtectionEnabled":false
-"memoryIntegrityEnabled":false
-"osMinimumVersion":"10.0.19045"
-"passwordBlockSimple":true
-"passwordExpirationDays":730
-"passwordMinimumCharacterSetCount":4
-"passwordMinimumLength":12
-"passwordMinutesOfInactivityBeforeLock":60
-"passwordRequired":true
-"passwordRequiredToUnlockFromIdle":false
-"passwordRequiredType":"alphanumeric"
-"requireHealthyDeviceReport":false
-"rtpEnabled":true
-"secureBootEnabled":false
-"signatureOutOfDate":true
-"storageRequireEncryption":false
-"tpmRequired":true
-"validOperatingSystemBuildRanges":[]0 items
-"virtualizationBasedSecurityEnabled":false
-"description":""
-"displayName":"Windows Compliance Policy - Marcos"
-"version":3
-"scheduledActionsForRule":[1 item
-0:{1 item
-"scheduledActionConfigurations":[1 item
-0:{4 items
-"actionType":"block"
-"gracePeriodHours":0
-"notificationMessageCCList":[]0 items
-"notificationTemplateId":"00000000-0000-0000-0000-000000000000"
-}
-]
-}
-]
-"@odata.type":"#microsoft.graph.windows10CompliancePolicy"
+{
+    "activeFirewallRequired": true,
+    "antiSpywareRequired": true,
+    "antivirusRequired": true,
+    "bitLockerEnabled": true,
+    "codeIntegrityEnabled": false,
+    "configurationManagerComplianceRequired": false,
+    "defenderEnabled": true,
+    "deviceThreatProtectionEnabled": false,
+    "deviceThreatProtectionRequiredSecurityLevel": "unavailable",
+    "earlyLaunchAntiMalwareDriverEnabled": false,
+    "firmwareProtectionEnabled": false,
+    "kernelDmaProtectionEnabled": false,
+    "memoryIntegrityEnabled": false,
+    "osMinimumVersion": "10.0.19045",
+    "passwordBlockSimple": true,
+    "passwordExpirationDays": 730,
+    "passwordMinimumCharacterSetCount": 4,
+    "passwordMinimumLength": 12,
+    "passwordMinutesOfInactivityBeforeLock": 60,
+    "passwordRequired": true,
+    "passwordRequiredToUnlockFromIdle": false,
+    "passwordRequiredType": "alphanumeric",
+    "requireHealthyDeviceReport": false,
+    "rtpEnabled": true,
+    "secureBootEnabled": false,
+    "signatureOutOfDate": true,
+    "storageRequireEncryption": false,
+    "tpmRequired": true,
+    "validOperatingSystemBuildRanges": [],
+    "virtualizationBasedSecurityEnabled": false,
+    "description": "",
+    "displayName": "Windows Default Compliance Policy",
+    "version": 6,
+    "scheduledActionsForRule": [
+        {
+            "scheduledActionConfigurations": [
+                {
+                    "actionType": "block",
+                    "gracePeriodHours": 0,
+                    "notificationMessageCCList": [],
+                    "notificationTemplateId": "00000000-0000-0000-0000-000000000000"
+                }
+            ]
+        }
+    ],
+    "@odata.type": "#microsoft.graph.windows10CompliancePolicy"
 }
