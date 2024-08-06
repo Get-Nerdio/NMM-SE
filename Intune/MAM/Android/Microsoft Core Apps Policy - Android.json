@@ -1,232 +1,229 @@
-"root":{72 items
-"allowedAndroidDeviceModels":[]0 items
-"appActionIfAndroidDeviceManufacturerNotAllowed":"block"
-"appActionIfAndroidDeviceModelNotAllowed":"block"
-"appActionIfAndroidSafetyNetAppsVerificationFailed":"block"
-"appActionIfAndroidSafetyNetDeviceAttestationFailed":"block"
-"appActionIfDeviceLockNotSet":"block"
-"approvedKeyboards":[11 items
-0:{2 items
-"name":"com.google.android.inputmethod.latin"
-"value":"Gboard - the Google Keyboard"
-}
-1:{2 items
-"name":"com.touchtype.swiftkey"
-"value":"SwiftKey Keyboard"
-}
-2:{2 items
-"name":"com.sec.android.inputmethod"
-"value":"Samsung Keyboard"
-}
-3:{2 items
-"name":"com.google.android.apps.inputmethod.hindi"
-"value":"Google Indic Keyboard"
-}
-4:{2 items
-"name":"com.google.android.inputmethod.pinyin"
-"value":"Google Pinyin Input"
-}
-5:{2 items
-"name":"com.google.android.inputmethod.japanese"
-"value":"Google Japanese Input"
-}
-6:{2 items
-"name":"com.google.android.inputmethod.korean"
-"value":"Google Korean Input"
-}
-7:{2 items
-"name":"com.google.android.apps.handwriting.ime"
-"value":"Google Handwriting Input"
-}
-8:{2 items
-"name":"com.google.android.googlequicksearchbox"
-"value":"Google voice typing"
-}
-9:{2 items
-"name":"com.samsung.android.svoiceime"
-"value":"Samsung voice input"
-}
-10:{2 items
-"name":"com.samsung.android.honeyboard"
-"value":"Samsung Keyboard"
-}
-]
-"biometricAuthenticationBlocked":false
-"blockAfterCompanyPortalUpdateDeferralInDays":0
-"connectToVpnOnLaunch":false
-"customBrowserDisplayName":""
-"customBrowserPackageId":""
-"customDialerAppDisplayName":""
-"customDialerAppPackageId":""
-"deployedAppCount":13
-"deviceLockRequired":false
-"disableAppEncryptionIfDeviceEncryptionIsEnabled":false
-"encryptAppData":true
-"exemptedAppPackages":[]0 items
-"fingerprintAndBiometricEnabled":true
-"keyboardsRestricted":true
-"minimumRequiredPatchVersion":"0000-00-00"
-"minimumWarningPatchVersion":"0000-00-00"
-"minimumWipePatchVersion":"0000-00-00"
-"requireClass3Biometrics":false
-"requiredAndroidSafetyNetAppsVerificationType":"none"
-"requiredAndroidSafetyNetDeviceAttestationType":"none"
-"requiredAndroidSafetyNetEvaluationType":"basic"
-"requirePinAfterBiometricChange":false
-"screenCaptureBlocked":true
-"warnAfterCompanyPortalUpdateDeferralInDays":0
-"wipeAfterCompanyPortalUpdateDeferralInDays":0
-"apps":[13 items
-0:{3 items
-"mobileAppIdentifier":{2 items
-"packageId":"com.microsoft.emmx"
-"@odata.type":"#microsoft.graph.androidMobileAppIdentifier"
-}
-"version":"-725393251"
-"id":"com.microsoft.emmx.android"
-}
-1:{3 items
-"mobileAppIdentifier":{2 items
-"packageId":"com.microsoft.office.excel"
-"@odata.type":"#microsoft.graph.androidMobileAppIdentifier"
-}
-"version":"-1789826587"
-"id":"com.microsoft.office.excel.android"
-}
-2:{3 items
-"mobileAppIdentifier":{2 items
-"packageId":"com.microsoft.office.officehub"
-"@odata.type":"#microsoft.graph.androidMobileAppIdentifier"
-}
-"version":"-1091809935"
-"id":"com.microsoft.office.officehub.android"
-}
-3:{3 items
-"mobileAppIdentifier":{2 items
-"packageId":"com.microsoft.office.officehubhl"
-"@odata.type":"#microsoft.graph.androidMobileAppIdentifier"
-}
-"version":"-1175805259"
-"id":"com.microsoft.office.officehubhl.android"
-}
-4:{3 items
-"mobileAppIdentifier":{2 items
-"packageId":"com.microsoft.office.officehubrow"
-"@odata.type":"#microsoft.graph.androidMobileAppIdentifier"
-}
-"version":"-1861979965"
-"id":"com.microsoft.office.officehubrow.android"
-}
-5:{3 items
-"mobileAppIdentifier":{2 items
-"packageId":"com.microsoft.office.onenote"
-"@odata.type":"#microsoft.graph.androidMobileAppIdentifier"
-}
-"version":"186482170"
-"id":"com.microsoft.office.onenote.android"
-}
-6:{3 items
-"mobileAppIdentifier":{2 items
-"packageId":"com.microsoft.office.powerpoint"
-"@odata.type":"#microsoft.graph.androidMobileAppIdentifier"
-}
-"version":"1411665537"
-"id":"com.microsoft.office.powerpoint.android"
-}
-7:{3 items
-"mobileAppIdentifier":{2 items
-"packageId":"com.microsoft.office.word"
-"@odata.type":"#microsoft.graph.androidMobileAppIdentifier"
-}
-"version":"2122351424"
-"id":"com.microsoft.office.word.android"
-}
-8:{3 items
-"mobileAppIdentifier":{2 items
-"packageId":"com.microsoft.sharepoint"
-"@odata.type":"#microsoft.graph.androidMobileAppIdentifier"
-}
-"version":"84773357"
-"id":"com.microsoft.sharepoint.android"
-}
-9:{3 items
-"mobileAppIdentifier":{2 items
-"packageId":"com.microsoft.skydrive"
-"@odata.type":"#microsoft.graph.androidMobileAppIdentifier"
-}
-"version":"1887770705"
-"id":"com.microsoft.skydrive.android"
-}
-10:{3 items
-"mobileAppIdentifier":{2 items
-"packageId":"com.microsoft.teams"
-"@odata.type":"#microsoft.graph.androidMobileAppIdentifier"
-}
-"version":"1900143244"
-"id":"com.microsoft.teams.android"
-}
-11:{3 items
-"mobileAppIdentifier":{2 items
-"packageId":"com.microsoft.teams.baidu"
-"@odata.type":"#microsoft.graph.androidMobileAppIdentifier"
-}
-"version":"-314614189"
-"id":"com.microsoft.teams.baidu.android"
-}
-12:{3 items
-"mobileAppIdentifier":{2 items
-"packageId":"com.microsoft.todos"
-"@odata.type":"#microsoft.graph.androidMobileAppIdentifier"
-}
-"version":"1697858135"
-"id":"com.microsoft.todos.android"
-}
-]
-"appGroupType":"selectedPublicApps"
-"targetedAppManagementLevels":"unspecified"
-"allowedDataIngestionLocations":[4 items
-0:"oneDriveForBusiness"
-1:"sharePoint"
-2:"camera"
-3:"photoLibrary"
-]
-"allowedDataStorageLocations":[2 items
-0:"oneDriveForBusiness"
-1:"sharePoint"
-]
-"allowedInboundDataTransferSources":"allApps"
-"allowedOutboundClipboardSharingExceptionLength":0
-"allowedOutboundClipboardSharingLevel":"managedAppsWithPasteIn"
-"allowedOutboundDataTransferDestinations":"managedApps"
-"appActionIfDeviceComplianceRequired":"block"
-"appActionIfMaximumPinRetriesExceeded":"block"
-"blockDataIngestionIntoOrganizationDocuments":false
-"contactSyncBlocked":false
-"dataBackupBlocked":false
-"deviceComplianceRequired":true
-"dialerRestrictionLevel":"allApps"
-"disableAppPinIfDevicePinIsSet":false
-"fingerprintBlocked":false
-"managedBrowser":"microsoftEdge"
-"managedBrowserToOpenLinksRequired":true
-"maximumAllowedDeviceThreatLevel":"notConfigured"
-"maximumPinRetries":5
-"minimumPinLength":6
-"mobileThreatDefenseRemediationAction":"block"
-"notificationRestriction":"allow"
-"organizationalCredentialsRequired":false
-"periodBeforePinReset":"PT0S"
-"periodOfflineBeforeAccessCheck":"PT12H"
-"periodOfflineBeforeWipeIsEnforced":"P90D"
-"periodOnlineBeforeAccessCheck":"PT15M"
-"pinCharacterSet":"numeric"
-"pinRequired":true
-"previousPinBlockCount":0
-"printBlocked":false
-"saveAsBlocked":true
-"simplePinBlocked":false
-"description":""
-"displayName":"Microsoft Core Apps Policy - Android "
-"version":""1f022f2c-0000-0800-0000-649a06090000""
-"@odata.type":"microsoft.graph.androidManagedAppProtection"
+{
+    "allowedAndroidDeviceModels": [],
+    "appActionIfAndroidDeviceManufacturerNotAllowed": "block",
+    "appActionIfAndroidDeviceModelNotAllowed": "block",
+    "appActionIfAndroidSafetyNetAppsVerificationFailed": "block",
+    "appActionIfAndroidSafetyNetDeviceAttestationFailed": "block",
+    "appActionIfDeviceLockNotSet": "block",
+    "approvedKeyboards": [
+        {
+            "name": "com.google.android.inputmethod.latin",
+            "value": "Gboard - the Google Keyboard"
+        },
+        {
+            "name": "com.touchtype.swiftkey",
+            "value": "SwiftKey Keyboard"
+        },
+        {
+            "name": "com.sec.android.inputmethod",
+            "value": "Samsung Keyboard"
+        },
+        {
+            "name": "com.google.android.apps.inputmethod.hindi",
+            "value": "Google Indic Keyboard"
+        },
+        {
+            "name": "com.google.android.inputmethod.pinyin",
+            "value": "Google Pinyin Input"
+        },
+        {
+            "name": "com.google.android.inputmethod.japanese",
+            "value": "Google Japanese Input"
+        },
+        {
+            "name": "com.google.android.inputmethod.korean",
+            "value": "Google Korean Input"
+        },
+        {
+            "name": "com.google.android.apps.handwriting.ime",
+            "value": "Google Handwriting Input"
+        },
+        {
+            "name": "com.google.android.googlequicksearchbox",
+            "value": "Google voice typing"
+        },
+        {
+            "name": "com.samsung.android.svoiceime",
+            "value": "Samsung voice input"
+        },
+        {
+            "name": "com.samsung.android.honeyboard",
+            "value": "Samsung Keyboard"
+        }
+    ],
+    "biometricAuthenticationBlocked": false,
+    "blockAfterCompanyPortalUpdateDeferralInDays": 0,
+    "connectToVpnOnLaunch": false,
+    "customBrowserDisplayName": "",
+    "customBrowserPackageId": "",
+    "customDialerAppDisplayName": "",
+    "customDialerAppPackageId": "",
+    "deployedAppCount": 13,
+    "deviceLockRequired": false,
+    "disableAppEncryptionIfDeviceEncryptionIsEnabled": false,
+    "encryptAppData": true,
+    "exemptedAppPackages": [],
+    "fingerprintAndBiometricEnabled": true,
+    "keyboardsRestricted": true,
+    "requireClass3Biometrics": true,
+    "requiredAndroidSafetyNetAppsVerificationType": "none",
+    "requiredAndroidSafetyNetDeviceAttestationType": "none",
+    "requiredAndroidSafetyNetEvaluationType": "basic",
+    "requirePinAfterBiometricChange": false,
+    "screenCaptureBlocked": true,
+    "warnAfterCompanyPortalUpdateDeferralInDays": 0,
+    "wipeAfterCompanyPortalUpdateDeferralInDays": 0,
+    "apps": [
+        {
+            "mobileAppIdentifier": {
+                "packageId": "com.microsoft.emmx",
+                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
+            },
+            "version": "-725393251",
+            "id": "com.microsoft.emmx.android"
+        },
+        {
+            "mobileAppIdentifier": {
+                "packageId": "com.microsoft.office.excel",
+                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
+            },
+            "version": "-1789826587",
+            "id": "com.microsoft.office.excel.android"
+        },
+        {
+            "mobileAppIdentifier": {
+                "packageId": "com.microsoft.office.officehub",
+                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
+            },
+            "version": "-1091809935",
+            "id": "com.microsoft.office.officehub.android"
+        },
+        {
+            "mobileAppIdentifier": {
+                "packageId": "com.microsoft.office.officehubhl",
+                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
+            },
+            "version": "-1175805259",
+            "id": "com.microsoft.office.officehubhl.android"
+        },
+        {
+            "mobileAppIdentifier": {
+                "packageId": "com.microsoft.office.officehubrow",
+                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
+            },
+            "version": "-1861979965",
+            "id": "com.microsoft.office.officehubrow.android"
+        },
+        {
+            "mobileAppIdentifier": {
+                "packageId": "com.microsoft.office.onenote",
+                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
+            },
+            "version": "186482170",
+            "id": "com.microsoft.office.onenote.android"
+        },
+        {
+            "mobileAppIdentifier": {
+                "packageId": "com.microsoft.office.outlook",
+                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
+            },
+            "version": "1146701235",
+            "id": "com.microsoft.office.outlook.android"
+        },
+        {
+            "mobileAppIdentifier": {
+                "packageId": "com.microsoft.office.powerpoint",
+                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
+            },
+            "version": "1411665537",
+            "id": "com.microsoft.office.powerpoint.android"
+        },
+        {
+            "mobileAppIdentifier": {
+                "packageId": "com.microsoft.office.word",
+                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
+            },
+            "version": "2122351424",
+            "id": "com.microsoft.office.word.android"
+        },
+        {
+            "mobileAppIdentifier": {
+                "packageId": "com.microsoft.sharepoint",
+                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
+            },
+            "version": "84773357",
+            "id": "com.microsoft.sharepoint.android"
+        },
+        {
+            "mobileAppIdentifier": {
+                "packageId": "com.microsoft.skydrive",
+                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
+            },
+            "version": "1887770705",
+            "id": "com.microsoft.skydrive.android"
+        },
+        {
+            "mobileAppIdentifier": {
+                "packageId": "com.microsoft.teams",
+                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
+            },
+            "version": "1900143244",
+            "id": "com.microsoft.teams.android"
+        },
+        {
+            "mobileAppIdentifier": {
+                "packageId": "com.microsoft.todos",
+                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
+            },
+            "version": "1697858135",
+            "id": "com.microsoft.todos.android"
+        }
+    ],
+    "appGroupType": "allCoreMicrosoftApps",
+    "targetedAppManagementLevels": "unspecified",
+    "allowedDataIngestionLocations": [
+        "oneDriveForBusiness",
+        "sharePoint",
+        "camera",
+        "photoLibrary"
+    ],
+    "allowedDataStorageLocations": [
+        "oneDriveForBusiness",
+        "sharePoint"
+    ],
+    "allowedInboundDataTransferSources": "allApps",
+    "allowedOutboundClipboardSharingExceptionLength": 0,
+    "allowedOutboundClipboardSharingLevel": "managedApps",
+    "allowedOutboundDataTransferDestinations": "managedApps",
+    "appActionIfDeviceComplianceRequired": "block",
+    "appActionIfMaximumPinRetriesExceeded": "block",
+    "blockDataIngestionIntoOrganizationDocuments": false,
+    "contactSyncBlocked": false,
+    "dataBackupBlocked": false,
+    "deviceComplianceRequired": true,
+    "dialerRestrictionLevel": "blocked",
+    "disableAppPinIfDevicePinIsSet": false,
+    "fingerprintBlocked": false,
+    "managedBrowser": "microsoftEdge",
+    "managedBrowserToOpenLinksRequired": true,
+    "maximumAllowedDeviceThreatLevel": "notConfigured",
+    "maximumPinRetries": 10,
+    "minimumPinLength": 4,
+    "mobileThreatDefenseRemediationAction": "block",
+    "notificationRestriction": "allow",
+    "organizationalCredentialsRequired": false,
+    "periodBeforePinReset": "PT0S",
+    "periodOfflineBeforeAccessCheck": "P5D",
+    "periodOfflineBeforeWipeIsEnforced": "P90D",
+    "periodOnlineBeforeAccessCheck": "PT1H",
+    "pinCharacterSet": "numeric",
+    "pinRequired": true,
+    "previousPinBlockCount": 0,
+    "printBlocked": true,
+    "saveAsBlocked": true,
+    "simplePinBlocked": false,
+    "description": "Blocks copy of org data out of corp apps. Allows saving to OneDrive and SP. Blocks saving data out of company apps. \n\nRequires PIN and/or biometrics for app acess, and recheck after 1 hour.",
+    "displayName": "Microsoft Core Apps - Android",
+    "version": "\"ad00dbf9-0000-0100-0000-66b26b680000\"",
+    "@odata.type": "microsoft.graph.androidManagedAppProtection"
 }

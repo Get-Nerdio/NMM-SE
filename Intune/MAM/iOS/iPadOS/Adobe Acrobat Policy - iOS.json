@@ -1,133 +1,140 @@
-"root":{56 items
-"appActionIfIosDeviceModelNotAllowed":"block"
-"appDataEncryptionType":"whenDeviceLocked"
-"customBrowserProtocol":""
-"customDialerAppProtocol":""
-"deployedAppCount":1
-"disableProtectionOfManagedOutboundOpenInData":false
-"exemptedAppProtocols":[1 item
-0:{2 items
-"name":"Default"
-"value":"skype;app-settings;calshow;itms;itmss;itms-apps;itms-appss;itms-services;"
-}
-]
-"exemptedUniversalLinks":[4 items
-0:"http://facetime.apple.com"
-1:"http://maps.apple.com"
-2:"https://facetime.apple.com"
-3:"https://maps.apple.com"
-]
-"faceIdBlocked":false
-"filterOpenInToOnlyManagedApps":true
-"managedUniversalLinks":[50 items
-0:"http://*.appsplatform.us/*"
-1:"http://*.onedrive.com/*"
-2:"http://*.powerapps.cn/*"
-3:"http://*.powerapps.com/*"
-4:"http://*.powerapps.us/*"
-5:"http://*.powerbi.com/*"
-6:"http://*.service-now.com/*"
-7:"http://*.sharepoint-df.com/*"
-8:"http://*.sharepoint.com/*"
-9:"http://*.yammer.com/*"
-10:"http://*.zoom.us/*"
-11:"http://*collab.apps.mil/l/*"
-12:"http://*devspaces.skype.com/l/*"
-13:"http://*teams-fl.microsoft.com/l/*"
-14:"http://*teams.live.com/l/*"
-15:"http://*teams.microsoft.com/l/*"
-16:"http://*teams.microsoft.us/l/*"
-17:"http://app.powerbi.cn/*"
-18:"http://app.powerbi.de/*"
-19:"http://app.powerbigov.us/*"
-20:"http://msit.microsoftstream.com/video/*"
-21:"http://tasks.office.com/*"
-22:"http://to-do.microsoft.com/sharing*"
-23:"http://web.microsoftstream.com/video/*"
-24:"http://zoom.us/*"
-25:"https://*.appsplatform.us/*"
-26:"https://*.onedrive.com/*"
-27:"https://*.powerapps.cn/*"
-28:"https://*.powerapps.com/*"
-29:"https://*.powerapps.us/*"
-30:"https://*.powerbi.com/*"
-31:"https://*.service-now.com/*"
-32:"https://*.sharepoint-df.com/*"
-33:"https://*.sharepoint.com/*"
-34:"https://*.yammer.com/*"
-35:"https://*.zoom.us/*"
-36:"https://*collab.apps.mil/l/*"
-37:"https://*devspaces.skype.com/l/*"
-38:"https://*teams-fl.microsoft.com/l/*"
-39:"https://*teams.live.com/l/*"
-40:"https://*teams.microsoft.com/l/*"
-41:"https://*teams.microsoft.us/l/*"
-42:"https://app.powerbi.cn/*"
-43:"https://app.powerbi.de/*"
-44:"https://app.powerbigov.us/*"
-45:"https://msit.microsoftstream.com/video/*"
-46:"https://tasks.office.com/*"
-47:"https://to-do.microsoft.com/sharing*"
-48:"https://web.microsoftstream.com/video/*"
-49:"https://zoom.us/*"
-]
-"protectInboundDataFromUnknownSources":true
-"thirdPartyKeyboardsBlocked":false
-"apps":[1 item
-0:{3 items
-"mobileAppIdentifier":{2 items
-"bundleId":"com.adobe.adobe-reader"
-"@odata.type":"#microsoft.graph.iosMobileAppIdentifier"
-}
-"version":"536130818"
-"id":"com.adobe.adobe-reader.ios"
-}
-]
-"appGroupType":"selectedPublicApps"
-"isAssigned":true
-"targetedAppManagementLevels":"unspecified"
-"allowedDataIngestionLocations":[4 items
-0:"oneDriveForBusiness"
-1:"sharePoint"
-2:"camera"
-3:"photoLibrary"
-]
-"allowedDataStorageLocations":[]0 items
-"allowedInboundDataTransferSources":"allApps"
-"allowedOutboundClipboardSharingExceptionLength":0
-"allowedOutboundClipboardSharingLevel":"managedAppsWithPasteIn"
-"allowedOutboundDataTransferDestinations":"managedApps"
-"appActionIfDeviceComplianceRequired":"block"
-"appActionIfMaximumPinRetriesExceeded":"block"
-"blockDataIngestionIntoOrganizationDocuments":false
-"contactSyncBlocked":false
-"dataBackupBlocked":false
-"deviceComplianceRequired":true
-"dialerRestrictionLevel":"allApps"
-"disableAppPinIfDevicePinIsSet":false
-"fingerprintBlocked":false
-"managedBrowser":"microsoftEdge"
-"managedBrowserToOpenLinksRequired":true
-"maximumAllowedDeviceThreatLevel":"notConfigured"
-"maximumPinRetries":5
-"minimumPinLength":6
-"mobileThreatDefenseRemediationAction":"block"
-"notificationRestriction":"allow"
-"organizationalCredentialsRequired":false
-"periodBeforePinReset":"PT0S"
-"periodOfflineBeforeAccessCheck":"PT12H"
-"periodOfflineBeforeWipeIsEnforced":"P90D"
-"periodOnlineBeforeAccessCheck":"PT15M"
-"pinCharacterSet":"numeric"
-"pinRequired":true
-"previousPinBlockCount":0
-"printBlocked":false
-"saveAsBlocked":false
-"simplePinBlocked":false
-"description":""
-"displayName":"Adobe Acrobat Policy- iOS"
-"version":""b0006928-0000-0800-0000-646e85c70000""
-"@odata.type":"microsoft.graph.iosManagedAppProtection"
-"@odata.context":"https://graph.microsoft.com/beta/$metadata#deviceAppManagement/iosManagedAppProtections(apps())/$entity"
-"apps@odata.context":"https://graph.microsoft.com/beta/$metadata#deviceAppManagement/iosManagedAppProtections('T_3f7405f3-a3a1-4261-b192-938bfe38fd2a')/apps"
+{
+    "appActionIfIosDeviceModelNotAllowed": "block",
+    "appDataEncryptionType": "whenDeviceLocked",
+    "customBrowserProtocol": "",
+    "customDialerAppProtocol": "",
+    "deployedAppCount": 1,
+    "disableProtectionOfManagedOutboundOpenInData": false,
+    "exemptedAppProtocols": [
+        {
+            "name": "Default",
+            "value": "skype;app-settings;calshow;itms;itmss;itms-apps;itms-appss;itms-services;"
+        }
+    ],
+    "exemptedUniversalLinks": [
+        "http://facetime.apple.com",
+        "http://maps.apple.com",
+        "https://facetime.apple.com",
+        "https://maps.apple.com"
+    ],
+    "faceIdBlocked": false,
+    "filterOpenInToOnlyManagedApps": false,
+    "managedUniversalLinks": [
+        "http://*.appsplatform.us/*",
+        "http://*.onedrive.com/*",
+        "http://*.powerapps.cn/*",
+        "http://*.powerapps.com/*",
+        "http://*.powerapps.us/*",
+        "http://*.powerbi.com/*",
+        "http://*.service-now.com/*",
+        "http://*.sharepoint-df.com/*",
+        "http://*.sharepoint.com/*",
+        "http://*.yammer.com/*",
+        "http://*.zoom.us/*",
+        "http://*collab.apps.mil/l/*",
+        "http://*devspaces.skype.com/l/*",
+        "http://*teams-fl.microsoft.com/l/*",
+        "http://*teams.live.com/l/*",
+        "http://*teams.microsoft.com/l/*",
+        "http://*teams.microsoft.us/l/*",
+        "http://app.powerbi.cn/*",
+        "http://app.powerbi.de/*",
+        "http://app.powerbigov.us/*",
+        "http://msit.microsoftstream.com/video/*",
+        "http://tasks.office.com/*",
+        "http://to-do.microsoft.com/sharing*",
+        "http://web.microsoftstream.com/video/*",
+        "http://zoom.us/*",
+        "https://*.appsplatform.us/*",
+        "https://*.onedrive.com/*",
+        "https://*.powerapps.cn/*",
+        "https://*.powerapps.com/*",
+        "https://*.powerapps.us/*",
+        "https://*.powerbi.com/*",
+        "https://*.service-now.com/*",
+        "https://*.sharepoint-df.com/*",
+        "https://*.sharepoint.com/*",
+        "https://*.yammer.com/*",
+        "https://*.zoom.us/*",
+        "https://*collab.apps.mil/l/*",
+        "https://*devspaces.skype.com/l/*",
+        "https://*teams-fl.microsoft.com/l/*",
+        "https://*teams.live.com/l/*",
+        "https://*teams.microsoft.com/l/*",
+        "https://*teams.microsoft.us/l/*",
+        "https://app.powerbi.cn/*",
+        "https://app.powerbi.de/*",
+        "https://app.powerbigov.us/*",
+        "https://msit.microsoftstream.com/video/*",
+        "https://tasks.office.com/*",
+        "https://to-do.microsoft.com/sharing*",
+        "https://web.microsoftstream.com/video/*",
+        "https://zoom.us/*"
+    ],
+    "protectInboundDataFromUnknownSources": true,
+    "thirdPartyKeyboardsBlocked": false,
+    "apps": [
+        {
+            "mobileAppIdentifier": {
+                "bundleId": "com.adobe.adobe-reader",
+                "@odata.type": "#microsoft.graph.iosMobileAppIdentifier"
+            },
+            "version": "536130818",
+            "id": "com.adobe.adobe-reader.ios"
+        }
+    ],
+    "appGroupType": "selectedPublicApps",
+    "isAssigned": false,
+    "targetedAppManagementLevels": "unspecified",
+    "allowedDataIngestionLocations": [
+        "oneDriveForBusiness",
+        "sharePoint",
+        "camera",
+        "photoLibrary"
+    ],
+    "allowedDataStorageLocations": [
+        "oneDriveForBusiness",
+        "sharePoint"
+    ],
+    "allowedInboundDataTransferSources": "allApps",
+    "allowedOutboundClipboardSharingExceptionLength": 0,
+    "allowedOutboundClipboardSharingLevel": "managedApps",
+    "allowedOutboundDataTransferDestinations": "managedApps",
+    "appActionIfDeviceComplianceRequired": "block",
+    "appActionIfMaximumPinRetriesExceeded": "block",
+    "blockDataIngestionIntoOrganizationDocuments": false,
+    "contactSyncBlocked": false,
+    "dataBackupBlocked": true,
+    "deviceComplianceRequired": true,
+    "dialerRestrictionLevel": "blocked",
+    "disableAppPinIfDevicePinIsSet": false,
+    "fingerprintBlocked": false,
+    "managedBrowser": "microsoftEdge",
+    "managedBrowserToOpenLinksRequired": true,
+    "maximumAllowedDeviceThreatLevel": "notConfigured",
+    "maximumPinRetries": 5,
+    "minimumPinLength": 6,
+    "mobileThreatDefenseRemediationAction": "block",
+    "notificationRestriction": "allow",
+    "organizationalCredentialsRequired": false,
+    "periodBeforePinReset": "PT0S",
+    "periodOfflineBeforeAccessCheck": "P5D",
+    "periodOfflineBeforeWipeIsEnforced": "P90D",
+    "periodOnlineBeforeAccessCheck": "PT1H",
+    "pinCharacterSet": "numeric",
+    "pinRequired": false,
+    "previousPinBlockCount": 0,
+    "printBlocked": true,
+    "saveAsBlocked": true,
+    "simplePinBlocked": false,
+    "description": "",
+    "displayName": "Adobe Acrobat - iOS/iPadOS",
+    "version": "\"d60006df-0000-0100-0000-66b26a9c0000\"",
+    "@odata.type": "microsoft.graph.iosManagedAppProtection",
+    "@odata.context": "https://graph.microsoft.com/beta/$metadata#deviceAppManagement/iosManagedAppProtections(apps())/$entity",
+    "protectedMessagingRedirectAppType": "blocked",
+    "allowWidgetContentSync": false,
+    "appActionIfAccountIsClockedOut": null,
+    "messagingRedirectAppUrlScheme": "",
+    "apps@odata.context": "https://graph.microsoft.com/beta/$metadata#deviceAppManagement/iosManagedAppProtections('T_841eae78-f800-4a0e-9a12-2137fdd0a231')/apps"
 }

@@ -76,11 +76,11 @@
     "apps": [
         {
             "mobileAppIdentifier": {
-                "bundleId": "com.microsoft.office.outlook",
+                "bundleId": "com.getdropbox.dropbox",
                 "@odata.type": "#microsoft.graph.iosMobileAppIdentifier"
             },
-            "version": "-518090279",
-            "id": "com.microsoft.office.outlook.ios"
+            "version": "2035993534",
+            "id": "com.getdropbox.dropbox.ios"
         }
     ],
     "appGroupType": "selectedPublicApps",
@@ -96,7 +96,7 @@
         "oneDriveForBusiness",
         "sharePoint"
     ],
-    "allowedInboundDataTransferSources": "managedApps",
+    "allowedInboundDataTransferSources": "allApps",
     "allowedOutboundClipboardSharingExceptionLength": 0,
     "allowedOutboundClipboardSharingLevel": "managedApps",
     "allowedOutboundDataTransferDestinations": "managedApps",
@@ -113,28 +113,29 @@
     "managedBrowserToOpenLinksRequired": true,
     "maximumAllowedDeviceThreatLevel": "notConfigured",
     "maximumPinRetries": 10,
-    "minimumPinLength": 6,
+    "minimumPinLength": 4,
     "mobileThreatDefenseRemediationAction": "block",
     "notificationRestriction": "allow",
     "organizationalCredentialsRequired": false,
     "periodBeforePinReset": "PT0S",
     "periodOfflineBeforeAccessCheck": "P5D",
     "periodOfflineBeforeWipeIsEnforced": "P90D",
-    "periodOnlineBeforeAccessCheck": "PT1H",
+    "periodOnlineBeforeAccessCheck": "PT30M",
     "pinCharacterSet": "numeric",
-    "pinRequired": true,
+    "pinRequired": false,
+    "pinRequiredInsteadOfBiometricTimeout": "PT30M",
     "previousPinBlockCount": 0,
     "printBlocked": true,
     "saveAsBlocked": true,
     "simplePinBlocked": false,
     "description": "",
-    "displayName": "Microsoft Outlook - iOS/iPadOS",
-    "version": "\"a7018027-0000-0100-0000-66b26cc00000\"",
+    "displayName": "DropBox - App Protection Policy - iOS/iPadOS",
+    "version": "\"a30055c4-0000-0100-0000-66b268550000\"",
     "@odata.type": "microsoft.graph.iosManagedAppProtection",
     "@odata.context": "https://graph.microsoft.com/beta/$metadata#deviceAppManagement/iosManagedAppProtections(apps())/$entity",
     "protectedMessagingRedirectAppType": "blocked",
-    "allowWidgetContentSync": false,
+    "allowWidgetContentSync": true,
     "appActionIfAccountIsClockedOut": null,
     "messagingRedirectAppUrlScheme": "",
-    "apps@odata.context": "https://graph.microsoft.com/beta/$metadata#deviceAppManagement/iosManagedAppProtections('T_4f77844f-36a0-409a-9704-cb41f7895125')/apps"
+    "apps@odata.context": "https://graph.microsoft.com/beta/$metadata#deviceAppManagement/iosManagedAppProtections('T_e83a51dd-ad0e-4df1-a218-5a6146914252')/apps"
 }

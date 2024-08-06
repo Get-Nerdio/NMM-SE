@@ -65,6 +65,9 @@
     "exemptedAppPackages": [],
     "fingerprintAndBiometricEnabled": true,
     "keyboardsRestricted": true,
+    "minimumRequiredPatchVersion": "0000-00-00",
+    "minimumWarningPatchVersion": "0000-00-00",
+    "minimumWipePatchVersion": "0000-00-00",
     "requireClass3Biometrics": false,
     "requiredAndroidSafetyNetAppsVerificationType": "none",
     "requiredAndroidSafetyNetDeviceAttestationType": "none",
@@ -76,11 +79,11 @@
     "apps": [
         {
             "mobileAppIdentifier": {
-                "packageId": "com.adobe.reader",
+                "packageId": "com.microsoft.emmx",
                 "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
             },
-            "version": "267816930",
-            "id": "com.adobe.reader.android"
+            "version": "-725393251",
+            "id": "com.microsoft.emmx.android"
         }
     ],
     "appGroupType": "selectedPublicApps",
@@ -111,23 +114,24 @@
     "managedBrowser": "microsoftEdge",
     "managedBrowserToOpenLinksRequired": true,
     "maximumAllowedDeviceThreatLevel": "notConfigured",
-    "maximumPinRetries": 5,
-    "minimumPinLength": 6,
+    "maximumPinRetries": 10,
+    "minimumPinLength": 4,
     "mobileThreatDefenseRemediationAction": "block",
     "notificationRestriction": "allow",
     "organizationalCredentialsRequired": false,
     "periodBeforePinReset": "PT0S",
     "periodOfflineBeforeAccessCheck": "P5D",
     "periodOfflineBeforeWipeIsEnforced": "P90D",
-    "periodOnlineBeforeAccessCheck": "PT1H",
+    "periodOnlineBeforeAccessCheck": "PT30M",
     "pinCharacterSet": "numeric",
     "pinRequired": false,
+    "pinRequiredInsteadOfBiometricTimeout": "PT30M",
     "previousPinBlockCount": 0,
     "printBlocked": true,
     "saveAsBlocked": true,
     "simplePinBlocked": false,
     "description": "",
-    "displayName": "Adobe Acrobat - Android",
-    "version": "\"d600cde3-0000-0100-0000-66b26aaf0000\"",
+    "displayName": "Microsoft Edge - App Protection Policy - Android",
+    "version": "\"a301be78-0000-0100-0000-66b265610000\"",
     "@odata.type": "microsoft.graph.androidManagedAppProtection"
 }

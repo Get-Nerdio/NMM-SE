@@ -65,7 +65,10 @@
     "exemptedAppPackages": [],
     "fingerprintAndBiometricEnabled": true,
     "keyboardsRestricted": true,
-    "requireClass3Biometrics": false,
+    "minimumRequiredPatchVersion": "0000-00-00",
+    "minimumWarningPatchVersion": "0000-00-00",
+    "minimumWipePatchVersion": "0000-00-00",
+    "requireClass3Biometrics": true,
     "requiredAndroidSafetyNetAppsVerificationType": "none",
     "requiredAndroidSafetyNetDeviceAttestationType": "none",
     "requiredAndroidSafetyNetEvaluationType": "basic",
@@ -76,11 +79,11 @@
     "apps": [
         {
             "mobileAppIdentifier": {
-                "packageId": "com.adobe.reader",
+                "packageId": "com.ms.office365admin",
                 "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
             },
-            "version": "267816930",
-            "id": "com.adobe.reader.android"
+            "version": "1040477753",
+            "id": "com.ms.office365admin.android"
         }
     ],
     "appGroupType": "selectedPublicApps",
@@ -111,23 +114,24 @@
     "managedBrowser": "microsoftEdge",
     "managedBrowserToOpenLinksRequired": true,
     "maximumAllowedDeviceThreatLevel": "notConfigured",
-    "maximumPinRetries": 5,
-    "minimumPinLength": 6,
+    "maximumPinRetries": 10,
+    "minimumPinLength": 4,
     "mobileThreatDefenseRemediationAction": "block",
     "notificationRestriction": "allow",
     "organizationalCredentialsRequired": false,
     "periodBeforePinReset": "PT0S",
     "periodOfflineBeforeAccessCheck": "P5D",
     "periodOfflineBeforeWipeIsEnforced": "P90D",
-    "periodOnlineBeforeAccessCheck": "PT1H",
+    "periodOnlineBeforeAccessCheck": "PT30M",
     "pinCharacterSet": "numeric",
-    "pinRequired": false,
+    "pinRequired": true,
+    "pinRequiredInsteadOfBiometricTimeout": "PT1H",
     "previousPinBlockCount": 0,
     "printBlocked": true,
     "saveAsBlocked": true,
-    "simplePinBlocked": false,
+    "simplePinBlocked": true,
     "description": "",
-    "displayName": "Adobe Acrobat - Android",
-    "version": "\"d600cde3-0000-0100-0000-66b26aaf0000\"",
+    "displayName": "Microsoft 365 Admin - App Protection Policy - Android",
+    "version": "\"a6010645-0000-0100-0000-66b26af50000\"",
     "@odata.type": "microsoft.graph.androidManagedAppProtection"
 }
