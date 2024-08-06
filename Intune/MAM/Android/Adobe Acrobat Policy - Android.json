@@ -95,7 +95,7 @@
 3:"photoLibrary"
 ]
 "allowedDataStorageLocations":[]0 items
-"allowedInboundDataTransferSources":"managedApps"
+"allowedInboundDataTransferSources":"allApps"
 "allowedOutboundClipboardSharingExceptionLength":0
 "allowedOutboundClipboardSharingLevel":"managedAppsWithPasteIn"
 "allowedOutboundDataTransferDestinations":"managedApps"
@@ -103,7 +103,7 @@
 "appActionIfMaximumPinRetriesExceeded":"block"
 "blockDataIngestionIntoOrganizationDocuments":false
 "contactSyncBlocked":false
-"dataBackupBlocked":false
+"dataBackupBlocked":true
 "deviceComplianceRequired":true
 "dialerRestrictionLevel":"allApps"
 "disableAppPinIfDevicePinIsSet":false
@@ -119,7 +119,7 @@
 "periodBeforePinReset":"PT0S"
 "periodOfflineBeforeAccessCheck":"PT12H"
 "periodOfflineBeforeWipeIsEnforced":"P90D"
-"periodOnlineBeforeAccessCheck":"PT15M"
+"periodOnlineBeforeAccessCheck":"PT1H"
 "pinCharacterSet":"numeric"
 "pinRequired":true
 "previousPinBlockCount":0
@@ -127,7 +127,7 @@
 "saveAsBlocked":false
 "simplePinBlocked":false
 "description":""
-"displayName":"Adobe Acrobat Policy - Android"
-"version":""a0008cd1-0000-0800-0000-646e86510000""
+"displayName":"Adobe Acrobat - Android"
+"version":""c6000505-0000-0100-0000-66b2328d0000""
 "@odata.type":"microsoft.graph.androidManagedAppProtection"
 }
