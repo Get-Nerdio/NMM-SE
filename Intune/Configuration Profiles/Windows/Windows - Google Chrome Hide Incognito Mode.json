@@ -1,0 +1,60 @@
+{
+    "description": "",
+    "name": "Windows - Google CHrome Hide Incognito Mode",
+    "platforms": "windows10",
+    "settingCount": 3,
+    "technologies": "mdm",
+    "templateReference": {
+        "templateFamily": "none",
+        "templateId": ""
+    },
+    "settings": [
+        {
+            "settingInstance": {
+                "choiceSettingValue": {
+                    "children": [
+                        {
+                            "simpleSettingCollectionValue": [
+                                {
+                                    "value": "{$InheritedVars.AllowedWebsites}",
+                                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue"
+                                }
+                            ],
+                            "settingDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_urlallowlist_urlallowlistdesc",
+                            "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance"
+                        }
+                    ],
+                    "value": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_urlallowlist_1",
+                    "@odata.type": "microsoft.graph.deviceManagementConfigurationChoiceSettingValue"
+                },
+                "settingDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_urlallowlist",
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance"
+            },
+            "id": "0"
+        },
+        {
+            "settingInstance": {
+                "choiceSettingValue": {
+                    "children": [],
+                    "value": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~extensions_blockexternalextensions_1",
+                    "@odata.type": "microsoft.graph.deviceManagementConfigurationChoiceSettingValue"
+                },
+                "settingDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~extensions_blockexternalextensions",
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance"
+            },
+            "id": "1"
+        },
+        {
+            "settingInstance": {
+                "choiceSettingValue": {
+                    "children": [],
+                    "value": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_incognitomodeavailability_0",
+                    "@odata.type": "microsoft.graph.deviceManagementConfigurationChoiceSettingValue"
+                },
+                "settingDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_incognitomodeavailability",
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance"
+            },
+            "id": "2"
+        }
+    ]
+}

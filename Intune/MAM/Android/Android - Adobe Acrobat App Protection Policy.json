@@ -127,7 +127,7 @@
     "saveAsBlocked": true,
     "simplePinBlocked": false,
     "description": "",
-    "displayName": "Adobe Acrobat - Android",
+    "displayName": "Android - Adobe Acrobat App Protection Policy",
     "version": "\"d600cde3-0000-0100-0000-66b26aaf0000\"",
     "@odata.type": "microsoft.graph.androidManagedAppProtection"
 }

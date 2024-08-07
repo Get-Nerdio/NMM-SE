@@ -129,7 +129,7 @@
     "saveAsBlocked": true,
     "simplePinBlocked": false,
     "description": "",
-    "displayName": "DropBox - App Protection Policy - iOS/iPadOS",
+    "displayName": "iOS DropBox App Protection Policy",
     "version": "\"a30055c4-0000-0100-0000-66b268550000\"",
     "@odata.type": "microsoft.graph.iosManagedAppProtection",
     "@odata.context": "https://graph.microsoft.com/beta/$metadata#deviceAppManagement/iosManagedAppProtections(apps())/$entity",

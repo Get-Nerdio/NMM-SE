@@ -1,0 +1,25 @@
+{
+    "description": "",
+    "name": "Windows - Hide Control Panel",
+    "platforms": "windows10",
+    "settingCount": 1,
+    "technologies": "mdm",
+    "templateReference": {
+        "templateFamily": "none",
+        "templateId": ""
+    },
+    "settings": [
+        {
+            "settingInstance": {
+                "choiceSettingValue": {
+                    "children": [],
+                    "value": "user_vendor_msft_policy_config_admx_controlpanel_nocontrolpanel_0",
+                    "@odata.type": "microsoft.graph.deviceManagementConfigurationChoiceSettingValue"
+                },
+                "settingDefinitionId": "user_vendor_msft_policy_config_admx_controlpanel_nocontrolpanel",
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance"
+            },
+            "id": "0"
+        }
+    ]
+}

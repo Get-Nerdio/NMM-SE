@@ -76,11 +76,11 @@
     "apps": [
         {
             "mobileAppIdentifier": {
-                "bundleId": "com.microsoft.o365shdmobileapp",
+                "bundleId": "com.microsoft.msedge",
                 "@odata.type": "#microsoft.graph.iosMobileAppIdentifier"
             },
-            "version": "644136791",
-            "id": "com.microsoft.o365shdmobileapp.ios"
+            "version": "-2135752869",
+            "id": "com.microsoft.msedge.ios"
         }
     ],
     "appGroupType": "selectedPublicApps",
@@ -104,7 +104,7 @@
     "appActionIfMaximumPinRetriesExceeded": "block",
     "blockDataIngestionIntoOrganizationDocuments": false,
     "contactSyncBlocked": false,
-    "dataBackupBlocked": false,
+    "dataBackupBlocked": true,
     "deviceComplianceRequired": true,
     "dialerRestrictionLevel": "blocked",
     "disableAppPinIfDevicePinIsSet": false,
@@ -122,20 +122,20 @@
     "periodOfflineBeforeWipeIsEnforced": "P90D",
     "periodOnlineBeforeAccessCheck": "PT30M",
     "pinCharacterSet": "numeric",
-    "pinRequired": true,
-    "pinRequiredInsteadOfBiometricTimeout": "PT1H",
+    "pinRequired": false,
+    "pinRequiredInsteadOfBiometricTimeout": "PT30M",
     "previousPinBlockCount": 0,
     "printBlocked": true,
     "saveAsBlocked": true,
-    "simplePinBlocked": true,
-    "description": "Default policy for M365 admin app",
-    "displayName": "Microsoft 365 Admin - App Protection Policy - iOS/iPadOS",
-    "version": "\"ad003fea-0000-0100-0000-66b26b1e0000\"",
+    "simplePinBlocked": false,
+    "description": "",
+    "displayName": "iOS - Microsoft Edge App Protection Policy",
+    "version": "\"ae00171d-0000-0100-0000-66b26c080000\"",
     "@odata.type": "microsoft.graph.iosManagedAppProtection",
     "@odata.context": "https://graph.microsoft.com/beta/$metadata#deviceAppManagement/iosManagedAppProtections(apps())/$entity",
     "protectedMessagingRedirectAppType": "blocked",
     "allowWidgetContentSync": true,
     "appActionIfAccountIsClockedOut": null,
     "messagingRedirectAppUrlScheme": "",
-    "apps@odata.context": "https://graph.microsoft.com/beta/$metadata#deviceAppManagement/iosManagedAppProtections('T_2cd4a507-8b75-4eda-a21d-561d422f90a8')/apps"
+    "apps@odata.context": "https://graph.microsoft.com/beta/$metadata#deviceAppManagement/iosManagedAppProtections('T_9f9a6758-2ac7-4ee8-bc17-dcc35d43644c')/apps"
 }

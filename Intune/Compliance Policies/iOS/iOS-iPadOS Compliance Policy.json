@@ -1,0 +1,34 @@
+{
+    "advancedThreatProtectionRequiredSecurityLevel": "unavailable",
+    "deviceThreatProtectionEnabled": false,
+    "deviceThreatProtectionRequiredSecurityLevel": "unavailable",
+    "managedEmailProfileRequired": false,
+    "osMinimumVersion": "16.7.8",
+    "passcodeBlockSimple": true,
+    "passcodeExpirationDays": 730,
+    "passcodeMinimumCharacterSetCount": 1,
+    "passcodeMinimumLength": 12,
+    "passcodeMinutesOfInactivityBeforeLock": 60,
+    "passcodeMinutesOfInactivityBeforeScreenTimeout": 15,
+    "passcodePreviousPasscodeBlockCount": 5,
+    "passcodeRequired": true,
+    "passcodeRequiredType": "alphanumeric",
+    "restrictedApps": [],
+    "securityBlockJailbrokenDevices": true,
+    "description": "",
+    "displayName": "iOS/iPadOS Compliance Policy - Marcos",
+    "version": 1,
+    "scheduledActionsForRule": [
+        {
+            "scheduledActionConfigurations": [
+                {
+                    "actionType": "block",
+                    "gracePeriodHours": 0,
+                    "notificationMessageCCList": [],
+                    "notificationTemplateId": "00000000-0000-0000-0000-000000000000"
+                }
+            ]
+        }
+    ],
+    "@odata.type": "#microsoft.graph.iosCompliancePolicy"
+}

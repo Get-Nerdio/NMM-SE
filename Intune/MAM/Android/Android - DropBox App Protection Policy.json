@@ -68,7 +68,7 @@
     "minimumRequiredPatchVersion": "0000-00-00",
     "minimumWarningPatchVersion": "0000-00-00",
     "minimumWipePatchVersion": "0000-00-00",
-    "requireClass3Biometrics": true,
+    "requireClass3Biometrics": false,
     "requiredAndroidSafetyNetAppsVerificationType": "none",
     "requiredAndroidSafetyNetDeviceAttestationType": "none",
     "requiredAndroidSafetyNetEvaluationType": "basic",
@@ -79,11 +79,11 @@
     "apps": [
         {
             "mobileAppIdentifier": {
-                "packageId": "com.ms.office365admin",
+                "packageId": "com.getdropbox.dropbox",
                 "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
             },
-            "version": "1040477753",
-            "id": "com.ms.office365admin.android"
+            "version": "661410520",
+            "id": "com.getdropbox.dropbox.android"
         }
     ],
     "appGroupType": "selectedPublicApps",
@@ -124,14 +124,14 @@
     "periodOfflineBeforeWipeIsEnforced": "P90D",
     "periodOnlineBeforeAccessCheck": "PT30M",
     "pinCharacterSet": "numeric",
-    "pinRequired": true,
-    "pinRequiredInsteadOfBiometricTimeout": "PT1H",
+    "pinRequired": false,
+    "pinRequiredInsteadOfBiometricTimeout": "PT30M",
     "previousPinBlockCount": 0,
     "printBlocked": true,
     "saveAsBlocked": true,
-    "simplePinBlocked": true,
+    "simplePinBlocked": false,
     "description": "",
-    "displayName": "Microsoft 365 Admin - App Protection Policy - Android",
-    "version": "\"a6010645-0000-0100-0000-66b26af50000\"",
+    "displayName": "Android - DropBox App Protection Policy",
+    "version": "\"ad00276f-0000-0100-0000-66b268d90000\"",
     "@odata.type": "microsoft.graph.androidManagedAppProtection"
 }

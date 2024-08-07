@@ -79,11 +79,11 @@
     "apps": [
         {
             "mobileAppIdentifier": {
-                "packageId": "com.getdropbox.dropbox",
+                "packageId": "com.microsoft.emmx",
                 "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
             },
-            "version": "661410520",
-            "id": "com.getdropbox.dropbox.android"
+            "version": "-725393251",
+            "id": "com.microsoft.emmx.android"
         }
     ],
     "appGroupType": "selectedPublicApps",
@@ -131,7 +131,7 @@
     "saveAsBlocked": true,
     "simplePinBlocked": false,
     "description": "",
-    "displayName": "DropBox - App Protection Policy - Android",
-    "version": "\"ad00276f-0000-0100-0000-66b268d90000\"",
+    "displayName": "Android - Microsoft Edge App Protection Policy",
+    "version": "\"a301be78-0000-0100-0000-66b265610000\"",
     "@odata.type": "microsoft.graph.androidManagedAppProtection"
 }

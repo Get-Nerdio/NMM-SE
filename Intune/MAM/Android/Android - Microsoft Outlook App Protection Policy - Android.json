@@ -58,14 +58,14 @@
     "customBrowserPackageId": "",
     "customDialerAppDisplayName": "",
     "customDialerAppPackageId": "",
-    "deployedAppCount": 13,
+    "deployedAppCount": 1,
     "deviceLockRequired": false,
     "disableAppEncryptionIfDeviceEncryptionIsEnabled": false,
     "encryptAppData": true,
     "exemptedAppPackages": [],
     "fingerprintAndBiometricEnabled": true,
     "keyboardsRestricted": true,
-    "requireClass3Biometrics": true,
+    "requireClass3Biometrics": false,
     "requiredAndroidSafetyNetAppsVerificationType": "none",
     "requiredAndroidSafetyNetDeviceAttestationType": "none",
     "requiredAndroidSafetyNetEvaluationType": "basic",
@@ -76,110 +76,14 @@
     "apps": [
         {
             "mobileAppIdentifier": {
-                "packageId": "com.microsoft.emmx",
-                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
-            },
-            "version": "-725393251",
-            "id": "com.microsoft.emmx.android"
-        },
-        {
-            "mobileAppIdentifier": {
-                "packageId": "com.microsoft.office.excel",
-                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
-            },
-            "version": "-1789826587",
-            "id": "com.microsoft.office.excel.android"
-        },
-        {
-            "mobileAppIdentifier": {
-                "packageId": "com.microsoft.office.officehub",
-                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
-            },
-            "version": "-1091809935",
-            "id": "com.microsoft.office.officehub.android"
-        },
-        {
-            "mobileAppIdentifier": {
-                "packageId": "com.microsoft.office.officehubhl",
-                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
-            },
-            "version": "-1175805259",
-            "id": "com.microsoft.office.officehubhl.android"
-        },
-        {
-            "mobileAppIdentifier": {
-                "packageId": "com.microsoft.office.officehubrow",
-                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
-            },
-            "version": "-1861979965",
-            "id": "com.microsoft.office.officehubrow.android"
-        },
-        {
-            "mobileAppIdentifier": {
-                "packageId": "com.microsoft.office.onenote",
-                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
-            },
-            "version": "186482170",
-            "id": "com.microsoft.office.onenote.android"
-        },
-        {
-            "mobileAppIdentifier": {
                 "packageId": "com.microsoft.office.outlook",
                 "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
             },
             "version": "1146701235",
             "id": "com.microsoft.office.outlook.android"
-        },
-        {
-            "mobileAppIdentifier": {
-                "packageId": "com.microsoft.office.powerpoint",
-                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
-            },
-            "version": "1411665537",
-            "id": "com.microsoft.office.powerpoint.android"
-        },
-        {
-            "mobileAppIdentifier": {
-                "packageId": "com.microsoft.office.word",
-                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
-            },
-            "version": "2122351424",
-            "id": "com.microsoft.office.word.android"
-        },
-        {
-            "mobileAppIdentifier": {
-                "packageId": "com.microsoft.sharepoint",
-                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
-            },
-            "version": "84773357",
-            "id": "com.microsoft.sharepoint.android"
-        },
-        {
-            "mobileAppIdentifier": {
-                "packageId": "com.microsoft.skydrive",
-                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
-            },
-            "version": "1887770705",
-            "id": "com.microsoft.skydrive.android"
-        },
-        {
-            "mobileAppIdentifier": {
-                "packageId": "com.microsoft.teams",
-                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
-            },
-            "version": "1900143244",
-            "id": "com.microsoft.teams.android"
-        },
-        {
-            "mobileAppIdentifier": {
-                "packageId": "com.microsoft.todos",
-                "@odata.type": "#microsoft.graph.androidMobileAppIdentifier"
-            },
-            "version": "1697858135",
-            "id": "com.microsoft.todos.android"
         }
     ],
-    "appGroupType": "allCoreMicrosoftApps",
+    "appGroupType": "selectedPublicApps",
     "targetedAppManagementLevels": "unspecified",
     "allowedDataIngestionLocations": [
         "oneDriveForBusiness",
@@ -191,7 +95,7 @@
         "oneDriveForBusiness",
         "sharePoint"
     ],
-    "allowedInboundDataTransferSources": "allApps",
+    "allowedInboundDataTransferSources": "managedApps",
     "allowedOutboundClipboardSharingExceptionLength": 0,
     "allowedOutboundClipboardSharingLevel": "managedApps",
     "allowedOutboundDataTransferDestinations": "managedApps",
@@ -199,7 +103,7 @@
     "appActionIfMaximumPinRetriesExceeded": "block",
     "blockDataIngestionIntoOrganizationDocuments": false,
     "contactSyncBlocked": false,
-    "dataBackupBlocked": false,
+    "dataBackupBlocked": true,
     "deviceComplianceRequired": true,
     "dialerRestrictionLevel": "blocked",
     "disableAppPinIfDevicePinIsSet": false,
@@ -208,7 +112,7 @@
     "managedBrowserToOpenLinksRequired": true,
     "maximumAllowedDeviceThreatLevel": "notConfigured",
     "maximumPinRetries": 10,
-    "minimumPinLength": 4,
+    "minimumPinLength": 6,
     "mobileThreatDefenseRemediationAction": "block",
     "notificationRestriction": "allow",
     "organizationalCredentialsRequired": false,
@@ -222,8 +126,8 @@
     "printBlocked": true,
     "saveAsBlocked": true,
     "simplePinBlocked": false,
-    "description": "Blocks copy of org data out of corp apps. Allows saving to OneDrive and SP. Blocks saving data out of company apps. \n\nRequires PIN and/or biometrics for app acess, and recheck after 1 hour.",
-    "displayName": "Microsoft Core Apps - Android",
-    "version": "\"ad00dbf9-0000-0100-0000-66b26b680000\"",
+    "description": "",
+    "displayName": "Android - Microsoft Outlook App Protection Policy",
+    "version": "\"d700fd5d-0000-0100-0000-66b26c850000\"",
     "@odata.type": "microsoft.graph.androidManagedAppProtection"
 }

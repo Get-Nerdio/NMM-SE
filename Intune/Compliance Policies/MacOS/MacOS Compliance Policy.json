@@ -1,0 +1,38 @@
+{
+    "advancedThreatProtectionRequiredSecurityLevel": "unavailable",
+    "deviceThreatProtectionEnabled": false,
+    "deviceThreatProtectionRequiredSecurityLevel": "unavailable",
+    "firewallBlockAllIncoming": false,
+    "firewallEnabled": true,
+    "firewallEnableStealthMode": false,
+    "gatekeeperAllowedAppSource": "macAppStoreAndIdentifiedDevelopers",
+    "osMaximumBuildVersion": "23F79",
+    "osMaximumVersion": "14.5",
+    "osMinimumBuildVersion": "21H1222",
+    "osMinimumVersion": "12.7.5",
+    "passwordBlockSimple": true,
+    "passwordExpirationDays": 730,
+    "passwordMinimumCharacterSetCount": 1,
+    "passwordMinimumLength": 12,
+    "passwordMinutesOfInactivityBeforeLock": 60,
+    "passwordRequired": true,
+    "passwordRequiredType": "alphanumeric",
+    "storageRequireEncryption": false,
+    "systemIntegrityProtectionEnabled": false,
+    "description": "",
+    "displayName": "MacOS Compliance Policy - Marcos",
+    "version": 2,
+    "scheduledActionsForRule": [
+        {
+            "scheduledActionConfigurations": [
+                {
+                    "actionType": "block",
+                    "gracePeriodHours": 0,
+                    "notificationMessageCCList": [],
+                    "notificationTemplateId": "00000000-0000-0000-0000-000000000000"
+                }
+            ]
+        }
+    ],
+    "@odata.type": "#microsoft.graph.macOSCompliancePolicy"
+}

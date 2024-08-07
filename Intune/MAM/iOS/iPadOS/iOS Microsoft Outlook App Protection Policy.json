@@ -3,7 +3,7 @@
     "appDataEncryptionType": "whenDeviceLocked",
     "customBrowserProtocol": "",
     "customDialerAppProtocol": "",
-    "deployedAppCount": 11,
+    "deployedAppCount": 1,
     "disableProtectionOfManagedOutboundOpenInData": false,
     "exemptedAppProtocols": [
         {
@@ -71,25 +71,9 @@
         "https://web.microsoftstream.com/video/*",
         "https://zoom.us/*"
     ],
-    "protectInboundDataFromUnknownSources": true,
+    "protectInboundDataFromUnknownSources": false,
     "thirdPartyKeyboardsBlocked": false,
     "apps": [
-        {
-            "mobileAppIdentifier": {
-                "bundleId": "com.microsoft.msedge",
-                "@odata.type": "#microsoft.graph.iosMobileAppIdentifier"
-            },
-            "version": "-2135752869",
-            "id": "com.microsoft.msedge.ios"
-        },
-        {
-            "mobileAppIdentifier": {
-                "bundleId": "com.microsoft.office.excel",
-                "@odata.type": "#microsoft.graph.iosMobileAppIdentifier"
-            },
-            "version": "-1255026913",
-            "id": "com.microsoft.office.excel.ios"
-        },
         {
             "mobileAppIdentifier": {
                 "bundleId": "com.microsoft.office.outlook",
@@ -97,73 +81,9 @@
             },
             "version": "-518090279",
             "id": "com.microsoft.office.outlook.ios"
-        },
-        {
-            "mobileAppIdentifier": {
-                "bundleId": "com.microsoft.office.powerpoint",
-                "@odata.type": "#microsoft.graph.iosMobileAppIdentifier"
-            },
-            "version": "-740777841",
-            "id": "com.microsoft.office.powerpoint.ios"
-        },
-        {
-            "mobileAppIdentifier": {
-                "bundleId": "com.microsoft.office.word",
-                "@odata.type": "#microsoft.graph.iosMobileAppIdentifier"
-            },
-            "version": "922692278",
-            "id": "com.microsoft.office.word.ios"
-        },
-        {
-            "mobileAppIdentifier": {
-                "bundleId": "com.microsoft.officemobile",
-                "@odata.type": "#microsoft.graph.iosMobileAppIdentifier"
-            },
-            "version": "-803819540",
-            "id": "com.microsoft.officemobile.ios"
-        },
-        {
-            "mobileAppIdentifier": {
-                "bundleId": "com.microsoft.onenote",
-                "@odata.type": "#microsoft.graph.iosMobileAppIdentifier"
-            },
-            "version": "107156768",
-            "id": "com.microsoft.onenote.ios"
-        },
-        {
-            "mobileAppIdentifier": {
-                "bundleId": "com.microsoft.sharepoint",
-                "@odata.type": "#microsoft.graph.iosMobileAppIdentifier"
-            },
-            "version": "-585639021",
-            "id": "com.microsoft.sharepoint.ios"
-        },
-        {
-            "mobileAppIdentifier": {
-                "bundleId": "com.microsoft.skydrive",
-                "@odata.type": "#microsoft.graph.iosMobileAppIdentifier"
-            },
-            "version": "-108719121",
-            "id": "com.microsoft.skydrive.ios"
-        },
-        {
-            "mobileAppIdentifier": {
-                "bundleId": "com.microsoft.skype.teams",
-                "@odata.type": "#microsoft.graph.iosMobileAppIdentifier"
-            },
-            "version": "-1040529574",
-            "id": "com.microsoft.skype.teams.ios"
-        },
-        {
-            "mobileAppIdentifier": {
-                "bundleId": "com.microsoft.to-do",
-                "@odata.type": "#microsoft.graph.iosMobileAppIdentifier"
-            },
-            "version": "-292160221",
-            "id": "com.microsoft.to-do.ios"
         }
     ],
-    "appGroupType": "allCoreMicrosoftApps",
+    "appGroupType": "selectedPublicApps",
     "isAssigned": false,
     "targetedAppManagementLevels": "unspecified",
     "allowedDataIngestionLocations": [
@@ -176,7 +96,7 @@
         "oneDriveForBusiness",
         "sharePoint"
     ],
-    "allowedInboundDataTransferSources": "allApps",
+    "allowedInboundDataTransferSources": "managedApps",
     "allowedOutboundClipboardSharingExceptionLength": 0,
     "allowedOutboundClipboardSharingLevel": "managedApps",
     "allowedOutboundDataTransferDestinations": "managedApps",
@@ -193,7 +113,7 @@
     "managedBrowserToOpenLinksRequired": true,
     "maximumAllowedDeviceThreatLevel": "notConfigured",
     "maximumPinRetries": 10,
-    "minimumPinLength": 4,
+    "minimumPinLength": 6,
     "mobileThreatDefenseRemediationAction": "block",
     "notificationRestriction": "allow",
     "organizationalCredentialsRequired": false,
@@ -208,13 +128,13 @@
     "saveAsBlocked": true,
     "simplePinBlocked": false,
     "description": "",
-    "displayName": "Microsoft Core Apps - iOS/iPadOS",
-    "version": "\"d700fe2e-0000-0100-0000-66b26bd80000\"",
+    "displayName": "iOS - Microsoft Outlook App Protection Policy",
+    "version": "\"a7018027-0000-0100-0000-66b26cc00000\"",
     "@odata.type": "microsoft.graph.iosManagedAppProtection",
     "@odata.context": "https://graph.microsoft.com/beta/$metadata#deviceAppManagement/iosManagedAppProtections(apps())/$entity",
     "protectedMessagingRedirectAppType": "blocked",
     "allowWidgetContentSync": false,
     "appActionIfAccountIsClockedOut": null,
     "messagingRedirectAppUrlScheme": "",
-    "apps@odata.context": "https://graph.microsoft.com/beta/$metadata#deviceAppManagement/iosManagedAppProtections('T_f15470fe-0bad-427e-af45-36b6fbc93354')/apps"
+    "apps@odata.context": "https://graph.microsoft.com/beta/$metadata#deviceAppManagement/iosManagedAppProtections('T_4f77844f-36a0-409a-9704-cb41f7895125')/apps"
 }

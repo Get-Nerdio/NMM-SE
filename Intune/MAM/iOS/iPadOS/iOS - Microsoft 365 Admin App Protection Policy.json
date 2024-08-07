@@ -71,16 +71,16 @@
         "https://web.microsoftstream.com/video/*",
         "https://zoom.us/*"
     ],
-    "protectInboundDataFromUnknownSources": true,
+    "protectInboundDataFromUnknownSources": false,
     "thirdPartyKeyboardsBlocked": false,
     "apps": [
         {
             "mobileAppIdentifier": {
-                "bundleId": "com.adobe.adobe-reader",
+                "bundleId": "com.microsoft.o365shdmobileapp",
                 "@odata.type": "#microsoft.graph.iosMobileAppIdentifier"
             },
-            "version": "536130818",
-            "id": "com.adobe.adobe-reader.ios"
+            "version": "644136791",
+            "id": "com.microsoft.o365shdmobileapp.ios"
         }
     ],
     "appGroupType": "selectedPublicApps",
@@ -104,7 +104,7 @@
     "appActionIfMaximumPinRetriesExceeded": "block",
     "blockDataIngestionIntoOrganizationDocuments": false,
     "contactSyncBlocked": false,
-    "dataBackupBlocked": true,
+    "dataBackupBlocked": false,
     "deviceComplianceRequired": true,
     "dialerRestrictionLevel": "blocked",
     "disableAppPinIfDevicePinIsSet": false,
@@ -112,29 +112,30 @@
     "managedBrowser": "microsoftEdge",
     "managedBrowserToOpenLinksRequired": true,
     "maximumAllowedDeviceThreatLevel": "notConfigured",
-    "maximumPinRetries": 5,
-    "minimumPinLength": 6,
+    "maximumPinRetries": 10,
+    "minimumPinLength": 4,
     "mobileThreatDefenseRemediationAction": "block",
     "notificationRestriction": "allow",
     "organizationalCredentialsRequired": false,
     "periodBeforePinReset": "PT0S",
     "periodOfflineBeforeAccessCheck": "P5D",
     "periodOfflineBeforeWipeIsEnforced": "P90D",
-    "periodOnlineBeforeAccessCheck": "PT1H",
+    "periodOnlineBeforeAccessCheck": "PT30M",
     "pinCharacterSet": "numeric",
-    "pinRequired": false,
+    "pinRequired": true,
+    "pinRequiredInsteadOfBiometricTimeout": "PT1H",
     "previousPinBlockCount": 0,
     "printBlocked": true,
     "saveAsBlocked": true,
-    "simplePinBlocked": false,
-    "description": "",
-    "displayName": "Adobe Acrobat - iOS/iPadOS",
-    "version": "\"d60006df-0000-0100-0000-66b26a9c0000\"",
+    "simplePinBlocked": true,
+    "description": "Default policy for M365 admin app",
+    "displayName": "iOS Microsoft 365 Admin App Protection Policy",
+    "version": "\"ad003fea-0000-0100-0000-66b26b1e0000\"",
     "@odata.type": "microsoft.graph.iosManagedAppProtection",
     "@odata.context": "https://graph.microsoft.com/beta/$metadata#deviceAppManagement/iosManagedAppProtections(apps())/$entity",
     "protectedMessagingRedirectAppType": "blocked",
-    "allowWidgetContentSync": false,
+    "allowWidgetContentSync": true,
     "appActionIfAccountIsClockedOut": null,
     "messagingRedirectAppUrlScheme": "",
-    "apps@odata.context": "https://graph.microsoft.com/beta/$metadata#deviceAppManagement/iosManagedAppProtections('T_841eae78-f800-4a0e-9a12-2137fdd0a231')/apps"
+    "apps@odata.context": "https://graph.microsoft.com/beta/$metadata#deviceAppManagement/iosManagedAppProtections('T_2cd4a507-8b75-4eda-a21d-561d422f90a8')/apps"
 }
