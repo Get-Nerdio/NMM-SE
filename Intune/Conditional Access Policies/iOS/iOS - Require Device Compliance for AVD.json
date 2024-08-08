@@ -1,0 +1,43 @@
+{
+    "conditions": {
+        "applications": {
+            "excludeApplications": [],
+            "includeApplications": [
+                "9cdead84-a844-4324-93f2-b2e6bb768d07",
+                "a4a365df-50f1-4397-bc59-1a1564b8bb9c",
+                "0af06dc6-e4b5-4f28-818e-e78e62d137a5",
+                "270efc09-cd0d-444b-a71f-39af4910ec45"
+            ],
+            "includeAuthenticationContextClassReferences": [],
+            "includeUserActions": []
+        },
+        "clientAppTypes": [
+            "all"
+        ],
+        "platforms": {
+            "excludePlatforms": [],
+            "includePlatforms": [
+                "ios"
+            ]
+        },
+        "signInRiskLevels": [],
+        "userRiskLevels": [],
+        "users": {
+            "excludeRoles": [],
+            "includeRoles": [],
+            "includeUsers": [
+                "None"
+            ]
+        }
+    },
+    "displayName": "iOS - Require Device Compliance for AVD",
+    "grantControls": {
+        "builtInControls": [
+            "compliantDevice"
+        ],
+        "customAuthenticationFactors": [],
+        "operator": "OR",
+        "termsOfUse": []
+    },
+    "state": "enabledForReportingButNotEnforced"
+}
