@@ -1,0 +1,45 @@
+{
+    "description": "",
+    "displayName": "Windows - Default Outlook Settings Profile",
+    "policyConfigurationIngestionType": "unknown",
+    "definitionValues": [
+        {
+            "enabled": false,
+            "definition@odata.bind": "https://graph.microsoft.com/beta/deviceManagement/groupPolicyDefinitions('26c220d2-7e79-40d2-b2fa-06c190f468a2')"
+        },
+        {
+            "enabled": true,
+            "presentationValues": [
+                {
+                    "value": "2",
+                    "@odata.type": "#microsoft.graph.groupPolicyPresentationValueText",
+                    "presentation@odata.bind": "https://graph.microsoft.com/beta/deviceManagement/groupPolicyDefinitions('2ad5a00c-4639-439d-b94b-07f55308f266')/presentations('3cd2bc66-05f4-47d0-8556-37521a028b69')"
+                }
+            ],
+            "definition@odata.bind": "https://graph.microsoft.com/beta/deviceManagement/groupPolicyDefinitions('2ad5a00c-4639-439d-b94b-07f55308f266')"
+        },
+        {
+            "enabled": true,
+            "presentationValues": [
+                {
+                    "value": "3",
+                    "@odata.type": "#microsoft.graph.groupPolicyPresentationValueText",
+                    "presentation@odata.bind": "https://graph.microsoft.com/beta/deviceManagement/groupPolicyDefinitions('12de366f-07eb-422b-9c97-127d6ce0d862')/presentations('59eb2606-d2d5-439a-8fca-b27312aeb38a')"
+                }
+            ],
+            "definition@odata.bind": "https://graph.microsoft.com/beta/deviceManagement/groupPolicyDefinitions('12de366f-07eb-422b-9c97-127d6ce0d862')"
+        },
+        {
+            "enabled": true,
+            "definition@odata.bind": "https://graph.microsoft.com/beta/deviceManagement/groupPolicyDefinitions('119a4420-2b26-4f0e-ab72-6202fd4eb888')"
+        },
+        {
+            "enabled": false,
+            "definition@odata.bind": "https://graph.microsoft.com/beta/deviceManagement/groupPolicyDefinitions('fbe0afeb-83a6-411c-ab7c-cd4e1fea9f56')"
+        },
+        {
+            "enabled": true,
+            "definition@odata.bind": "https://graph.microsoft.com/beta/deviceManagement/groupPolicyDefinitions('7b3b34a7-9280-493c-818d-f3dbf5ea11e9')"
+        }
+    ]
+}

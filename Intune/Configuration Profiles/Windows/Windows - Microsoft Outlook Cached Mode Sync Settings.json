@@ -1,0 +1,15 @@
+{
+    "omaSettings": [
+        {
+            "isReadOnly": false,
+            "value": 90,
+            "displayName": "Outlook Cached Mode Sync Settings",
+            "isEncrypted": false,
+            "omaUri": "./Device/Vendor/MSFT/Policy/ConfigOperations/ADMXInstall/MicrosoftOutlook16/PolicyOutlook/OutlookOST/SynchronizeOnlyIfItemInDays",
+            "@odata.type": "#microsoft.graph.omaSettingInteger"
+        }
+    ],
+    "description": "Sets the default period of mail synced to 90 days",
+    "displayName": "Windows - Microsoft Outlook Cached Mode Sync Settings",
+    "@odata.type": "#microsoft.graph.windows10CustomConfiguration"
+}
