@@ -1,0 +1,44 @@
+{
+    "conditions": {
+        "applications": {
+            "excludeApplications": [],
+            "includeApplications": [
+                "All"
+            ],
+            "includeAuthenticationContextClassReferences": [],
+            "includeUserActions": []
+        },
+        "clientAppTypes": [
+            "all"
+        ],
+        "signInRiskLevels": [],
+        "userRiskLevels": [],
+        "users": {
+            "excludeRoles": [],
+            "includeRoles": [],
+            "includeUsers": [
+                "None"
+            ]
+        }
+    },
+    "displayName": "Require multi-factor authentication for all users with a 30 day sign-in frequency",
+    "grantControls": {
+        "builtInControls": [
+            "mfa"
+        ],
+        "customAuthenticationFactors": [],
+        "operator": "OR",
+        "termsOfUse": []
+    },
+    "sessionControls": {
+        "signInFrequency": {
+            "authenticationType": "primaryAndSecondaryAuthentication",
+            "frequencyInterval": "timeBased",
+            "type": "days",
+            "value": 30,
+            "isEnabled": true,
+            "@odata.type": "microsoft.graph.signInFrequencySessionControl"
+        }
+    },
+    "state": "disabled"
+}

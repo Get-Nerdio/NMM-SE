@@ -1,0 +1,42 @@
+{
+    "conditions": {
+        "applications": {
+            "excludeApplications": [],
+            "includeApplications": [
+                "All"
+            ],
+            "includeAuthenticationContextClassReferences": [],
+            "includeUserActions": []
+        },
+        "clientAppTypes": [
+            "all"
+        ],
+        "locations": {
+            "excludeLocations": [
+                "AllTrusted"
+            ],
+            "includeLocations": [
+                "All"
+            ]
+        },
+        "signInRiskLevels": [],
+        "userRiskLevels": [],
+        "users": {
+            "excludeRoles": [],
+            "includeRoles": [],
+            "includeUsers": [
+                "None"
+            ]
+        }
+    },
+    "displayName": "Block Access Outside of Trusted Locations",
+    "grantControls": {
+        "builtInControls": [
+            "block"
+        ],
+        "customAuthenticationFactors": [],
+        "operator": "OR",
+        "termsOfUse": []
+    },
+    "state": "enabledForReportingButNotEnforced"
+}

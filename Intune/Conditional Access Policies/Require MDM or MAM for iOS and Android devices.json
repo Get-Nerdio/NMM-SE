@@ -1,0 +1,43 @@
+{
+    "conditions": {
+        "applications": {
+            "excludeApplications": [],
+            "includeApplications": [
+                "All"
+            ],
+            "includeAuthenticationContextClassReferences": [],
+            "includeUserActions": []
+        },
+        "clientAppTypes": [
+            "mobileAppsAndDesktopClients"
+        ],
+        "platforms": {
+            "excludePlatforms": [],
+            "includePlatforms": [
+                "android",
+                "ios"
+            ]
+        },
+        "signInRiskLevels": [],
+        "userRiskLevels": [],
+        "users": {
+            "excludeRoles": [],
+            "includeRoles": [],
+            "includeUsers": [
+                "None"
+            ]
+        }
+    },
+    "displayName": "Require MDM or MAM for iOS and Android devices",
+    "grantControls": {
+        "builtInControls": [
+            "compliantDevice",
+            "approvedApplication",
+            "compliantApplication"
+        ],
+        "customAuthenticationFactors": [],
+        "operator": "OR",
+        "termsOfUse": []
+    },
+    "state": "enabledForReportingButNotEnforced"
+}

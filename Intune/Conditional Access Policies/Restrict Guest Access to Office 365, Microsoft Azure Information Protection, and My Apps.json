@@ -1,0 +1,41 @@
+{
+    "conditions": {
+        "applications": {
+            "excludeApplications": [
+                "2793995e-0a7d-40d7-bd35-6968ba142197",
+                "Office365"
+            ],
+            "includeApplications": [
+                "All"
+            ],
+            "includeAuthenticationContextClassReferences": [],
+            "includeUserActions": []
+        },
+        "clientAppTypes": [
+            "all"
+        ],
+        "signInRiskLevels": [],
+        "userRiskLevels": [],
+        "users": {
+            "excludeRoles": [],
+            "includeGuestsOrExternalUsers": {
+                "externalTenants": {
+                    "membershipKind": "all",
+                    "@odata.type": "#microsoft.graph.conditionalAccessAllExternalTenants"
+                },
+                "guestOrExternalUserTypes": "internalGuest, b2bCollaborationGuest, b2bCollaborationMember, b2bDirectConnectUser, otherExternalUser, serviceProvider"
+            },
+            "includeRoles": []
+        }
+    },
+    "displayName": "Restrict Guest Access to Office 365, Microsoft Azure Information Protection, and My Apps",
+    "grantControls": {
+        "builtInControls": [
+            "block"
+        ],
+        "customAuthenticationFactors": [],
+        "operator": "OR",
+        "termsOfUse": []
+    },
+    "state": "enabledForReportingButNotEnforced"
+}

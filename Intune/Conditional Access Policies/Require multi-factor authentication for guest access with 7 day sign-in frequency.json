@@ -1,0 +1,48 @@
+{
+    "conditions": {
+        "applications": {
+            "excludeApplications": [],
+            "includeApplications": [
+                "All"
+            ],
+            "includeAuthenticationContextClassReferences": [],
+            "includeUserActions": []
+        },
+        "clientAppTypes": [
+            "all"
+        ],
+        "signInRiskLevels": [],
+        "userRiskLevels": [],
+        "users": {
+            "excludeRoles": [],
+            "includeGuestsOrExternalUsers": {
+                "externalTenants": {
+                    "membershipKind": "all",
+                    "@odata.type": "#microsoft.graph.conditionalAccessAllExternalTenants"
+                },
+                "guestOrExternalUserTypes": "internalGuest, b2bCollaborationGuest, b2bCollaborationMember, b2bDirectConnectUser, otherExternalUser, serviceProvider"
+            },
+            "includeRoles": []
+        }
+    },
+    "displayName": "Require multi-factor authentication for guest access with 7 day sign-in frequency",
+    "grantControls": {
+        "builtInControls": [
+            "mfa"
+        ],
+        "customAuthenticationFactors": [],
+        "operator": "OR",
+        "termsOfUse": []
+    },
+    "sessionControls": {
+        "signInFrequency": {
+            "authenticationType": "primaryAndSecondaryAuthentication",
+            "frequencyInterval": "timeBased",
+            "type": "days",
+            "value": 7,
+            "isEnabled": true,
+            "@odata.type": "microsoft.graph.signInFrequencySessionControl"
+        }
+    },
+    "state": "disabled"
+}
