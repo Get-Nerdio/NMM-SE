@@ -1,0 +1,54 @@
+{
+    "description": "",
+    "displayName": "MacOS - Default FileVault Profile",
+    "templateId": "a239407c-698d-4ef8-b314-e3ae409204b8",
+    "settings": [
+        {
+            "value": true,
+            "definitionId": "deviceConfiguration--macOSEndpointProtectionConfiguration_fileVaultAllowDeferralUntilSignOut",
+            "valueJson": "true",
+            "@odata.type": "#microsoft.graph.deviceManagementBooleanSettingInstance"
+        },
+        {
+            "value": false,
+            "definitionId": "deviceConfiguration--macOSEndpointProtectionConfiguration_fileVaultDisablePromptAtSignOut",
+            "valueJson": "false",
+            "@odata.type": "#microsoft.graph.deviceManagementBooleanSettingInstance"
+        },
+        {
+            "value": true,
+            "definitionId": "deviceConfiguration--macOSEndpointProtectionConfiguration_fileVaultEnabled",
+            "valueJson": "true",
+            "@odata.type": "#microsoft.graph.deviceManagementBooleanSettingInstance"
+        },
+        {
+            "value": false,
+            "definitionId": "deviceConfiguration--macOSEndpointProtectionConfiguration_fileVaultHidePersonalRecoveryKey",
+            "valueJson": "false",
+            "@odata.type": "#microsoft.graph.deviceManagementBooleanSettingInstance"
+        },
+        {
+            "value": 0,
+            "definitionId": "deviceConfiguration--macOSEndpointProtectionConfiguration_fileVaultNumberOfTimesUserCanIgnore",
+            "valueJson": "0",
+            "@odata.type": "#microsoft.graph.deviceManagementIntegerSettingInstance"
+        },
+        {
+            "value": "Enter your custom message here",
+            "definitionId": "deviceConfiguration--macOSEndpointProtectionConfiguration_fileVaultPersonalRecoveryKeyHelpMessage",
+            "valueJson": "\"Enter your custom message here\"",
+            "@odata.type": "#microsoft.graph.deviceManagementStringSettingInstance"
+        },
+        {
+            "value": 12,
+            "definitionId": "deviceConfiguration--macOSEndpointProtectionConfiguration_fileVaultPersonalRecoveryKeyRotationInMonths",
+            "valueJson": "12",
+            "@odata.type": "#microsoft.graph.deviceManagementIntegerSettingInstance"
+        },
+        {
+            "definitionId": "deviceConfiguration--macOSEndpointProtectionConfiguration_fileVaultSelectedRecoveryKeyTypes",
+            "valueJson": "[\"personalRecoveryKey\"]",
+            "@odata.type": "#microsoft.graph.deviceManagementCollectionSettingInstance"
+        }
+    ]
+}
