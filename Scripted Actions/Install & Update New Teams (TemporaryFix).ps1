@@ -11,7 +11,6 @@ This script performs the following:
 5. Sends logs to C:\Windows\temp\NerdioManagerLogs\ScriptedActions\msteams
 #>
  
- 
 # Start powershell logging
 $SaveVerbosePreference = $VerbosePreference
 $VerbosePreference = 'continue'
@@ -64,10 +63,17 @@ if ($null -ne $GetTeams){
     Write-Host "INFO: Teams per-machine Install Found, uninstalling teams"
 }
  
+#Check for New Teams being Installed
+$Apps = Get-AppxPackage | Where-Object { $_.Name -like "*Teams*" }
+FOREACH ($App in $Apps) {
+Remove-AppxPackage -Package $App.PackageFullName
+}
+
 # WebRTC uninstall logic
-$GetWebRTC = get-wmiobject Win32_Product | Where-Object IdentifyingNumber -match "{FB41EDB3-4138-4240-AC09-B5A184E8F8E4}"
-if ($null -ne $GetWebRTC){
-    Start-Process C:\Windows\System32\msiexec.exe -ArgumentList '/x "{FB41EDB3-4138-4240-AC09-B5A184E8F8E4}" /qn /norestart' -Wait 2>&1
+$GetWebRTC = get-wmiobject Win32_Product | Where-Object Name -like "*webrtc*"
+
+if ($null -ne $GetWebRTC.IdentifyingNumber){
+    Start-Process C:\Windows\System32\msiexec.exe -ArgumentList "/x $($GetWebRTC.IdentifyingNumber) /qn /norestart" -Wait 2>&1
     Write-Host "INFO: WebRTC Install Found, uninstalling Current version of WebRTC"
 }
  
