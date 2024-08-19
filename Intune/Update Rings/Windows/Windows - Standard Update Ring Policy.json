@@ -1,0 +1,25 @@
+{
+    "allowWindows11Upgrade": false,
+    "automaticUpdateMode": "autoInstallAtMaintenanceTime",
+    "autoRestartNotificationDismissal": "notConfigured",
+    "businessReadyUpdatesOnly": "userDefined",
+    "deliveryOptimizationMode": "userDefined",
+    "driversExcluded": true,
+    "featureUpdatesDeferralPeriodInDays": 90,
+    "featureUpdatesRollbackWindowInDays": 30,
+    "installationSchedule": {
+        "activeHoursEnd": "21:00:00",
+        "activeHoursStart": "06:00:00",
+        "@odata.type": "#microsoft.graph.windowsUpdateActiveHoursInstall"
+    },
+    "microsoftUpdateServiceAllowed": true,
+    "prereleaseFeatures": "userDefined",
+    "qualityUpdatesDeferralPeriodInDays": 14,
+    "skipChecksBeforeRestart": false,
+    "updateNotificationLevel": "defaultNotifications",
+    "userPauseAccess": "enabled",
+    "userWindowsUpdateScanAccess": "disabled",
+    "description": "",
+    "displayName": "Windows - Standard Update Ring Policy",
+    "@odata.type": "#microsoft.graph.windowsUpdateForBusinessConfiguration"
+}
