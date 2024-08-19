@@ -1,0 +1,16 @@
+{
+    "allowDeviceResetOnInstallFailure": true,
+    "allowDeviceUseOnInstallFailure": false,
+    "allowLogCollectionOnInstallFailure": true,
+    "allowNonBlockingAppInstallation": true,
+    "blockDeviceSetupRetryByUser": false,
+    "customErrorMessage": "Setup could not be completed. Please try again or contact your support person for help.",
+    "disableUserStatusTrackingAfterFirstUser": true,
+    "installProgressTimeoutInMinutes": 60,
+    "showInstallationProgress": true,
+    "trackInstallProgressForAutopilotOnly": true,
+    "description": "",
+    "deviceEnrollmentConfigurationType": "windows10EnrollmentCompletionPageConfiguration",
+    "displayName": "Standard Enrollment Page",
+    "@odata.type": "#microsoft.graph.windows10EnrollmentCompletionPageConfiguration"
+}

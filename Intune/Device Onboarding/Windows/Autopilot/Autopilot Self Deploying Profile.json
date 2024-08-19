@@ -1,0 +1,18 @@
+{
+    "description": "",
+    "deviceNameTemplate": "Name-%SERIAL%",
+    "deviceType": "windowsPc",
+    "displayName": "Autopilot Self Deploying Profile",
+    "enableWhiteGlove": false,
+    "extractHardwareHash": false,
+    "language": "os-default",
+    "outOfBoxExperienceSettings": {
+        "deviceUsageType": "shared",
+        "hideEscapeLink": true,
+        "hideEULA": true,
+        "hidePrivacySettings": true,
+        "skipKeyboardSelectionPage": true,
+        "userType": "standard"
+    },
+    "@odata.type": "#microsoft.graph.azureADWindowsAutopilotDeploymentProfile"
+}
