@@ -2,7 +2,7 @@ function NMMLogOutput {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
-        [ValidateSet("Information", "Warning", "Error")]
+        [ValidateSet('Information', 'Warning', 'Error')]
         [string]$Level,
         
         [Parameter(Mandatory = $true)]
@@ -11,21 +11,30 @@ function NMMLogOutput {
         
         [string]$LogFilePath = "$env:TEMP\NerdioManagerLogs",
 
-        [string]$LogName = "Uninstall-Printix.txt",
+        [string]$LogName = 'Install-Teams.txt',
 
         [bool]$throw = $false,
 
         [bool]$return = $false,
 
-        [bool]$exit = $false
+        [bool]$exit = $false,
+
+        [bool]$WriteOutput = $false,
+
+        [bool]$FirstLogInnput = $false
     )
     
     if (-not (Test-Path $LogFilePath)) {
         New-Item -ItemType Directory -Path $LogFilePath -Force
         Write-Output "$LogFilePath has been created."
     }
+    else {
+        if ($FirstLogInnput -eq $true) {
+            Add-Content -Path "$($LogFilePath)\$($LogName)" -Value "################# New Script Run #################"
+        }
+    }
     
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
     $logEntry = "$timestamp [$Level]: $Message"
     
     try {
@@ -42,6 +51,10 @@ function NMMLogOutput {
         if ($exit) {
             Write-Output "$($Message)"
             exit 
+        }
+
+        if ($WriteOutput) {
+            Write-Output "$($Message)"
         }
     }
     catch {
