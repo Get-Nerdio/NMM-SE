@@ -140,10 +140,11 @@ function Set-RegistryValue {
 try {
     
     Set-RegistryValue  -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppInstaller" -Name "EnableAppInstaller" -Value "1" -Type "DWORD"
+    NMMLogOutput -Level 'Information' -Message 'Successfully enabled Desktop App Installer (Winget) for UAM.' -WriteOutput $true
 
 }
 catch {
-    NMMLogOutput -Level 'Error' -Message $_.Exception.Message -throw
+    NMMLogOutput -Level 'Error' -Message $_.Exception.Message -throw $true
 }
 
 
