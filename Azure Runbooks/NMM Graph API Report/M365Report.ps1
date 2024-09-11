@@ -268,36 +268,6 @@ function Get-UnusedLicenses {
     # Return the list of unused licenses
     return $UnusedLicensesList
 }
-function ConvertTo-ObjectToHtmlTable {
-    param (
-        [Parameter(Mandatory = $true)]
-        [System.Collections.Generic.List[Object]]$Objects
-    )
-
-    $sb = New-Object System.Text.StringBuilder
-    # Start the HTML table
-    [void]$sb.Append('<table style="border-collapse: collapse; width: 100%;">')
-    [void]$sb.Append('<thead><tr style="background-color: #13BA7C; color: white;">')
-
-    # Add column headers based on the properties of the first object
-    $Objects[0].PSObject.Properties.Name | ForEach-Object {
-        [void]$sb.Append("<th style='border: 1px solid #ddd; padding: 8px;'>$_</th>")
-    }
-
-    [void]$sb.Append('</tr></thead><tbody>')
-
-    # Add table rows
-    foreach ($obj in $Objects) {
-        [void]$sb.Append('<tr style="border: 1px solid #ddd; padding: 8px;">')
-        foreach ($prop in $obj.PSObject.Properties.Name) {
-            [void]$sb.Append("<td style='border: 1px solid #ddd; padding: 8px;'>$($obj.$prop)</td>")
-        }
-        [void]$sb.Append('</tr>')
-    }
-
-    [void]$sb.Append('</tbody></table>')
-    return $sb.ToString()
-}
 function Get-RecentEnterpriseAppsAndRegistrations {
     try {
         # Calculate the date for 30 days ago
@@ -393,11 +363,44 @@ function Get-RecentGroupsAndAddedMembers {
         $_.Exception.Message
     }
 }
+function ConvertTo-ObjectToHtmlTable {
+    param (
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Generic.List[Object]]$Objects
+    )
 
+    $sb = New-Object System.Text.StringBuilder
+    # Start the HTML table with modernized styling
+    [void]$sb.Append('<table style="border-collapse: collapse; width: 100%; font-family: Inter; margin-bottom: 20px;">')
+    [void]$sb.Append('<thead><tr style="background-color: #13BA7C; color: white;">')
+
+    # Add column headers based on the properties of the first object
+    $Objects[0].PSObject.Properties.Name | ForEach-Object {
+        [void]$sb.Append("<th style='border: 1px solid #ddd; padding: 12px; text-align: left;'>$_</th>")
+    }
+
+    [void]$sb.Append('</tr></thead><tbody>')
+
+    # Add table rows with alternating row colors
+    $rowIndex = 0
+    foreach ($obj in $Objects) {
+        $rowColor = if ($rowIndex % 2 -eq 0) { "background-color: #f9f9f9;" } else { "background-color: #ffffff;" }
+        $rowIndex++
+
+        [void]$sb.Append("<tr style='$rowColor border: 1px solid #ddd;'>")
+        foreach ($prop in $obj.PSObject.Properties.Name) {
+            [void]$sb.Append("<td style='border: 1px solid #ddd; padding: 12px;'>$($obj.$prop)</td>")
+        }
+        [void]$sb.Append('</tr>')
+    }
+
+    [void]$sb.Append('</tbody></table>')
+    return $sb.ToString()
+}
 function Generate-Report {
     param (
         [Parameter(Mandatory = $true)]
-        [System.Collections.Hashtable]$DataSets, # Accepts multiple datasets, each with a title
+        [System.Collections.Hashtable]$DataSets,  # Accepts multiple datasets, each with a title
 
         [Parameter(Mandatory = $false)]
         [switch]$Json,
@@ -431,17 +434,25 @@ function Generate-Report {
         if ($Html) {
             [void]$htmlContent.Append("<html><head><title>Report</title>")
 
-            # Inline CSS for font-family
+            # Inline CSS for font-family and overall modern styling
             [void]$htmlContent.Append("<style>")
-            [void]$htmlContent.Append("body { font-family: '$FontFamily'; }")
+            [void]$htmlContent.Append("body { font-family: '$FontFamily'; background-color: #f4f7f6; margin: 0; padding: 0; }")
+            [void]$htmlContent.Append("h2 { color: #FFFFFF; }")
+            [void]$htmlContent.Append("h3 { color: #151515; margin-top: 20px; }")
+            [void]$htmlContent.Append(".report-header { background-color: #13BA7C; color: white; padding: 20px 0; text-align: center; }")
+            [void]$htmlContent.Append(".content { padding: 20px; }")
             [void]$htmlContent.Append("</style>")
 
             [void]$htmlContent.Append("</head><body>")
-            [void]$htmlContent.Append("<div style='text-align: center;'>")
-            [void]$htmlContent.Append("<img src='$LogoUrl' style='width: 200px; height: auto;' alt='Logo' /><br/>")
+
+            # Add a header section with a logo and summary text
+            [void]$htmlContent.Append("<div class='report-header'>")
+            [void]$htmlContent.Append("<img src='$LogoUrl' style='width: 150px; height: auto;' alt='Logo' /><br/>")
             [void]$htmlContent.Append("<h2>Microsoft 365 Tenant Report</h2>")
             [void]$htmlContent.Append("<p>$SummaryText</p>")
             [void]$htmlContent.Append("</div>")
+
+            [void]$htmlContent.Append("<div class='content'>")
         }
 
         # Iterate through the datasets in the hashtable
@@ -455,9 +466,9 @@ function Generate-Report {
             }
         }
 
-        # HTML Output: Close the tags and output to a file
+        # HTML Output: Close the content section and body
         if ($Html) {
-            [void]$htmlContent.Append("</body></html>")
+            [void]$htmlContent.Append("</div></body></html>")
             $htmlContentString = $htmlContent.ToString()
             Set-Content -Path $HtmlOutputPath -Value $htmlContentString
             Write-Host "HTML report generated at: $HtmlOutputPath"
@@ -474,7 +485,6 @@ function Generate-Report {
         }
     }
 }
-
 
 
 
@@ -497,6 +507,9 @@ $dataSets = @{
 
 # Generate the HTML report
 Generate-Report -DataSets $dataSets -Html -HtmlOutputPath ".\M365Report.html"
+
+
+
 
 
 
