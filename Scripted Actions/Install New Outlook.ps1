@@ -4,9 +4,10 @@
 
 .DESCRIPTION
     This script performs the following actions:
-    1. Makes an install folder
-    2. Downloads the latest version of New outlook
-    3. Installes the downloaded version of New Outlook
+    1. Uninstalls New Outlook (if it is installed)
+    2. Makes an install folder
+    3. Downloads the latest version of New outlook
+    4. Installes the downloaded version of New Outlook
 
 .EXECUTION MODE NMM
     IndividualWithRestart
@@ -18,6 +19,13 @@
 
 
 #> 
+
+#Uninstall New Outlook if it is installed
+$Apps =  Get-AppxPackage -AllUsers | Where-Object {$_.Name -Like '*OutlookForWindows*'-and $_.Publisher -like "*Microsoft Corporation*" }
+foreach ($App in $Apps) {
+    Remove-AppxPackage -Package $App.PackageFullName
+}
+
 
 # make directories to hold new install
 mkdir "C:\Windows\Temp\Outlook\install" -Force
