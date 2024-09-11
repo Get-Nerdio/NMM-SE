@@ -3,7 +3,6 @@ Version: 0.1
 Author: Jan Scholte | Nerdio
 
 Todo:
-- Mail send setup
 - Add more reports
 #>
 
@@ -18,6 +17,7 @@ $params = @{
         "User.Read.All",
         "Group.Read.All",
         "Mail.Read",
+        "Mail.Send",
         "Calendars.Read",
         "Sites.Read.All",
         "Directory.Read.All"
@@ -37,7 +37,7 @@ catch {
     $_.Exception.Message
 }
 
-
+#Start of Report Functions
 ############################################################################################################
 
 function Get-LicenseDetails {
@@ -349,11 +349,11 @@ function Get-RecentGroupsAndAddedMembers {
 
             # Add group details with recent members to the list
             $groupDetails.Add([PSCustomObject]@{
-                GroupName       = $groupName
-                GroupId         = $groupId
-                CreatedDateTime = $group.createdDateTime
-                RecentMembers   = if ($recentMemberNames) { $recentMemberNames } else { "No recent members" }
-            })
+                    GroupName       = $groupName
+                    GroupId         = $groupId
+                    CreatedDateTime = $group.createdDateTime
+                    RecentMembers   = if ($recentMemberNames) { $recentMemberNames } else { "No recent members" }
+                })
         }
 
         # Output the results
@@ -400,13 +400,16 @@ function ConvertTo-ObjectToHtmlTable {
 function Generate-Report {
     param (
         [Parameter(Mandatory = $true)]
-        [System.Collections.Hashtable]$DataSets,  # Accepts multiple datasets, each with a title
+        [System.Collections.Hashtable]$DataSets, # Accepts multiple datasets, each with a title
 
         [Parameter(Mandatory = $false)]
         [switch]$Json,
 
         [Parameter(Mandatory = $false)]
         [switch]$PsObject,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$RawHTML,
 
         [Parameter(Mandatory = $false)]
         [switch]$Html,
@@ -431,7 +434,7 @@ function Generate-Report {
 
     process {
         # Create a header section with the logo, summary, and font for HTML output
-        if ($Html) {
+        if ($Html -or $RawHTML) {
             [void]$htmlContent.Append("<html><head><title>Report</title>")
 
             # Inline CSS for font-family and overall modern styling
@@ -460,7 +463,7 @@ function Generate-Report {
             $sectionTitle = $key   # The title for the section is the hashtable key
             $data = $DataSets[$key]  # The data for this section is the hashtable value
 
-            if ($Html) {
+            if ($Html -or $RawHTML) {
                 [void]$htmlContent.Append("<h3>$sectionTitle</h3>")  # Add a section title
                 [void]$htmlContent.Append((ConvertTo-ObjectToHtmlTable -Objects $data))  # Convert the data to an HTML table
             }
@@ -474,6 +477,13 @@ function Generate-Report {
             Write-Host "HTML report generated at: $HtmlOutputPath"
         }
 
+        # Raw HTML Output
+        if ($RawHTML) {
+            [void]$htmlContent.Append("</div></body></html>")
+            $htmlContentString = $htmlContent.ToString()
+            return $htmlContentString
+        }
+
         # JSON Output
         if ($Json) {
             return $DataSets | ConvertTo-Json
@@ -485,8 +495,74 @@ function Generate-Report {
         }
     }
 }
+function Send-EmailWithGraphAPI {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Recipient, # The recipient's email address
 
+        [Parameter(Mandatory = $true)]
+        [string]$Subject, # The subject of the email
 
+        [Parameter(Mandatory = $true)]
+        [string]$HtmlBody, # The HTML content to send
+
+        [Parameter(Mandatory = $false)]
+        [switch]$Attachment, # Switch to attach the HTML content as a file
+
+        [Parameter(Mandatory = $false)]
+        [string]$Sender = "me"  # Use "me" for the authenticated user, or specify another sender
+    )
+
+    try {
+        # Create the email payload with correct emailAddress structure
+        $emailPayload = @{
+            message         = @{
+                subject      = $Subject
+                body         = @{
+                    contentType = "HTML"
+                    content     = $HtmlBody
+                }
+                toRecipients = @(@{
+                        emailAddress = @{
+                            address = $Recipient
+                        }
+                    })
+            }
+            saveToSentItems = "true"
+        }
+
+        # If the -Attachment parameter is set, attach the HTML content as a file
+        if ($Attachment) {
+            # Convert the HTML body content to base64
+            $htmlFileBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($HtmlBody))
+
+            # Add the attachment to the email payload
+            $emailPayload.message.attachments = @(@{
+                    '@odata.type' = "#microsoft.graph.fileAttachment"
+                    name          = "Report.html"
+                    contentType   = "text/html"
+                    contentBytes  = $htmlFileBase64
+                })
+        }
+
+        # Convert the payload to JSON with increased depth
+        $jsonPayload = $emailPayload | ConvertTo-Json -Depth 10
+
+        # Send the email using Microsoft Graph API
+        Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/$Sender/sendMail" `
+            -Method POST `
+            -Body $jsonPayload `
+            -ContentType "application/json"
+                              
+        Write-Host "Email sent successfully to $Recipient"
+    }
+    catch {
+        Write-Error "Error sending email: $_"
+    }
+}
+
+#End of Report Functions
+############################################################################################################
 
 # Save Data in Vars
 $unusedLicenses = Get-UnusedLicenses
@@ -505,14 +581,7 @@ $dataSets = @{
     "Recent Groups and Members"    = $GroupsAndMembers
 }
 
-# Generate the HTML report
-Generate-Report -DataSets $dataSets -Html -HtmlOutputPath ".\M365Report.html"
+# Generate the HTML report and send it via email
+$htmlcontent = Generate-Report -DataSets $dataSets -RawHTML -Html -HtmlOutputPath ".\M365Report.html"
 
-
-
-
-
-
-
-
-
+Send-EmailWithGraphAPI -Recipient "test@msp.com" -Subject "M365 Report - $(Get-Date -Format "yyyy-MM-dd")" -HtmlBody $htmlContent -Attachment
