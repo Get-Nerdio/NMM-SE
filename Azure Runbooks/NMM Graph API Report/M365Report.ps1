@@ -4,6 +4,8 @@ Author: Jan Scholte | Nerdio
 
 Todo:
 - Add more reports
+- Create function for authentication support managed identity and interactive login
+- Try to automatically configure the managed identity on th automation account and set the needed graph permissions on the managed identity
 #>
 
 #$TenantId = $EnvironmentalVars.TenantId #Tenant ID of the Azure AD
@@ -397,6 +399,37 @@ function ConvertTo-ObjectToHtmlTable {
     [void]$sb.Append('</tbody></table>')
     return $sb.ToString()
 }
+function Get-RecentDevices {
+    try {
+        # Calculate the date for 30 days ago
+        $dateThreshold = (Get-Date).AddDays(-30).ToString("yyyy-MM-ddTHH:mm:ssZ")
+
+        # Get devices added in the last 30 days
+        $devices = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/devices" -OutputType PSObject
+        $recentDevices = $devices.value | Where-Object { $_.createdDateTime -ge $dateThreshold }
+
+        # Create a list to store the recent devices
+        $deviceDetails = [System.Collections.Generic.List[PSCustomObject]]::new()
+
+        foreach ($device in $recentDevices) {
+            # Add device details to the list
+            $deviceDetails.Add([PSCustomObject]@{
+                    DisplayName      = $device.displayName    
+                    DeviceId         = $device.id
+                    OperatingSystem  = "$($device.operatingSystem) - $($device.operatingSystemVersion)"
+                    CreatedDateTime  = $device.createdDateTime
+                    TrustType        = $device.deviceTrustType
+                    RegistrationDate = $device.registeredDateTime
+                })
+        }
+
+        # Output the results
+        return $deviceDetails
+    }
+    catch {
+        Write-Error "Error retrieving devices: $_"
+    }
+}
 function Generate-Report {
     param (
         [Parameter(Mandatory = $true)]
@@ -569,7 +602,8 @@ $unusedLicenses = Get-UnusedLicenses
 $AssignedRoles = Get-AssignedRoleMembers
 $inactiveUsers = Get-InactiveUsers
 $AppsAndRegistrations = Get-RecentEnterpriseAppsAndRegistrations
-$GroupsAndMembers = Get-RecentGroupsAndAddedMembers 
+$GroupsAndMembers = Get-RecentGroupsAndAddedMembers
+$recentDevices = Get-RecentDevices 
 
 
 # Create a hashtable where the keys are the section titles and the values are the datasets
@@ -579,9 +613,14 @@ $dataSets = @{
     "Inactive Users"               = $inactiveUsers
     "Enterprise App Registrations" = $AppsAndRegistrations
     "Recent Groups and Members"    = $GroupsAndMembers
+    "Recent Devices"               = $recentDevices
 }
 
 # Generate the HTML report and send it via email
 $htmlcontent = Generate-Report -DataSets $dataSets -RawHTML -Html -HtmlOutputPath ".\M365Report.html"
 
 Send-EmailWithGraphAPI -Recipient "test@msp.com" -Subject "M365 Report - $(Get-Date -Format "yyyy-MM-dd")" -HtmlBody $htmlContent -Attachment
+
+
+
+
