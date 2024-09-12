@@ -18,7 +18,7 @@ function Send-SlackMessage {
     }
 
     if ($Request.Job.JobStatus -eq 'Failed') { 
-        $JobStatus = "@everyone - A critical event has occurred" 
+        $JobStatus = "@here - A critical event has occurred" 
     } else { 
         $JobStatus = $Request.Job.JobStatus
     }
