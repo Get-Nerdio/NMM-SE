@@ -213,7 +213,7 @@ try {
     Start-Process C:\Windows\System32\msiexec.exe `
         -ArgumentList '/i C:\Windows\Temp\msteams_sa\install\MsRdcWebRTCSvc_x64.msi /l*v C:\Windows\temp\NerdioManagerLogs\ScriptedActions\msteams\WebRTC_install_log.txt /qn /norestart' -Wait 2>&1
 
-    NMMLogOutput -Level 'Information' -Message 'Finished running installers. Check C:\Windows\Temp\msteams_sa for logs on the MSI installations.' -return $true
+    NMMLogOutput -Level 'Information' -Message 'Finished running installers. Check C:\Windows\Temp\NerdioManagerLogs for logs on the MSI installations.' -return $true
     NMMLogOutput -Level 'Information' -Message 'All Commands Executed; script is now finished. Allow 5 minutes for teams to appear' -return $true 
 }
 catch {
