@@ -25,9 +25,9 @@ $params = @{
         "Mail.Send",
         "Calendars.Read",
         "Sites.Read.All",
-        "Directory.Read.All"
-        "RoleManagement.Read.Directory"
-        "AuditLog.Read.All"
+        "Directory.Read.All",
+        "RoleManagement.Read.Directory",
+        "AuditLog.Read.All",
         "Organization.Read.All"
     )
     TenantId = $TenantId
@@ -819,5 +819,5 @@ $dataSets = @{
 # Generate the HTML report and send it via email
 $htmlcontent = GenerateReport -DataSets $dataSets -RawHTML -Html -HtmlOutputPath ".\M365Report.html"
 
-Send-EmailWithGraphAPI -Recipient "test@msp.com" -Subject "M365 Report - $(Get-Date -Format "yyyy-MM-dd")" -HtmlBody $htmlContent -Attachment
+Send-EmailWithGraphAPI -Recipient "test@msp.com" -Subject "M365 Report - $(Get-Date -Format "yyyy-MM-dd")" -HtmlBody ($htmlContent | Out-String) -Attachment
 
