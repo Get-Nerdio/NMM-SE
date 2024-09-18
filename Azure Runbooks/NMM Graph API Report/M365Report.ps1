@@ -190,54 +190,82 @@ function Get-AssignedRoleMembers {
     }
 }
 function Get-InactiveUsers {
+    [CmdletBinding()]
     param(
         [int]$DaysInactive = 30
     )
 
     try {
-        # Get the date 30 days ago in UTC format and format it as required
+        # Calculate the cutoff date in UTC format
         $cutoffDate = (Get-Date).AddDays(-$DaysInactive).ToUniversalTime()
         $cutoffDateFormatted = $cutoffDate.ToString("yyyy-MM-ddTHH:mm:ssZ")
 
-        # Get users whose last sign-in is before the cutoff date
+        # Retrieve users with last sign-in before the cutoff date
         $signIns = (Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/users?`$filter=signInActivity/lastSuccessfulSignInDateTime le $cutoffDateFormatted" -OutputType PSObject).value
 
-        if ($null -eq $signIns) {
-            return "No inactive users found"
+        if ($null -eq $signIns -or $signIns.Count -eq 0) {
+            return [PSCustomObject]@{
+                Info = "No inactive users found"
+            }
         }
         else {
-            # Process the results to identify inactive users
-            $inactiveUsers = [System.Collections.Generic.List[Object]]::new()
+            # Initialize the list to store inactive user details
+            $inactiveUsers = [System.Collections.Generic.List[PSObject]]::new()
 
             foreach ($user in $signIns) {
-                $inactiveUser = [PSCustomObject]@{
-                    DisplayName       = $user.displayName
-                    UserPrincipalName = $user.userPrincipalName
-                    Id                = $user.id
-                    #LastSignIn        = $user.signInActivity.lastSuccessfulSignInDateTime
-                    AssignedLicenses  = (GetLicenseDetails -LicenseId $user.assignedLicenses.skuId).Split(",")
-                    UsageLocation     = $user.usageLocation
-                    AccountEnabled    = $user.accountEnabled
-                }
+                try {
+                    # Initialize assigned licenses string
+                    $assignedLicensesString = "No Licenses Assigned"
 
-                # Add to the inactive users list
-                $inactiveUsers.Add($inactiveUser)
+                    if ($user.assignedLicenses -and $user.assignedLicenses.skuid) {
+                        # Handle multiple skuIds
+                        $assignedLicenses = $user.assignedLicenses.skuid | ForEach-Object {
+                            $licenseDetails = Get-LicenseDetails -LicenseId $_
+                            if ($licenseDetails) {
+                                $licenseDetails.Split(",")
+                            }
+                            else {
+                                Write-Warning "License ID $_ could not be resolved."
+                                @("Unknown License")
+                            }
+                        } | Select-Object -Unique
+
+                        $assignedLicensesString = $assignedLicenses -join ", "
+                    }
+
+                    # Create the inactive user object with safe property assignments
+                    $inactiveUser = [PSCustomObject]@{
+                        DisplayName       = if ($user.displayName) { $user.displayName } else { "N/A" }
+                        UserPrincipalName = if ($user.userPrincipalName) { $user.userPrincipalName } else { "N/A" }
+                        Id                = if ($user.id) { $user.id } else { "N/A" }
+                        #LastSignIn        = if ($user.signInActivity.lastSuccessfulSignInDateTime) { $user.signInActivity.lastSuccessfulSignInDateTime } else { "N/A" }
+                        AssignedLicenses  = $assignedLicensesString
+                        UsageLocation     = if ($user.usageLocation) { $user.usageLocation } else { "N/A" }
+                        AccountEnabled    = if ($user.accountEnabled -ne $null) { $user.accountEnabled } else { $false }
+                    }
+
+                    # Add the inactive user to the list
+                    $inactiveUsers.Add($inactiveUser)
+                }
+                catch {
+                    Write-Error "Error processing user $($user.userPrincipalName): $_"
+                }
             }
 
-            # Return the list of inactive users
+            # Return the inactive users list or an info message if empty
             if ($inactiveUsers.Count -eq 0) {
                 return [PSCustomObject]@{
-                    Info = "No inactive users found"
+                    Info = "No inactive users found after processing."
                 }
             }
             else {
                 return $inactiveUsers
             }
         }
-        
+
     }
     catch {
-        $_.Exception.Message
+        Write-Error "Error in Get-InactiveUsers: $_"
     }
 }
 function Get-UnusedLicenses {
@@ -463,29 +491,55 @@ function Get-LicensedUsers {
         }
 
         # Get all users with assigned licenses
-        $Users = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/users?`$filter=assignedLicenses/`$count ne 0&`$count=true&`$select=$selectedProperties" -Headers $headers -OutputType PSObject
-        
-        
-        # Use ForEach-Object for handling large collections efficiently, removing -Parallel for Powershell 5.1 compatibility
+        $users = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/users?`$filter=assignedLicenses/`$count ne 0&`$count=true&`$select=$selectedProperties" -Headers $headers -OutputType PSObject
+
+        # Use ForEach-Object for handling large collections efficiently
         $users.value | ForEach-Object {
-            $userDetails = [PSCustomObject]@{
-                displayName       = $_.displayName
-                userPrincipalName = $_.userPrincipalName
-                department        = $_.department
-                location          = $_.usageLocation
-                assignedLicenses  = (Get-LicenseDetails -LicenseId ($_.assignedLicenses.skuid)).Split(",")
-                givenName         = $_.givenName
-                surname           = $_.surname
-                jobTitle          = $_.jobTitle
-                employeeId        = $_.employeeId
-                mail              = $_.mail
-                mobilePhone       = $_.mobilePhone
-                officeLocation    = $_.officeLocation
-                preferredLanguage = $_.preferredLanguage
-                businessPhones    = $_.businessPhones
+            try {
+                # Ensure assignedLicenses and skuid are not null
+                if ($_.assignedLicenses -and $_.assignedLicenses.skuid) {
+                    # Handle multiple skuid values
+                    $assignedLicenses = $_.assignedLicenses.skuid | ForEach-Object {
+                        $licenseDetails = Get-LicenseDetails -LicenseId $_
+                        if ($licenseDetails) {
+                            $licenseDetails.Split(",")
+                        }
+                        else {
+                            Write-Warning "License ID $_ could not be resolved."
+                            @("Unknown License")
+                        }
+                    } | Select-Object -Unique
+
+                    $assignedLicensesString = $assignedLicenses -join ", "
+                }
+                else {
+                    $assignedLicensesString = "No Licenses Assigned"
+                }
+
+                $userDetails = [PSCustomObject]@{
+                    displayName       = $_.displayName
+                    userPrincipalName = $_.userPrincipalName
+                    department        = $_.department
+                    location          = $_.usageLocation
+                    assignedLicenses  = $assignedLicensesString
+                    givenName         = $_.givenName
+                    surname           = $_.surname
+                    jobTitle          = $_.jobTitle
+                    employeeId        = $_.employeeId
+                    mail              = $_.mail
+                    mobilePhone       = $_.mobilePhone
+                    officeLocation    = $_.officeLocation
+                    preferredLanguage = $_.preferredLanguage
+                    businessPhones    = $_.businessPhones -join ", "
+                }
+
+                $licensedUsers.Add($userDetails)
             }
-            $licensedUsers.Add($userDetails)
+            catch {
+                Write-Error "Error processing user $($_.userPrincipalName): $_"
+            }
         }
+
         if ($licensedUsers.Count -eq 0) {
             return [PSCustomObject]@{
                 Info = "No licensed users found"
@@ -817,7 +871,9 @@ $dataSets = @{
 }
 
 # Generate the HTML report and send it via email
-$htmlcontent = GenerateReport -DataSets $dataSets -RawHTML -Html -HtmlOutputPath ".\M365Report.html"
+$htmlcontent = GenerateReport -DataSets $dataSets -RawHTML -Html -HtmlOutputPath ".\M365Report-NMM.html"
 
 Send-EmailWithGraphAPI -Recipient "test@msp.com" -Subject "M365 Report - $(Get-Date -Format "yyyy-MM-dd")" -HtmlBody ($htmlContent | Out-String) -Attachment
+
+
 
