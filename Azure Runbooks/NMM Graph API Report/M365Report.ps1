@@ -1,6 +1,9 @@
 <#
 Version: 0.1
 Author: Jan Scholte | Nerdio
+Module Needed:
+
+Microsoft.Graph.Authentication
 
 Todo:
 - Add more reports
@@ -173,7 +176,14 @@ function Get-AssignedRoleMembers {
         }
 
         # Output the results
-        return $roleAssignments
+        if ($roleAssignments.Count -eq 0) {
+            return [PSCustomObject]@{
+                Info = "No role assignments found"
+            }
+        }
+        else {
+            return $roleAssignments
+        }
     }
     catch {
         $_.Exception.Message
@@ -268,7 +278,14 @@ function Get-UnusedLicenses {
     }
 
     # Return the list of unused licenses
-    return $UnusedLicensesList
+    if ($UnusedLicensesList.Count -eq 0) {
+        return [PSCustomObject]@{
+            Info = "No unused licenses found"
+        }
+    }
+    else {
+        return $UnusedLicensesList
+    }
 }
 function Get-RecentEnterpriseAppsAndRegistrations {
     try {
@@ -305,7 +322,14 @@ function Get-RecentEnterpriseAppsAndRegistrations {
         }
 
         # Return the list of recent apps
-        return $recentApps
+        if ($recentApps.Count -eq 0) {
+            return [PSCustomObject]@{
+                Info = "No recent apps found"
+            }
+        }
+        else {
+            return $recentApps
+        }
     }
     catch {
         $_.Exception.Message
@@ -359,45 +383,18 @@ function Get-RecentGroupsAndAddedMembers {
         }
 
         # Output the results
-        return $groupDetails
+        if ($groupDetails.Count -eq 0) {
+            return [PSCustomObject]@{
+                Info = "No recent groups found"
+            }
+        }
+        else {
+            return $groupDetails
+        }
     }
     catch {
         $_.Exception.Message
     }
-}
-function ConvertTo-ObjectToHtmlTable {
-    param (
-        [Parameter(Mandatory = $true)]
-        [System.Collections.Generic.List[Object]]$Objects
-    )
-
-    $sb = New-Object System.Text.StringBuilder
-    # Start the HTML table with modernized styling
-    [void]$sb.Append('<table style="border-collapse: collapse; width: 100%; font-family: Inter; margin-bottom: 20px;">')
-    [void]$sb.Append('<thead><tr style="background-color: #13BA7C; color: white;">')
-
-    # Add column headers based on the properties of the first object
-    $Objects[0].PSObject.Properties.Name | ForEach-Object {
-        [void]$sb.Append("<th style='border: 1px solid #ddd; padding: 12px; text-align: left;'>$_</th>")
-    }
-
-    [void]$sb.Append('</tr></thead><tbody>')
-
-    # Add table rows with alternating row colors
-    $rowIndex = 0
-    foreach ($obj in $Objects) {
-        $rowColor = if ($rowIndex % 2 -eq 0) { "background-color: #f9f9f9;" } else { "background-color: #ffffff;" }
-        $rowIndex++
-
-        [void]$sb.Append("<tr style='$rowColor border: 1px solid #ddd;'>")
-        foreach ($prop in $obj.PSObject.Properties.Name) {
-            [void]$sb.Append("<td style='border: 1px solid #ddd; padding: 12px;'>$($obj.$prop)</td>")
-        }
-        [void]$sb.Append('</tr>')
-    }
-
-    [void]$sb.Append('</tbody></table>')
-    return $sb.ToString()
 }
 function Get-RecentDevices {
     try {
@@ -423,23 +420,127 @@ function Get-RecentDevices {
                 })
         }
 
-        # Output the results
-        return $deviceDetails
+        if ($deviceDetails.Count -eq 0) {
+            return [PSCustomObject]@{
+                Info = "No recent devices found"
+            }
+        }
+        else {
+            return $deviceDetails
+        } 
     }
     catch {
         Write-Error "Error retrieving devices: $_"
     }
 }
-function Generate-Report {
+function Get-LicensedUsers {
+    [CmdletBinding()]
+    param ()
+
+    try {
+        # Initialize the list to store user details
+        $licensedUsers = [System.Collections.Generic.List[PSObject]]::new()
+
+        $selectedProperties = @(
+            "displayName",
+            "givenName",
+            "surname",
+            "department",
+            "jobTitle",
+            "employeeId",
+            "mail",
+            "mobilePhone",
+            "officeLocation",
+            "preferredLanguage",
+            "userPrincipalName",
+            "id",
+            "businessPhones",
+            "assignedLicenses"
+        ) -join ','
+
+        $headers = @{
+            'ConsistencyLevel' = 'eventual'
+        }
+
+        # Get all users with assigned licenses
+        $Users = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/users?`$filter=assignedLicenses/`$count ne 0&`$count=true&`$select=$selectedProperties" -Headers $headers -OutputType PSObject
+        
+        
+        # Use ForEach-Object for handling large collections efficiently, removing -Parallel for Powershell 5.1 compatibility
+        $users.value | ForEach-Object {
+            $userDetails = [PSCustomObject]@{
+                displayName       = $_.displayName
+                userPrincipalName = $_.userPrincipalName
+                department        = $_.department
+                location          = $_.usageLocation
+                assignedLicenses  = (Get-LicenseDetails -LicenseId ($_.assignedLicenses.skuid)).Split(",")
+                givenName         = $_.givenName
+                surname           = $_.surname
+                jobTitle          = $_.jobTitle
+                employeeId        = $_.employeeId
+                mail              = $_.mail
+                mobilePhone       = $_.mobilePhone
+                officeLocation    = $_.officeLocation
+                preferredLanguage = $_.preferredLanguage
+                businessPhones    = $_.businessPhones
+            }
+            $licensedUsers.Add($userDetails)
+        }
+        if ($licensedUsers.Count -eq 0) {
+            return [PSCustomObject]@{
+                Info = "No licensed users found"
+            }
+        }
+        else {
+            return $licensedUsers
+        }
+    }
+    catch {
+        Write-Error "Error retrieving licensed user details: $_"
+    }
+}
+function ConvertTo-ObjectToHtmlTable {
     param (
         [Parameter(Mandatory = $true)]
-        [System.Collections.Hashtable]$DataSets, # Accepts multiple datasets, each with a title
+        [System.Collections.Generic.List[Object]]$Objects
+    )
+
+    $sb = [System.Text.StringBuilder]::new()
+
+    # Start the HTML table with the 'rounded-table' class
+    [void]$sb.Append('<table class="rounded-table">')
+    [void]$sb.Append('<thead><tr>')
+
+    # Add column headers based on the properties of the first object
+    $Objects[0].PSObject.Properties.Name | ForEach-Object {
+        [void]$sb.Append("<th>$_</th>")
+    }
+
+    [void]$sb.Append('</tr></thead><tbody>')
+
+    # Add table rows with alternating row colors handled by CSS
+    foreach ($obj in $Objects) {
+        [void]$sb.Append("<tr>")
+        foreach ($prop in $obj.PSObject.Properties.Name) {
+            # Include 'data-label' for responsive design
+            [void]$sb.Append("<td data-label='$prop'>$($obj.$prop)</td>")
+        }
+        [void]$sb.Append('</tr>')
+    }
+
+    [void]$sb.Append('</tbody></table>')
+    return $sb.ToString()
+}
+function GenerateReport {
+    param (
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Hashtable]$dataSets, # Accepts multiple datasets, each with a title
 
         [Parameter(Mandatory = $false)]
-        [switch]$Json,
+        [switch]$json,
 
         [Parameter(Mandatory = $false)]
-        [switch]$PsObject,
+        [switch]$psObject,
 
         [Parameter(Mandatory = $false)]
         [switch]$RawHTML,
@@ -448,57 +549,153 @@ function Generate-Report {
         [switch]$Html,
 
         [Parameter(Mandatory = $false)]
-        [string]$HtmlOutputPath = "Report.html",
+        [string]$htmlOutputPath = "Report.html",
 
         [Parameter(Mandatory = $false)]
-        [string]$LogoUrl = "https://github.com/Get-Nerdio/NMM-SE/assets/52416805/5c8dd05e-84a7-49f9-8218-64412fdaffaf",
+        [string]$logoUrl = "https://github.com/Get-Nerdio/NMM-SE/assets/52416805/5c8dd05e-84a7-49f9-8218-64412fdaffaf",
 
         [Parameter(Mandatory = $false)]
-        [string]$SummaryText = "This report shows information about your Microsoft 365 environment.",
+        [string]$summaryText = "This report shows information about your Microsoft 365 environment.",
 
         [Parameter(Mandatory = $false)]
-        [string]$FontFamily = "Inter"  # Allow user to specify a custom font family
+        [string]$fontFamily = "Roboto"  # Allow user to specify a custom font family
     )
 
     begin {
         # Initialize a string builder for HTML content
-        $htmlContent = New-Object System.Text.StringBuilder
+        $htmlContent = [System.Text.StringBuilder]::new()
     }
 
     process {
         # Create a header section with the logo, summary, and font for HTML output
         if ($Html -or $RawHTML) {
-            [void]$htmlContent.Append("<html><head><title>Report</title>")
-
-            # Inline CSS for font-family and overall modern styling
+            [void]$htmlContent.Append("<!DOCTYPE html>")
+            [void]$htmlContent.Append("<html>")
+            [void]$htmlContent.Append("<head>")
+            [void]$htmlContent.Append("<meta charset='UTF-8'>")
+            [void]$htmlContent.Append("<meta name='viewport' content='width=device-width, initial-scale=1.0'>")
+            [void]$htmlContent.Append("<title>Microsoft 365 Tenant Report</title>")
             [void]$htmlContent.Append("<style>")
-            [void]$htmlContent.Append("body { font-family: '$FontFamily'; background-color: #f4f7f6; margin: 0; padding: 0; }")
-            [void]$htmlContent.Append("h2 { color: #FFFFFF; }")
-            [void]$htmlContent.Append("h3 { color: #151515; margin-top: 20px; }")
-            [void]$htmlContent.Append(".report-header { background-color: #13BA7C; color: white; padding: 20px 0; text-align: center; }")
-            [void]$htmlContent.Append(".content { padding: 20px; }")
-            [void]$htmlContent.Append("</style>")
+            # Existing Styles
+            [void]$htmlContent.Append("body { font-family: '$fontFamily', sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }")
+            [void]$htmlContent.Append("h2 { color: #FFFFFF; margin: 10px; }")
+            [void]$htmlContent.Append("h3 { color: #151515; margin-top: 30px; margin-bottom: 10px; }")
+            [void]$htmlContent.Append(".report-header { background-color: #13ba7c; color: white; padding: 20px 0; text-align: center; }")
+            [void]$htmlContent.Append(".report-header img { width: 150px; height: auto; }")
+            [void]$htmlContent.Append(".content { font-family: '$fontFamily', sans-serif; padding: 20px; }")
+            
+            # Accordion Styles
+            [void]$htmlContent.Append("
+                /* Accordion Styles */
+                details {
+                    margin-bottom: 10px;
+                }
 
-            [void]$htmlContent.Append("</head><body>")
+                summary {
+                    cursor: pointer;
+                    font-weight: bold;
+                    padding: 10px;
+                    background-color: #f2f2f2;
+                    border: 1px solid #ddd;
+                    border-radius: 5px;
+                }
+
+                summary::-webkit-details-marker {
+                    display: none;
+                }
+
+                /* Enhanced CSS for Rounded Tables */
+                table.rounded-table {
+                    width: 100%;
+                    border-collapse: separate; /* Allows border-radius to work */
+                    border-spacing: 0;
+                    border: 1px solid #ddd;
+                    border-radius: 8px; /* Rounded corners */
+                    overflow: hidden; /* Ensures child elements don't overflow the rounded corners */
+                    margin-bottom: 20px;
+                    font-family: 'Inter', sans-serif;
+                }
+                table.rounded-table thead tr {
+                    background-color: #13ba7c;
+                    color: white;
+                }
+                table.rounded-table th,
+                table.rounded-table td {
+                    border: 1px solid #ddd;
+                    padding: 12px;
+                    text-align: left;
+                }
+                table.rounded-table tbody tr:nth-child(even) {
+                    background-color: #f9f9f9;
+                }
+                table.rounded-table tbody tr:nth-child(odd) {
+                    background-color: #ffffff;
+                }
+                /* Optional: Add hover effect */
+                table.rounded-table tbody tr:hover {
+                    background-color: #f1f1f1;
+                }
+
+                /* Responsive Design */
+                @media (max-width: 768px) {
+                    table.rounded-table thead {
+                        display: none;
+                    }
+                    table.rounded-table, 
+                    table.rounded-table tbody, 
+                    table.rounded-table tr, 
+                    table.rounded-table td {
+                        display: block;
+                        width: 100%;
+                    }
+                    table.rounded-table tr {
+                        margin-bottom: 15px;
+                    }
+                    table.rounded-table td {
+                        text-align: right;
+                        padding-left: 50%;
+                        position: relative;
+                    }
+                    table.rounded-table td::before {
+                        content: attr(data-label);
+                        position: absolute;
+                        left: 0;
+                        width: 50%;
+                        padding-left: 15px;
+                        font-weight: bold;
+                        text-align: left;
+                    }
+                }
+            ")
+            [void]$htmlContent.Append("</style>")
+            [void]$htmlContent.Append("</head>")
+            [void]$htmlContent.Append("<body>")
 
             # Add a header section with a logo and summary text
             [void]$htmlContent.Append("<div class='report-header'>")
-            [void]$htmlContent.Append("<img src='$LogoUrl' style='width: 150px; height: auto;' alt='Logo' /><br/>")
+            [void]$htmlContent.Append("<img src='$logoUrl' alt='Logo' /><br/>")
             [void]$htmlContent.Append("<h2>Microsoft 365 Tenant Report</h2>")
-            [void]$htmlContent.Append("<p>$SummaryText</p>")
+            [void]$htmlContent.Append("<p>$summaryText</p>")
             [void]$htmlContent.Append("</div>")
 
             [void]$htmlContent.Append("<div class='content'>")
         }
 
         # Iterate through the datasets in the hashtable
-        foreach ($key in $DataSets.Keys) {
+        foreach ($key in $dataSets.Keys) {
             $sectionTitle = $key   # The title for the section is the hashtable key
-            $data = $DataSets[$key]  # The data for this section is the hashtable value
+            $data = $dataSets[$key]  # The data for this section is the hashtable value
+            $itemCount = if ($data.PSObject.Properties.Name -eq 'Info') { 0 } else { $data.Count }
+
+
+             
 
             if ($Html -or $RawHTML) {
-                [void]$htmlContent.Append("<h3>$sectionTitle</h3>")  # Add a section title
+                # Wrap each table section within <details> and <summary> for collapsible functionality
+                [void]$htmlContent.Append("<details>")
+                [void]$htmlContent.Append("<summary>$sectionTitle ($itemCount)</summary>")
                 [void]$htmlContent.Append((ConvertTo-ObjectToHtmlTable -Objects $data))  # Convert the data to an HTML table
+                [void]$htmlContent.Append("</details>")
             }
         }
 
@@ -506,8 +703,8 @@ function Generate-Report {
         if ($Html) {
             [void]$htmlContent.Append("</div></body></html>")
             $htmlContentString = $htmlContent.ToString()
-            Set-Content -Path $HtmlOutputPath -Value $htmlContentString
-            Write-Host "HTML report generated at: $HtmlOutputPath"
+            Set-Content -Path $htmlOutputPath -Value $htmlContentString
+            Write-Output "HTML report generated at: $htmlOutputPath"
         }
 
         # Raw HTML Output
@@ -518,13 +715,13 @@ function Generate-Report {
         }
 
         # JSON Output
-        if ($Json) {
-            return $DataSets | ConvertTo-Json
+        if ($json) {
+            return $dataSets | ConvertTo-Json
         }
 
         # PSObject Output
-        if ($PsObject) {
-            return $DataSets
+        if ($psObject) {
+            return $dataSets
         }
     }
 }
@@ -604,6 +801,8 @@ $inactiveUsers = Get-InactiveUsers
 $AppsAndRegistrations = Get-RecentEnterpriseAppsAndRegistrations
 $GroupsAndMembers = Get-RecentGroupsAndAddedMembers
 $recentDevices = Get-RecentDevices 
+$licensedUsers = Get-LicensedUsers
+
 
 
 # Create a hashtable where the keys are the section titles and the values are the datasets
@@ -614,13 +813,11 @@ $dataSets = @{
     "Enterprise App Registrations" = $AppsAndRegistrations
     "Recent Groups and Members"    = $GroupsAndMembers
     "Recent Devices"               = $recentDevices
+    "Licensed Users"               = $licensedUsers
 }
 
 # Generate the HTML report and send it via email
-$htmlcontent = Generate-Report -DataSets $dataSets -RawHTML -Html -HtmlOutputPath ".\M365Report.html"
+$htmlcontent = GenerateReport -DataSets $dataSets -RawHTML -Html -HtmlOutputPath ".\M365Report.html"
 
 Send-EmailWithGraphAPI -Recipient "test@msp.com" -Subject "M365 Report - $(Get-Date -Format "yyyy-MM-dd")" -HtmlBody $htmlContent -Attachment
-
-
-
 
