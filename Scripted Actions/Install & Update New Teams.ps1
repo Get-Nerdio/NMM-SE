@@ -43,7 +43,7 @@ function NMMLogOutput {
         [ValidateNotNullOrEmpty()]
         [string]$Message,
         
-        [string]$LogFilePath = "$env:TEMP\NerdioManagerLogs",
+        [string]$LogFilePath = "$Env:WinDir\Temp\NerdioManagerLogs",
 
         [string]$LogName = 'Install-Teams.txt',
 
@@ -137,18 +137,18 @@ catch {
 }
  
 # Per-Machine teams uninstall logic
-$GetTeams = Get-CimInstance -ClassName Win32_Product | Where-Object IdentifyingNumber -Match '{731F6BAA-A986-45A4-8936-7C3AAAAA760B}'
+$GetTeams = Get-CimInstance -ClassName Win32_Product | Where-Object { $_.Name -like "Teams Machine-Wide*" -and $_.Vendor -eq "Microsoft Corporation" }
 
-if ($null -ne $GetTeams) {
-    Start-Process C:\Windows\System32\msiexec.exe -ArgumentList '/x ' { 731F6BAA-A986-45A4-8936-7C3AAAAA760B }' /qn /norestart' -Wait 2>&1
+if ($null -ne $GetTeams.IdentifyingNumber) {
+    Start-Process C:\Windows\System32\msiexec.exe -ArgumentList "/x $($GetTeams.IdentifyingNumber) /qn /norestart" -Wait 2>&1
 
     NMMLogOutput -Level 'Information' -Message 'Teams per-machine Install Found, uninstalling teams' -return $true
 }
 
 #Check for New Teams being Installed
-$Apps = Get-AppxPackage | Where-Object { $_.Name -like "*Teams*" -and $_.Publisher -like "*Microsoft Corporation*" }
+$Apps = Get-AppxPackage -AllUsers | Where-Object { $_.Name -like "*Teams*" -and $_.Publisher -like "*Microsoft Corporation*" }
 foreach ($App in $Apps) {
-    Remove-AppxPackage -Package $App.PackageFullName
+    Remove-AppxPackage -Package $App.PackageFullName -AllUsers
 }
 
 try {
@@ -210,8 +210,7 @@ try {
     # Install Teams WebRTC Websocket Service
     NMMLogOutput -Level 'Information' -Message 'Installing WebRTC component' -return $true
 
-    Start-Process C:\Windows\System32\msiexec.exe `
-        -ArgumentList '/i C:\Windows\Temp\msteams_sa\install\MsRdcWebRTCSvc_x64.msi /l*v C:\Windows\temp\NerdioManagerLogs\ScriptedActions\msteams\WebRTC_install_log.txt /qn /norestart' -Wait 2>&1
+    Start-Process C:\Windows\System32\msiexec.exe -ArgumentList "/i C:\Windows\Temp\msteams_sa\install\MsRdcWebRTCSvc_x64.msi /log C:\Windows\temp\NerdioManagerLogs\WebRTC_install_log.txt /quiet /norestart" -Wait 2>&1
 
     NMMLogOutput -Level 'Information' -Message 'Finished running installers. Check C:\Windows\Temp\NerdioManagerLogs for logs on the MSI installations.' -return $true
     NMMLogOutput -Level 'Information' -Message 'All Commands Executed; script is now finished. Allow 5 minutes for teams to appear' -return $true 
