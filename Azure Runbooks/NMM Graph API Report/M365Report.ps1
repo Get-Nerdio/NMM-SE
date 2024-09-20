@@ -12,7 +12,7 @@ Todo:
 #>
 
 #$TenantId = $EnvironmentalVars.TenantId #Tenant ID of the Azure AD
-$TenantId = '9f563539-3e60-4e96-aff7-915a7b66fb7a'
+$TenantId = '000-000-000-000-000'
 
 # Define the parameters for splatting
 $params = @{
@@ -44,7 +44,53 @@ catch {
 
 #Start of Report Functions
 ############################################################################################################
+function DownloadLicenseDefinitions {
+    [CmdletBinding()]
+    param (
+        [string]$CsvUrl = "https://download.microsoft.com/download/e/3/e/e3e9faf2-f28b-490a-9ada-c6089a1fc5b0/Product%20names%20and%20service%20plan%20identifiers%20for%20licensing.csv"
+    )
 
+    try {
+        Write-Output "Downloading CSV from URL: $CsvUrl"
+        
+        # Download the CSV content using Invoke-RestMethod
+        $csvContent = Invoke-RestMethod -Uri $CsvUrl -Method Get -UseBasicParsing
+
+        # Debug: Check content length
+        Write-Output "CSV Content Length: $($csvContent.Length)"
+
+        if ([string]::IsNullOrWhiteSpace($csvContent)) {
+            Write-Warning "The CSV content is empty or could not be retrieved."
+            return $null
+        }
+
+        # Convert CSV content to objects
+        $csvData = $csvContent | ConvertFrom-Csv
+
+        # Debug: Check if CSV was parsed correctly
+        if ($null -eq $csvData -or $csvData.Count -eq 0) {
+            Write-Warning "No data found in the CSV after conversion."
+            return $null
+        }
+        else {
+            Write-Output "CSV successfully converted. Total records: $($csvData.Count)"
+        }
+
+        # Initialize the list to store license definitions
+        $licenseDefinitions = [System.Collections.Generic.List[PSObject]]::new()
+
+        # Iterate through each row in the CSV and add to the list
+        foreach ($row in $csvData) {
+            $licenseDefinitions.Add($row)
+        }
+
+        #Write-Output "License definitions list created. Total items in list: $($licenseDefinitions.Count)"
+        return $licenseDefinitions
+    }
+    catch {
+        Write-Error "Error downloading or parsing the CSV: $_"
+    }
+}
 function Get-LicenseDetails {
     [CmdletBinding(DefaultParameterSetName = 'LicenseID')]
     param (
@@ -68,7 +114,12 @@ function Get-LicenseDetails {
             if ($MatchskuID) {
                 # Get friendly license name using the LicenseConversionTable function
                 $FriendlyLicName = LicenseConversionTable -LicenseId $MatchskuID.skuId
-                $licenseList.Add($FriendlyLicName)
+                if ($FriendlyLicName) {
+                    $licenseList.Add($FriendlyLicName)
+                }
+                else {
+                    $licenseList.Add($MatchskuID.skuPartNumber)
+                }
             }
             else {
                 Write-Warning "License ID $license not found in AllLicenses"
@@ -86,50 +137,88 @@ function Get-LicenseDetails {
 function LicenseConversionTable {
     param (
         [Parameter(ValueFromPipeline = $true)]
-        [string]$LicenseId
+        [string]$licenseId
     )
     
     begin {
         try {
-            # Define repository details
-            $repoOwner = "Get-Nerdio"
-            $repoName = "NMM-SE"
-            $filePath = "Azure Runbooks/NMM Graph API Report/LicenseConversionTable.csv"
-            $apiUrl = "https://api.github.com/repos/$repoOwner/$repoName/contents/$filePath"
-        
-            # Send request to GitHub API and store the content in the begin block
-            $response = Invoke-RestMethod -Uri $apiUrl -Headers @{Accept = "application/vnd.github.v3+json" }
-        
-            # Decode the base64-encoded content
-            $encodedContent = $response.content
-            $decodedContent = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($encodedContent))
-        
-            # Convert the CSV content into a PowerShell object
-            $allConvertedLicense = $decodedContent | ConvertFrom-Csv
+            # Attempt to retrieve license definitions using DownloadLicenseDefinitions
+            if ($null -eq $licenseDefinitions) {
+                $script:licenseDefinitions = DownloadLicenseDefinitions
+            }
+            else {
+                Write-Verbose "License definitions already loaded from cache, $($licenseDefinitions.Count) records"
+            }
+            
+            if ($null -eq $licenseDefinitions) {
+                Write-Output "DownloadLicenseDefinitions returned null. Falling back to GitHub CSV retrieval."
+                
+                # Define repository details
+                $repoOwner = "Get-Nerdio"
+                $repoName = "NMM-SE"
+                $filePath = "Azure Runbooks/NMM Graph API Report/LicenseConversionTable.csv"
+                $apiUrl = "https://api.github.com/repos/$repoOwner/$repoName/contents/$filePath"
+            
+                # Send request to GitHub API and store the content in the begin block
+                $response = Invoke-RestMethod -Uri $apiUrl -Headers @{Accept = "application/vnd.github.v3+json" }
+            
+                # Decode the base64-encoded content
+                $encodedContent = $response.content
+                $decodedContent = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($encodedContent))
+            
+                # Convert the CSV content into a PowerShell object
+                $script:licenseDefinitions = $decodedContent | ConvertFrom-Csv
+                
+                # Check if CSV was parsed correctly
+                if ($null -eq $licenseDefinitions -or $licenseDefinitions.Count -eq 0) {
+                    Write-Warning "No data found in the CSV after conversion from GitHub."
+                    return $null
+                }
+                else {
+                    Write-Output "CSV from GitHub successfully converted. Total records: $($licenseDefinitions.Count)" | Out-Null
+                }
+            }
+            else {
+                Write-Output "License definitions retrieved using DownloadLicenseDefinitions. Total records: $($licenseDefinitions.Count)" | Out-Null
+            }
         }
         catch {
-            Write-Error "Error fetching or decoding the CSV file: $_"
+            Write-Error "Error fetching license definitions: $_"
+            return $null
         }
     }
 
     process {
         try {
-            # Find the matching GUID in the table for the current LicenseId
-            $matchedLicense = $allConvertedLicense | Where-Object { $_.GUID -eq $LicenseId } | Select-Object -First 1
+            if ($null -eq $licenseDefinitions) {
+                Write-Warning "No license definitions available to process."
+                return $null
+            }
 
-            # Output the matching license
-            return $matchedLicense.Product_Display_Name
+            # Find the matching GUID in the table for the current licenseId
+            $matchedLicense = $licenseDefinitions | Where-Object { $_.GUID -eq $licenseId } | Select-Object -First 1
+
+            if ($matchedLicense) {
+                # Output the matching license name
+                return $matchedLicense.Product_Display_Name
+            }
+            else {
+                Write-Warning "License ID $licenseId not found in the license definitions."
+                return $null
+            }
         }
         catch {
-            Write-Error "Error processing LicenseId $LicenseId : $_"
+            Write-Error "Error processing LicenseId $licenseId : $_"
         }
     }
 }
 function Get-AssignedRoleMembers {
-    
+    [CmdletBinding()]
+    param()
+
     try {
         # Report on all users and their roles
-        $roles = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/directoryRoles"
+        $roles = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/directoryRoles" -OutputType PSObject
 
         # Create a hashtable to store the user-role assignments
         $userRoles = @{}
@@ -138,18 +227,19 @@ function Get-AssignedRoleMembers {
         foreach ($role in $roles.value) {
             $roleId = $role.id
             $roleName = $role.displayName
- 
+
             # Retrieve the members of the role
             $members = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/directoryRoles/$roleId/members" -OutputType PSObject
- 
+
             # Iterate through the members
             foreach ($member in $members.value) {
-                $userPrincipalName = $member.userPrincipalName
-                $displayName = $member.displayName
-                $id = $member.id
+                # Ensure member properties are not null
+                $userPrincipalName = if ($member.userPrincipalName) { $member.userPrincipalName } else { "N/A" }
+                $displayName = if ($member.displayName) { $member.displayName } else { "N/A" }
+                $id = if ($member.id) { $member.id } else { "N/A" }
 
-                # If the user is already in the hashtable, append the role using .Add()
                 if ($userRoles.ContainsKey($userPrincipalName)) {
+                    # Append the role to the existing user's Roles list
                     $userRoles[$userPrincipalName].Roles.Add($roleName)
                 }
                 else {
@@ -166,13 +256,14 @@ function Get-AssignedRoleMembers {
         }
 
         # Convert hashtable values to a list and format roles as a comma-separated string
-        $roleAssignments = $userRoles.Values | ForEach-Object {
-            [PSCustomObject]@{
-                UserPrincipalName = $_.UserPrincipalName
-                DisplayName       = $_.DisplayName
-                Id                = $_.Id
-                Roles             = ($_.Roles -join ", ")  # Convert list to a comma-separated string
-            }
+        $roleAssignments = [System.Collections.Generic.List[PSObject]]::new()
+        foreach ($user in $userRoles.Values) {
+            $roleAssignments.Add([PSCustomObject]@{
+                    UserPrincipalName = $user.UserPrincipalName
+                    DisplayName       = $user.DisplayName
+                    Id                = $user.Id
+                    Roles             = ($user.Roles -join ", ")  # Convert list to a comma-separated string
+                })
         }
 
         # Output the results
@@ -186,7 +277,83 @@ function Get-AssignedRoleMembers {
         }
     }
     catch {
-        $_.Exception.Message
+        Write-Error "Error in Get-AssignedRoleMembers: $_"
+    }
+}
+function Get-RecentAssignedRoleMembers {
+    [CmdletBinding()]
+    param()
+
+    try {
+        # Calculate the cutoff date for the last 30 days
+        $cutoffDate = (Get-Date).AddDays(-30).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+
+        Write-Output "Fetching role assignments from the last 30 days..." | Out-Null
+
+        # Define the filter for audit logs: activity is 'Add member to role' and within the last 30 days
+        $filter = "activityDisplayName eq 'Add member to role' and activityDateTime ge $cutoffDate and result eq 'success'"
+        $orderby = "activityDateTime desc"
+
+        # Retrieve audit logs related to role assignments
+        $auditLogs = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/auditLogs/directoryAudits?`$filter=$filter&`$orderby=$orderby&`$top=1000" -OutputType PSObject
+
+        if ($null -eq $auditLogs -or $auditLogs.value.Count -eq 0) {
+            Write-Output "No recent role assignments found in the last 30 days." | Out-Null
+            return [PSCustomObject]@{
+                Info = "No recent role assignments found."
+            }
+        }
+
+        # Initialize the list to store recent role assignments
+        $recentRoleAssignments = [System.Collections.Generic.List[PSObject]]::new()
+
+        foreach ($log in $auditLogs.value) {
+            try {
+                # Extract the role name from the targetResources
+                $roleName = ($log.targetresources.modifiedProperties | Where-Object { $_.DisplayName -eq 'Role.DisplayName' }).newvalue
+                # Extract the role TemplateId
+                $roleTemplateId = ($log.targetresources.modifiedProperties | Where-Object { $_.DisplayName -eq 'Role.TemplateId' }).newvalue
+                # Extract the user who was assigned the role
+                $assignedUser = ($log.targetResources | Where-Object { $_.type -eq "User" }).userPrincipalName
+                # Extract the date of assignment
+                $assignmentDate = $log.activityDateTime
+
+                if ($null -ne $roleName -and $null -ne $assignedUser) {
+                    # Create a PSCustomObject for each assignment
+                    $roleAssignment = [PSCustomObject]@{
+                        UserPrincipalName = $assignedUser
+                        RoleName          = $roleName
+                        AssignedDate      = $assignmentDate
+                        RoleTemplateId    = $roleTemplateId
+                    }
+
+                    # Add to the list
+                    $recentRoleAssignments.Add($roleAssignment)
+                }
+                else {
+                    Write-Output "Incomplete information in audit log entry ID: $($log.id)" | Out-Null
+                }
+            }
+            catch {
+                Write-Error "Error processing audit log entry ID: $($log.id) - $_"
+            }
+        }
+
+        # Remove duplicate assignments if any
+        $uniqueRoleAssignments = $recentRoleAssignments | Sort-Object UserPrincipalName, RoleName, AssignedDate, RoleTemplateId -Unique
+
+        # Output the results
+        if ($uniqueRoleAssignments.Count -eq 0) {
+            return [PSCustomObject]@{
+                Info = "No recent role assignments found after processing audit logs."
+            }
+        }
+        else {
+            return $uniqueRoleAssignments
+        }
+    }
+    catch {
+        Write-Error "Error in Get-RecentAssignedRoleMembers: $_"
     }
 }
 function Get-InactiveUsers {
@@ -214,36 +381,63 @@ function Get-InactiveUsers {
 
             foreach ($user in $signIns) {
                 try {
-                    # Initialize assigned licenses string
+                    # Initialize assigned licenses string and license end dates
                     $assignedLicensesString = "No Licenses Assigned"
-
+                    $licenseEndDates = "No End Dates"
+            
                     if ($user.assignedLicenses -and $user.assignedLicenses.skuid) {
-                        # Handle multiple skuIds
-                        $assignedLicenses = $user.assignedLicenses.skuid | ForEach-Object {
-                            $licenseDetails = Get-LicenseDetails -LicenseId $_
+                        # Initialize temporary lists to store license names and end dates
+                        $licenseNames = [System.Collections.Generic.List[string]]::new()
+                        $licenseEndDateList = [System.Collections.Generic.List[string]]::new()
+            
+                        foreach ($skuId in $user.assignedLicenses.skuid) {
+                            # Retrieve license details
+                            $licenseDetails = Get-LicenseDetails -LicenseId $skuId
                             if ($licenseDetails) {
-                                $licenseDetails.Split(",")
+                                # Split multiple display names if necessary and add to the list
+                                $displayNames = $licenseDetails.Split(",")
+                                foreach ($name in $displayNames) {
+                                    $licenseNames.Add($name.Trim())
+                                }
+            
+                                # Retrieve the end date for the license
+                                $endDateObj = Get-LicenseEndDate -LicenseId $skuId
+                                if ($endDateObj -and $endDateObj.EndDate) {
+                                    $endDate = $endDateObj.EndDate
+                                    $licenseEndDateList.Add("$licenseDetails : $endDate")
+                                }
+                                else {
+                                    $licenseEndDateList.Add("$licenseDetails : N/A")
+                                }
                             }
                             else {
-                                Write-Warning "License ID $_ could not be resolved."
-                                @("Unknown License")
+                                Write-Warning "License ID $skuId could not be resolved."
+                                $licenseNames.Add("Unknown License")
+                                $licenseEndDateList.Add("Unknown License: N/A")
                             }
-                        } | Select-Object -Unique
-
-                        $assignedLicensesString = $assignedLicenses -join ", "
+                        }
+            
+                        # Generate the comma-separated strings
+                        if ($licenseNames.Count -gt 0) {
+                            $assignedLicensesString = ($licenseNames | Sort-Object -Unique) -join ", "
+                        }
+            
+                        if ($licenseEndDateList.Count -gt 0) {
+                            $licenseEndDates = $licenseEndDateList -join ", "
+                        }
                     }
-
+            
                     # Create the inactive user object with safe property assignments
                     $inactiveUser = [PSCustomObject]@{
                         DisplayName       = if ($user.displayName) { $user.displayName } else { "N/A" }
                         UserPrincipalName = if ($user.userPrincipalName) { $user.userPrincipalName } else { "N/A" }
                         Id                = if ($user.id) { $user.id } else { "N/A" }
-                        #LastSignIn        = if ($user.signInActivity.lastSuccessfulSignInDateTime) { $user.signInActivity.lastSuccessfulSignInDateTime } else { "N/A" }
                         AssignedLicenses  = $assignedLicensesString
+                        LicenseEndDate    = $licenseEndDates
                         UsageLocation     = if ($user.usageLocation) { $user.usageLocation } else { "N/A" }
                         AccountEnabled    = if ($user.accountEnabled -ne $null) { $user.accountEnabled } else { $false }
                     }
-
+            
                     # Add the inactive user to the list
                     $inactiveUsers.Add($inactiveUser)
                 }
@@ -268,6 +462,88 @@ function Get-InactiveUsers {
         Write-Error "Error in Get-InactiveUsers: $_"
     }
 }
+function Get-LatestCreatedUsers {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $false)]
+        [int]$days = 30  # Number of days to look back for created users
+    )
+
+    try {
+        # Calculate the cutoff date for the specified number of days
+        $cutoffDate = (Get-Date).AddDays(-$days).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+
+        Write-Output "Fetching users created in the last $days days (since $cutoffDate)..." | Out-Null
+
+        # Define the filter for users created in the last $days days without quotes
+        $filter = "createdDateTime ge $cutoffDate"
+
+        # Initialize the list to store the latest created users
+        $latestCreatedUsers = [System.Collections.Generic.List[PSObject]]::new()
+
+        # Define the properties to select
+        $selectProperties = "displayName,givenName,surname,userPrincipalName,createdDateTime,department,jobTitle,usageLocation,id"
+
+        # Initialize the URI with the filter and select parameters without $orderby
+        $uri = "https://graph.microsoft.com/v1.0/users?`$filter=$filter&`$select=$selectProperties&`$top=999"
+
+        # Retrieve users in batches (handling pagination)
+        do {
+            $response = Invoke-MgGraphRequest -Uri $uri -OutputType PSObject
+
+            if ($null -eq $response -or $null -eq $response.value) {
+                Write-Warning "No users found matching the criteria."
+                break
+            }
+
+            foreach ($user in $response.value) {
+                # Create a PSCustomObject with the desired user properties
+                $userDetails = [PSCustomObject][Ordered]@{
+                    displayName       = if ($user.displayName) { $user.displayName } else { "N/A" }
+                    givenName         = if ($user.givenName) { $user.givenName } else { "N/A" }
+                    surname           = if ($user.surname) { $user.surname } else { "N/A" }
+                    userPrincipalName = if ($user.userPrincipalName) { $user.userPrincipalName } else { "N/A" }
+                    mail              = if ($user.mail) { $user.mail } else { "N/A" }
+                    department        = if ($user.department) { $user.department } else { "N/A" }
+                    jobTitle          = if ($user.jobTitle) { $user.jobTitle } else { "N/A" }
+                    usageLocation     = if ($user.usageLocation) { $user.usageLocation } else { "N/A" }
+                    officeLocation    = if ($user.officeLocation) { $user.officeLocation } else { "N/A" }
+                    preferredLanguage = if ($user.preferredLanguage) { $user.preferredLanguage } else { "N/A" }
+                    createdDateTime   = if ($user.createdDateTime) { $user.createdDateTime } else { "N/A" }
+                    id                = if ($user.id) { $user.id } else { "N/A" }
+                }
+
+                # Add the user details to the list
+                $latestCreatedUsers.Add($userDetails)
+            }
+
+            # Check for nextLink for pagination
+            if ($response.'@odata.nextLink') {
+                $uri = $response.'@odata.nextLink'
+            }
+            else {
+                $uri = $null
+            }
+
+        } while ($uri -ne $null)
+
+        # Sort the users by CreatedDateTime in descending order locally
+        $sortedUsers = $latestCreatedUsers | Sort-Object -Property createdDateTime -Descending
+
+        # Output the results
+        if ($sortedUsers.Count -eq 0) {
+            return [PSCustomObject]@{
+                Info = "No users created in the last $days days."
+            }
+        }
+        else {
+            return $sortedUsers
+        }
+    }
+    catch {
+        Write-Error "Error in Get-LatestCreatedUsers: $_"
+    }
+}
 function Get-UnusedLicenses {
     # Retrieve all licenses
     $AllLicenses = Get-LicenseDetails -All
@@ -287,17 +563,19 @@ function Get-UnusedLicenses {
             # Get the friendly license name using LicenseConversionTable
             $friendlyName = LicenseConversionTable -LicenseId $license.skuId
 
+            
             # Create a PSCustomObject for each license with unused units
             $licenseObject = [PSCustomObject]@{
-                AccountName   = $license.accountName
-                AccountId     = $license.accountId
-                SkuPartNumber = $license.skuPartNumber
-                SkuId         = $license.skuId
-                FriendlyName  = $friendlyName
-                PrepaidUnits  = $prepaidEnabled
-                ConsumedUnits = $consumedUnits
-                UnusedUnits   = $unusedUnits
-                AppliesTo     = $license.appliesTo
+                AccountName    = $license.accountName
+                AccountId      = $license.accountId
+                SkuPartNumber  = $license.skuPartNumber
+                SkuId          = $license.skuId
+                LicenseEndDate = (Get-LicenseEndDate -LicenseId $license.skuId).EndDate
+                FriendlyName   = $friendlyName
+                PrepaidUnits   = $prepaidEnabled
+                ConsumedUnits  = $consumedUnits
+                UnusedUnits    = $unusedUnits
+                AppliesTo      = $license.appliesTo
             }
 
             # Add to the result list
@@ -475,14 +753,11 @@ function Get-LicensedUsers {
             "surname",
             "department",
             "jobTitle",
-            "employeeId",
             "mail",
-            "mobilePhone",
             "officeLocation",
             "preferredLanguage",
             "userPrincipalName",
             "id",
-            "businessPhones",
             "assignedLicenses"
         ) -join ','
 
@@ -516,21 +791,26 @@ function Get-LicensedUsers {
                     $assignedLicensesString = "No Licenses Assigned"
                 }
 
-                $userDetails = [PSCustomObject]@{
+                # Pre-calculate the license end dates and join them with a comma
+                $licenseEndDates = ($_.assignedLicenses.skuid | ForEach-Object {
+                        $licenseDetails = Get-LicenseDetails -LicenseId $_
+                        $endDate = (Get-LicenseEndDate -LicenseId $_).EndDate
+                        "$licenseDetails : $endDate"
+                    }) -join ", "
+
+                $userDetails = [PSCustomObject][Ordered]@{
                     displayName       = $_.displayName
-                    userPrincipalName = $_.userPrincipalName
-                    department        = $_.department
-                    location          = $_.usageLocation
-                    assignedLicenses  = $assignedLicensesString
                     givenName         = $_.givenName
                     surname           = $_.surname
-                    jobTitle          = $_.jobTitle
-                    employeeId        = $_.employeeId
+                    userPrincipalName = $_.userPrincipalName
                     mail              = $_.mail
-                    mobilePhone       = $_.mobilePhone
+                    assignedLicenses  = $assignedLicensesString
+                    licenseEndDate    = $licenseEndDates
+                    department        = $_.department
+                    location          = $_.usageLocation
+                    jobTitle          = $_.jobTitle
                     officeLocation    = $_.officeLocation
                     preferredLanguage = $_.preferredLanguage
-                    businessPhones    = $_.businessPhones -join ", "
                 }
 
                 $licensedUsers.Add($userDetails)
@@ -551,6 +831,200 @@ function Get-LicensedUsers {
     }
     catch {
         Write-Error "Error retrieving licensed user details: $_"
+    }
+}
+function Get-LicenseEndDate {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string[]]$LicenseIds
+    )
+
+    try {
+        # Initialize the list to store license end dates
+        $licenseEndDates = [System.Collections.Generic.List[PSObject]]::new()
+
+        # Define the API endpoint
+        $uri = "https://graph.microsoft.com/V1.0/directory/subscriptions"
+
+        # Invoke the Graph API request to retrieve all subscriptions
+        $subscriptionsResponse = Invoke-MgGraphRequest -Uri $uri -Method GET -OutputType PSObject
+
+        if ($subscriptionsResponse -and $subscriptionsResponse.value -and $subscriptionsResponse.value.Count -gt 0) {
+            # Iterate through each LicenseId provided
+            foreach ($licenseId in $LicenseIds) {
+                # Find subscription(s) matching the LicenseId
+                $matchedSubscriptions = $subscriptionsResponse.value | Where-Object { $_.skuId -eq $licenseId }
+
+                if ($matchedSubscriptions -and $matchedSubscriptions.Count -gt 0) {
+                    foreach ($sub in $matchedSubscriptions) {
+                        # Extract nextLifecycleDateTime and format it
+                        $endDate = if ($sub.nextLifecycleDateTime) {
+                            [datetime]::Parse($sub.nextLifecycleDateTime).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+                        }
+                        else {
+                            "N/A"
+                        }
+
+                        # Create PSObject with LicenseId and EndDate
+                        $licenseEndDate = [PSCustomObject]@{
+                            LicenseId = $licenseId
+                            EndDate   = $endDate
+                        }
+
+                        # Add to the list
+                        $licenseEndDates.Add($licenseEndDate)
+                    }
+                }
+                else {
+                    Write-Output "License ID $licenseId not found in Subscriptions"
+
+                    # Create PSObject with LicenseId and default EndDate
+                    $licenseEndDate = [PSCustomObject]@{
+                        LicenseId = $licenseId
+                        EndDate   = "N/A"
+                    }
+
+                    # Add to the list
+                    $licenseEndDates.Add($licenseEndDate)
+                }
+            }
+
+            return $licenseEndDates
+        }
+        else {
+            Write-Warning "No subscriptions data retrieved from the API."
+            return [PSCustomObject]@{
+                Info = "No subscriptions data available."
+            }
+        }
+    }
+    catch {
+        Write-Error "Error in Get-LicenseEndDate: $_"
+    }
+}
+function Get-ConditionalAccessPolicyModifications {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $false)]
+        [int]$Days = 30  # Number of days to look back for policy modifications
+    )
+
+    try {
+        # Calculate the cutoff date for the specified number of days
+        $cutoffDate = (Get-Date).AddDays(-$Days).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+
+        Write-Verbose "Fetching Conditional Access Policy modifications in the last $Days days (since $cutoffDate)..."
+
+        # Define the filter for Conditional Access Policy modification activities
+        # Ensure activityDisplayName matches exactly with the audit log entries (case and spacing)
+        $filter = " (activityDisplayName eq 'Add conditional access policy' or activityDisplayName eq 'Update conditional access policy' or activityDisplayName eq 'Delete conditional access policy') and activityDateTime ge $cutoffDate "
+
+        # Initialize the list to store policy modification events
+        $policyModifications = [System.Collections.Generic.List[PSObject]]::new()
+
+        # Define the URI with the corrected filter, ordering, and pagination
+        $uri = "https://graph.microsoft.com/v1.0/auditLogs/directoryAudits?`$filter=$($filter)&`$orderby=activityDateTime desc&`$top=999"
+
+        # Retrieve audit logs in batches (handling pagination)
+        do {
+            $response = Invoke-MgGraphRequest -Uri $uri -OutputType PSObject
+
+            if ($null -eq $response -or $null -eq $response.value) {
+                Write-Warning "No Conditional Access Policy modifications found in the last $Days days."
+                break
+            }
+
+            foreach ($log in $response.value) {
+                try {
+                    
+                    # Extract the user who performed the modification using a switch statement
+                    $initiatedByUser = switch ($true) {
+                        { $log.initiatedBy.user.userPrincipalName } { 
+                            $log.initiatedBy.user.userPrincipalName; break
+                        }
+                        { $log.initiatedBy.app.displayName } {
+                            $log.initiatedBy.app.displayName; break
+                        }
+                        default {
+                            "Unknown"
+                        }
+                    }
+
+
+                    # Get the IP Address of the user using a switch statement
+                    $ipAddress = switch ($true) {
+                        { $log.initiatedBy.user.ipAddress } { 
+                            $log.initiatedBy.user.ipAddress; break
+                        }
+                        { $log.initiatedBy.app.ipAddress } {
+                            $log.initiatedBy.app.ipAddress; break
+                        }
+                        default {
+                            "Unknown"
+                        }
+                    }
+                    
+
+                    # Extract the target resource details
+                    #$caPolicyResource = $log.targetResources | Where-Object { $_.type -eq "ConditionalAccessPolicy" }
+
+                    $newValue = $log.targetResources.modifiedProperties.newValue | ConvertFrom-Json -ErrorAction SilentlyContinue
+                    $oldValue = $log.targetResources.modifiedProperties.oldValue | ConvertFrom-Json -ErrorAction SilentlyContinue
+                    $diff = if ($null -ne $oldValue -and $null -ne $newValue) { 
+                        Compare-Object -ReferenceObject $oldValue -DifferenceObject $newValue -Property displayName, id, state, conditions, grantControls, sessionControls 
+                    }
+                    else { 
+                        "No changes" 
+                    }
+
+                    # Create a PSCustomObject with the desired properties
+                    $modificationDetails = [PSCustomObject][Ordered]@{
+                        InitiatedBy         = $initiatedByUser
+                        IpAddress           = $ipAddress
+                        ActivityDisplayName = $log.activityDisplayName
+                        ActivityDateTime    = $log.activityDateTime
+                        PolicyName          = if ($newValue.displayName) { $newValue.displayName } else { "N/A" }
+                        PolicyId            = if ($newValue.id) { $newValue.id } else { "N/A" }
+                        State               = if ($newValue.state) { $newValue.state } else { "N/A" }
+                        Differences         = $diff
+                        Result              = $log.result
+                        OperationType       = $log.operationType
+                    }
+
+                    # Add the modification details to the list
+                    $policyModifications.Add($modificationDetails)
+                }
+                catch {
+                    Write-Error "Error processing audit log entry ID: $($log.id) - $_"
+                }
+            }
+
+            # Check for nextLink for pagination
+            if ($response.'@odata.nextLink') {
+                $uri = $response.'@odata.nextLink'
+            }
+            else {
+                $uri = $null
+            }
+
+        } while ($uri -ne $null)
+
+        # Sort the modifications by ActivityDateTime in descending order locally
+        $sortedModifications = $policyModifications | Sort-Object -Property ActivityDateTime -Descending
+
+        # Output the results
+        if ($sortedModifications.Count -eq 0) {
+            return @()  # Return an empty array if no modifications found
+        }
+        else {
+            return $sortedModifications
+        }
+    }
+    catch {
+        $_ | Out-File -FilePath ".\ErrorLog.txt" -Append
+        Write-Error "Error in Get-ConditionalAccessPolicyModifications: $_"
+        return @()  # Return an empty array on error
     }
 }
 function ConvertTo-ObjectToHtmlTable {
@@ -851,29 +1325,44 @@ function Send-EmailWithGraphAPI {
 # Save Data in Vars
 $unusedLicenses = Get-UnusedLicenses
 $AssignedRoles = Get-AssignedRoleMembers
-$inactiveUsers = Get-InactiveUsers
+$recentRoleAssignments = Get-RecentAssignedRoleMembers
 $AppsAndRegistrations = Get-RecentEnterpriseAppsAndRegistrations
 $GroupsAndMembers = Get-RecentGroupsAndAddedMembers
-$recentDevices = Get-RecentDevices 
+$recentDevices = Get-RecentDevices
 $licensedUsers = Get-LicensedUsers
+$latestCreatedUsers = Get-LatestCreatedUsers
+$inactiveUsers = Get-InactiveUsers
+$conditionalAccessPolicyModifications = Get-ConditionalAccessPolicyModifications
+
+
 
 
 
 # Create a hashtable where the keys are the section titles and the values are the datasets
 $dataSets = @{
-    "Unused Licenses"              = $unusedLicenses
-    "AssignedRoles"                = $AssignedRoles
-    "Inactive Users"               = $inactiveUsers
-    "Enterprise App Registrations" = $AppsAndRegistrations
-    "Recent Groups and Members"    = $GroupsAndMembers
-    "Recent Devices"               = $recentDevices
-    "Licensed Users"               = $licensedUsers
+    "Unused Licenses"                         = $unusedLicenses
+    "AssignedRoles"                           = $AssignedRoles
+    "Recent Role Assignments"                 = $recentRoleAssignments
+    "Enterprise App Registrations"            = $AppsAndRegistrations
+    "Recent Groups and Members"               = $GroupsAndMembers
+    "Recent Devices"                          = $recentDevices
+    "Licensed Users"                          = $licensedUsers
+    "Latest Created Users"                    = $latestCreatedUsers
+    "Inactive Users"                          = $inactiveUsers
+    "Conditional Access Policy Modifications" = $conditionalAccessPolicyModifications
+    
 }
 
 # Generate the HTML report and send it via email
 $htmlcontent = GenerateReport -DataSets $dataSets -RawHTML -Html -HtmlOutputPath ".\M365Report-NMM.html"
 
+#Mail sned is still if you auth with a user, so no mail send from Runbook yet.
 Send-EmailWithGraphAPI -Recipient "test@msp.com" -Subject "M365 Report - $(Get-Date -Format "yyyy-MM-dd")" -HtmlBody ($htmlContent | Out-String) -Attachment
+
+
+#Todo: 
+# - Setup with azure communication service or appsreg for email send.
+
 
 
 
