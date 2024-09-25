@@ -368,7 +368,7 @@ function Get-InactiveUsers {
         $cutoffDateFormatted = $cutoffDate.ToString("yyyy-MM-ddTHH:mm:ssZ")
 
         # Retrieve users with last sign-in before the cutoff date
-        $signIns = (Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/users?`$filter=signInActivity/lastSuccessfulSignInDateTime le $cutoffDateFormatted" -OutputType PSObject).value
+         $signIns = Invoke-GraphRequestWithPaging -Uri "https://graph.microsoft.com/beta/users?`$filter=signInActivity/lastSuccessfulSignInDateTime le $cutoffDateFormatted"
 
         if ($null -eq $signIns -or $signIns.Count -eq 0) {
             return [PSCustomObject]@{
@@ -594,37 +594,47 @@ function Get-UnusedLicenses {
     }
 }
 function Get-RecentEnterpriseAppsAndRegistrations {
+    [CmdletBinding()]
+    param ()
+
     try {
-        # Calculate the date for 30 days ago
-        $dateThreshold = (Get-Date).AddDays(-30).ToString("yyyy-MM-ddTHH:mm:ssZ")
+        # Initialize the date threshold in UTC (30 days ago)
+        $dateThreshold = (Get-Date).AddDays(-30).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 
-        # Get enterprise applications (service principals)
-        $enterpriseApps = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/servicePrincipals" -OutputType PSObject
-        $recentEnterpriseApps = $enterpriseApps.value | Where-Object { $_.createdDateTime -ge $dateThreshold }
+        # Define the filter for recent creations
+        $filter = "createdDateTime ge $dateThreshold"
 
-        # Get app registrations (applications)
-        $appRegistrations = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/applications" -OutputType PSObject
-        $recentAppRegistrations = $appRegistrations.value | Where-Object { $_.createdDateTime -ge $dateThreshold }
-
-        # Combine results into a single list
+        # Initialize the list to store recent apps
         $recentApps = [System.Collections.Generic.List[PSCustomObject]]::new()
 
-        foreach ($app in $recentEnterpriseApps) {
+        # Define the initial URIs with server-side filtering
+        $servicePrincipalsUri = "https://graph.microsoft.com/v1.0/servicePrincipals?`$filter=$filter&`$top=999"
+        $applicationsUri     = "https://graph.microsoft.com/v1.0/applications?`$filter=$filter&`$top=999"
+
+        # Retrieve recent Enterprise Applications using Invoke-GraphRequestWithPaging
+        $servicePrincipals = Invoke-GraphRequestWithPaging -Uri $servicePrincipalsUri
+
+        foreach ($app in $servicePrincipals) {
+            # Add Enterprise Application details to the list
             $recentApps.Add([PSCustomObject]@{
-                    AppType         = "Enterprise Application"
-                    AppId           = $app.appId
-                    DisplayName     = $app.displayName
-                    CreatedDateTime = $app.createdDateTime
-                })
+                AppType         = "Enterprise Application"
+                AppId           = $app.appId
+                DisplayName     = $app.displayName
+                CreatedDateTime = $app.createdDateTime
+            })
         }
 
-        foreach ($app in $recentAppRegistrations) {
+        # Retrieve recent App Registrations using Invoke-GraphRequestWithPaging
+        $applications = Invoke-GraphRequestWithPaging -Uri $applicationsUri
+
+        foreach ($app in $applications) {
+            # Add App Registration details to the list
             $recentApps.Add([PSCustomObject]@{
-                    AppType         = "App Registration"
-                    AppId           = $app.appId
-                    DisplayName     = $app.displayName
-                    CreatedDateTime = $app.createdDateTime
-                })
+                AppType         = "App Registration"
+                AppId           = $app.appId
+                DisplayName     = $app.displayName
+                CreatedDateTime = $app.createdDateTime
+            })
         }
 
         # Return the list of recent apps
@@ -638,7 +648,7 @@ function Get-RecentEnterpriseAppsAndRegistrations {
         }
     }
     catch {
-        $_.Exception.Message
+        Write-Error $_.Exception.Message
     }
 }
 function Get-RecentGroupsAndAddedMembers {
@@ -647,11 +657,12 @@ function Get-RecentGroupsAndAddedMembers {
         $dateThreshold = (Get-Date).AddDays(-30).ToString("yyyy-MM-ddTHH:mm:ssZ")
 
         # Get groups created in the last 30 days
-        $groups = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/groups" -OutputType PSObject
-        $recentGroups = $groups.value | Where-Object { $_.createdDateTime -ge $dateThreshold }
+        
+        $groups = Invoke-GraphRequestWithPaging -Uri "https://graph.microsoft.com/v1.0/groups"
+        $recentGroups = $groups | Where-Object { $_.createdDateTime -ge $dateThreshold }
 
         # Get all "Add member to group" actions from audit logs in the last 30 days
-        $auditLogs = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/auditLogs/directoryAudits?`$filter=activityDisplayName eq 'Add member to group' and activityDateTime ge $dateThreshold and result eq 'success'&`$orderby=activityDateTime desc" -OutputType PSObject
+        $auditLogs = Invoke-GraphRequestWithPaging -Uri "https://graph.microsoft.com/v1.0/auditLogs/directoryAudits?`$filter=activityDisplayName eq 'Add member to group' and activityDateTime ge $dateThreshold and result eq 'success'&`$orderby=activityDateTime desc"
 
         # Create a list to store the group details and recent members
         $groupDetails = [System.Collections.Generic.List[PSCustomObject]]::new()
@@ -663,7 +674,7 @@ function Get-RecentGroupsAndAddedMembers {
             # Create a list to store recent members
             $recentMembers = [System.Collections.Generic.List[string]]::new()
 
-            foreach ($log in $auditLogs.value) {
+            foreach ($log in $auditLogs) {
                 
                 $groupObjectId = ($log.targetResources.modifiedProperties | Where-Object { $_.displayName -eq "Group.ObjectID" } | Select-Object -ExpandProperty newValue) -replace '"', ''
 
@@ -766,7 +777,7 @@ function Get-LicensedUsers {
         }
 
         # Get all users with assigned licenses
-        $users = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/users?`$filter=assignedLicenses/`$count ne 0&`$count=true&`$select=$selectedProperties" -Headers $headers -OutputType PSObject
+        $users = Invoke-GraphRequestWithPaging -Uri "https://graph.microsoft.com/v1.0/users?`$filter=assignedLicenses/`$count ne 0&`$count=true&`$select=$selectedProperties" -Headers $headers
 
         # Use ForEach-Object for handling large collections efficiently
         $users.value | ForEach-Object {
@@ -969,13 +980,24 @@ function Get-ConditionalAccessPolicyModifications {
                     # Extract the target resource details
                     #$caPolicyResource = $log.targetResources | Where-Object { $_.type -eq "ConditionalAccessPolicy" }
 
-                    $newValue = $log.targetResources.modifiedProperties.newValue | ConvertFrom-Json -ErrorAction SilentlyContinue
-                    $oldValue = $log.targetResources.modifiedProperties.oldValue | ConvertFrom-Json -ErrorAction SilentlyContinue
-                    $diff = if ($null -ne $oldValue -and $null -ne $newValue) { 
-                        Compare-Object -ReferenceObject $oldValue -DifferenceObject $newValue -Property displayName, id, state, conditions, grantControls, sessionControls 
-                    }
-                    else { 
-                        "No changes" 
+                    $newValue = $log.targetResources.modifiedProperties.newValue
+                    $oldValue = $log.targetResources.modifiedProperties.oldValue
+
+                    $newValueObj = $newValue | ConvertFrom-Json -ErrorAction SilentlyContinue
+
+                    
+                    $diff = [System.Collections.Generic.List[PSObject]]::new()
+
+                    if ($null -ne $oldValue -and $null -ne $newValue) { 
+                        $DataObj = Compare-JsonDifference -firstJson $oldValue -secondJson $newValue | Where-Object { $_.Path -ne "modifiedDateTime" }
+                        $DataObj | ForEach-Object {
+                            $diff.Add([PSCustomObject]@{
+                                Setting    = $_.Path
+                                ChangeType = $_.ChangeType
+                                OldValue   = $_.OldValue
+                                NewValue   = $_.NewValue
+                            })
+                        }
                     }
 
                     # Create a PSCustomObject with the desired properties
@@ -984,10 +1006,10 @@ function Get-ConditionalAccessPolicyModifications {
                         IpAddress           = $ipAddress
                         ActivityDisplayName = $log.activityDisplayName
                         ActivityDateTime    = $log.activityDateTime
-                        PolicyName          = if ($newValue.displayName) { $newValue.displayName } else { "N/A" }
-                        PolicyId            = if ($newValue.id) { $newValue.id } else { "N/A" }
-                        State               = if ($newValue.state) { $newValue.state } else { "N/A" }
-                        Differences         = $diff
+                        PolicyName          = if ($newValueObj.displayName) { $newValueObj.displayName } else { "N/A" }
+                        PolicyId            = if ($newValueObj.id) { $newValueObj.id } else { "N/A" }
+                        State               = if ($newValueObj.state) { $newValueObj.state } else { "N/A" }
+                        Differences         = if ($diff) { ConvertTo-ObjectToHtmlTable -Object $diff } else { "No changes" }
                         Result              = $log.result
                         OperationType       = $log.operationType
                     }
@@ -1194,6 +1216,15 @@ function GenerateReport {
                         text-align: left;
                     }
                 }
+                      /* New CSS for Nested Tables */
+  table.rounded-table table {
+      color: #000000; /* Set font color to black for nested tables */
+      background-color: #ffffff; /* Optional: Set background color if needed */
+  }
+  table.rounded-table table thead tr {
+      background-color: #f2f2f2; /* Optional: Different header color for nested tables */
+                    color: #000000; /* Ensure header text is readable */
+                }
             ")
             [void]$htmlContent.Append("</style>")
             [void]$htmlContent.Append("</head>")
@@ -1252,6 +1283,197 @@ function GenerateReport {
             return $dataSets
         }
     }
+}
+function Compare-JsonDifference {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$firstJson,
+
+        [Parameter(Mandatory = $true)]
+        [string]$secondJson
+    )
+
+    # Convert JSON strings to PowerShell objects
+    try {
+        $firstObject = $firstJson | ConvertFrom-Json -Depth 100
+    }
+    catch {
+        Write-Error "Failed to parse first JSON: $_"
+        return
+    }
+
+    try {
+        $secondObject = $secondJson | ConvertFrom-Json -Depth 100
+    }
+    catch {
+        Write-Error "Failed to parse second JSON: $_"
+        return
+    }
+
+    # Flatten the objects for comparison
+    function FlattenObject {
+        param (
+            [Parameter(Mandatory = $true)]
+            [object]$obj,
+
+            [string]$prefix = ""
+        )
+        $result = [System.Collections.Generic.Dictionary[string, object]]::new()
+
+        foreach ($prop in $obj.PSObject.Properties) {
+            $propName = if ($prefix) { "$prefix.$($prop.Name)" } else { $prop.Name }
+            if ($prop.Value -is [System.Management.Automation.PSCustomObject]) {
+                $flattened = FlattenObject -obj $prop.Value -prefix $propName
+                foreach ($key in $flattened.Keys) {
+                    if (-not $result.ContainsKey($key)) {
+                        $result.Add($key, $flattened[$key])
+                    }
+                }
+            }
+            elseif ($prop.Value -is [System.Collections.IEnumerable] -and -not ($prop.Value -is [string])) {
+                $index = 0
+                foreach ($item in $prop.Value) {
+                    if ($item -is [System.Management.Automation.PSCustomObject]) {
+                        $flattened = FlattenObject -obj $item -prefix "$propName[$index]"
+                        foreach ($key in $flattened.Keys) {
+                            if (-not $result.ContainsKey($key)) {
+                                $result.Add($key, $flattened[$key])
+                            }
+                        }
+                    }
+                    else {
+                        $key = "$propName[$index]"
+                        if (-not $result.ContainsKey($key)) {
+                            $result.Add($key, $item)
+                        }
+                    }
+                    $index++
+                }
+            }
+            else {
+                if (-not $result.ContainsKey($propName)) {
+                    $result.Add($propName, $prop.Value)
+                }
+            }
+        }
+
+        return $result
+    }
+
+    $flatFirst = FlattenObject -obj $firstObject
+    $flatSecond = FlattenObject -obj $secondObject
+
+    # Convert dictionaries to arrays of PSCustomObjects
+    $flatFirstArray = $flatFirst.GetEnumerator() | ForEach-Object {
+        [PSCustomObject]@{
+            Path  = $_.Key
+            Value = $_.Value
+        }
+    }
+
+    $flatSecondArray = $flatSecond.GetEnumerator() | ForEach-Object {
+        [PSCustomObject]@{
+            Path  = $_.Key
+            Value = $_.Value
+        }
+    }
+
+    # Compare the flattened objects using Compare-Object
+    $comparison = Compare-Object -ReferenceObject $flatFirstArray -DifferenceObject $flatSecondArray -Property Path, Value -PassThru
+
+    if ($comparison) {
+        $differences = [System.Collections.Generic.List[PSCustomObject]]::new()
+
+        foreach ($diff in $comparison) {
+            $path = $diff.Path
+            $sideIndicator = $diff.SideIndicator
+
+            switch ($sideIndicator) {
+                "<=" {
+                    $changeType = "Removed"
+                    $oldValue = $diff.Value
+                    $newValue = $null
+                }
+                "=>" {
+                    $changeType = "Added"
+                    $oldValue = $null
+                    $newValue = $diff.Value
+                }
+                default {
+                    $changeType = "Modified"
+                    # Retrieve old and new values
+                    $oldValue = $flatFirst[$path]
+                    $newValue = $flatSecond[$path]
+                }
+            }
+
+            # Only capture meaningful changes
+            if ($changeType -ne "==") {
+                $differences.Add([PSCustomObject]@{
+                    Path       = $path
+                    ChangeType = $changeType
+                    OldValue   = $oldValue
+                    NewValue   = $newValue
+                })
+            }
+        }
+
+        return $differences | Sort-Object Path
+    }
+    else {
+        Write-Output "No differences found between the provided JSON strings."
+    }
+}
+function Invoke-GraphRequestWithPaging {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Uri,
+
+        [Parameter(Mandatory = $false)]
+        [hashtable]$Headers
+    )
+
+    # Initialize an array to store all results
+    $allResults = [System.Collections.Generic.List[PSObject]]::new()
+
+    do {
+        Write-Verbose "Fetching data from URI: $Uri"
+
+        try {
+            # Invoke the Graph API request with or without headers based on the presence of $Headers
+            if ($PSBoundParameters.ContainsKey('Headers')) {
+                $response = Invoke-MgGraphRequest -Uri $Uri -OutputType PSObject -Headers $Headers
+            } else {
+                $response = Invoke-MgGraphRequest -Uri $Uri -OutputType PSObject
+            }
+        }
+        catch {
+            Write-Error "Failed to fetch data from $Uri. Error: $_"
+            break
+        }
+
+        if ($response.value) {
+            # Append the current page's items to the results
+            $allResults.add($response.value)
+            Write-Verbose "Retrieved $($response.value.Count) items."
+        }
+        else {
+            Write-Verbose "No items found in the current response."
+        }
+
+        # Update the URI to the next page if available
+        if ($response.'@odata.nextLink') {
+            $Uri = $response.'@odata.nextLink'
+        }
+        else {
+            $Uri = $null
+        }
+
+    } while ($Uri)
+
+    return $allResults
 }
 function Send-EmailWithGraphAPI {
     param (
@@ -1322,6 +1544,11 @@ function Send-EmailWithGraphAPI {
 #End of Report Functions
 ############################################################################################################
 
+#Cache Data in $Script Variables
+$script:CacheGroups = Invoke-GraphRequestWithPaging -Uri "https://graph.microsoft.com/v1.0/groups"
+$script:CacheUsers = Invoke-GraphRequestWithPaging -Uri "https://graph.microsoft.com/v1.0/users"
+$script:CacheRoles = Invoke-GraphRequestWithPaging -Uri "https://graph.microsoft.com/v1.0/directoryRoles"
+
 # Save Data in Vars
 $unusedLicenses = Get-UnusedLicenses
 $AssignedRoles = Get-AssignedRoleMembers
@@ -1332,7 +1559,7 @@ $recentDevices = Get-RecentDevices
 $licensedUsers = Get-LicensedUsers
 $latestCreatedUsers = Get-LatestCreatedUsers
 $inactiveUsers = Get-InactiveUsers
-$conditionalAccessPolicyModifications = Get-ConditionalAccessPolicyModifications
+$caPolicyModifications = Get-ConditionalAccessPolicyModifications
 
 
 
@@ -1349,7 +1576,7 @@ $dataSets = @{
     "Licensed Users"                          = $licensedUsers
     "Latest Created Users"                    = $latestCreatedUsers
     "Inactive Users"                          = $inactiveUsers
-    "Conditional Access Policy Modifications" = $conditionalAccessPolicyModifications
+    "Conditional Access Policy Modifications" = $caPolicyModifications
     
 }
 
@@ -1361,8 +1588,7 @@ Send-EmailWithGraphAPI -Recipient "test@msp.com" -Subject "M365 Report - $(Get-D
 
 
 #Todo: 
-# - Setup with azure communication service or appsreg for email send.
-
-
-
+# - Setup with azure communication service or appsreg for email send
+# - Use the Cache data in the variables to reduce the number of API calls
+# - Add a seperate function that can enumerate the object IDs and resolve the display names for the settings in the CA Policy Modifications
 
