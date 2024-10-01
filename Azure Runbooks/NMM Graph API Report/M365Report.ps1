@@ -1,49 +1,936 @@
 <#
-Version: 0.1
-Author: Jan Scholte | Nerdio
-Module Needed:
+.SYNOPSIS
+    Generates a comprehensive Microsoft 365 environment report using Microsoft Graph API and Pax8 API.
 
-Microsoft.Graph.Authentication
+.DESCRIPTION
+    The M365Report.ps1 script connects to Microsoft Graph API and Pax8 API to gather detailed information about the Microsoft 365 environment. 
+    It compiles various datasets, including unused licenses, assigned roles, recent role assignments, enterprise app registrations, recent groups and members, recent devices, licensed users, latest created users, inactive users, conditional access policy modifications, and Pax8 license details. The script generates an HTML report and optionally sends it via email.
 
-Todo:
-- Add more reports
-- Create function for authentication support managed identity and interactive login
-- Try to automatically configure the managed identity on th automation account and set the needed graph permissions on the managed identity
+.PARAMETER tenantId
+    The Tenant ID of the Azure Active Directory. This parameter is mandatory for both App Registration and Interactive authentication methods.
+
+.PARAMETER clientId
+    The Client ID of the Azure AD App Registration. Required when using App Registration authentication.
+
+.PARAMETER clientSecret
+    The Client Secret of the Azure AD App Registration. Required when using App Registration authentication.
+
+.PARAMETER interactive
+    A switch parameter that, when specified, enables interactive browser-based authentication instead of App Registration.
+
+.PARAMETER Pax8CompanyID
+    The Company ID for Pax8 API. Used to retrieve subscription details specific to the company.
+
+.PARAMETER Pax8ClientID
+    The Client ID for Pax8 API authentication.
+
+.PARAMETER Pax8ClientSecret
+    The Client Secret for Pax8 API authentication.
+
+.EXAMPLE
+    Read trought the howto here to setup this up in Nerdio for MSP in a Azure Runbook: https://github.com/Get-Nerdio/NMM-SE/blob/main/Azure%20Runbooks/NMM%20Graph%20API%20Report/readme.md
+
+.NOTES
+    Author: Jan Scholte | Nerdio
+    Version: 0.5
+    Modules Needed:
+        - Microsoft.Graph.Authentication
+    Permissions Needed:
+        - "Reports.Read.All"
+        - "ReportSettings.Read.All"
+        - "User.Read.All"
+        - "Group.Read.All"
+        - "Mail.Read"
+        - "Mail.Send"
+        - "Calendars.Read"
+        - "Sites.Read.All"
+        - "Directory.Read.All"
+        - "RoleManagement.Read.Directory"
+        - "AuditLog.Read.All"
+        - "Organization.Read.All"
+        - "PartnerBilling.Read.All"
 #>
 
-#$TenantId = $EnvironmentalVars.TenantId #Tenant ID of the Azure AD
-$TenantId = '000-000-000-000-000'
-
-# Define the parameters for splatting
-$params = @{
-    Scopes   = @(
-        "Reports.Read.All",
-        "ReportSettings.Read.All",
-        "User.Read.All",
-        "Group.Read.All",
-        "Mail.Read",
-        "Mail.Send",
-        "Calendars.Read",
-        "Sites.Read.All",
-        "Directory.Read.All",
-        "RoleManagement.Read.Directory",
-        "AuditLog.Read.All",
-        "Organization.Read.All"
-    )
-    TenantId = $TenantId
-}
 
 
-try {
-    #Connect to MS Graph
-    Connect-MgGraph @params
-}
-catch {
-    $_.Exception.Message
-}
+#Get the variables from Nerdio
+$TenantId = $EnvironmentVars.TenantId #Tenant ID of the Azure AD
+$clientId = $InheritedVars.M365ReportClientId #Client ID of the Azure AD App Registration
+$clientSecret = $SecureVars.M365ReportSecret #Client Secret of the Azure AD App Registration
+$Pax8CompanyID = $InheritedVars.Pax8CompanyID #Company ID of the Pax8 API
+$Pax8ClientID = $InheritedVars.Pax8ClientID #Client ID of the Pax8 API
+$Pax8ClientSecret = $SecureVars.Pax8ClientSecret #Client Secret of the Pax8 API
+$MailReportRecipient = $InheritedVars.M365ReportMailRecip #Mail recipient of the report
+$MailReportSender = $InheritedVars.M365ReportMailSender #Mail sender of the report
 
-#Start of Report Functions
+#Create secure string for the client secret
+$secureString = ConvertTo-SecureString $clientSecret -AsPlainText -Force
+#Create credential object for the Azure AD App Registration
+$credential = New-Object System.Management.Automation.PSCredential($clientId, $secureString)
+
+
+#Start of Helper Functions
 ############################################################################################################
+function Connect-MgGraphHelper {
+    [CmdletBinding(DefaultParameterSetName = 'Interactive')]
+    param (
+        # Associate tenantId with both parameter sets
+        [Parameter(Mandatory = $true, ParameterSetName = 'AppRegistration')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'Interactive')]
+        [string]$tenantId,
+
+        [Parameter(Mandatory = $true, ParameterSetName = 'AppRegistration')]
+        [string]$clientId,
+
+        [Parameter(Mandatory = $true, ParameterSetName = 'AppRegistration')]
+        [string]$clientSecret,
+
+        [Parameter(Mandatory = $false, ParameterSetName = 'Interactive')]
+        [switch]$interactive
+    )
+
+    begin {
+        try {
+            if ($PSCmdlet.ParameterSetName -eq 'AppRegistration') {
+                # Validate required parameters for App Registration
+                if (-not ($clientId -and $clientSecret)) {
+                    throw "For App Registration authentication, -clientId and -clientSecret must be provided."
+                }
+
+                # Convert client secret to secure string
+                $secureSecret = ConvertTo-SecureString -String $clientSecret -AsPlainText -Force
+                $credential = New-Object System.Management.Automation.PSCredential ($clientId, $secureSecret)
+
+                # Connect to Microsoft Graph using App Registration
+                Connect-MgGraph -NoWelcome -ClientSecretCredential $credential -TenantId $tenantId
+                Write-Output "Connected to Microsoft Graph using App Registration."
+            }
+            elseif ($PSCmdlet.ParameterSetName -eq 'Interactive') {
+                # Connect to Microsoft Graph using interactive browser session
+                $params = @{
+                    Scopes    = @(
+                        "Reports.Read.All",
+                        "ReportSettings.Read.All",
+                        "User.Read.All",
+                        "Group.Read.All",
+                        "Mail.Read",
+                        "Mail.Send",
+                        "Calendars.Read",
+                        "Sites.Read.All",
+                        "Directory.Read.All",
+                        "RoleManagement.Read.Directory",
+                        "AuditLog.Read.All",
+                        "Organization.Read.All",
+                        "PartnerBilling.Read.All"
+                    )
+                    TenantId  = $tenantId
+                }
+                Connect-MgGraph @params
+
+                Write-Output "Connected to Microsoft Graph using interactive browser session."
+            }
+            else {
+                throw "Please specify an authentication method: either provide -clientId, -clientSecret, and -tenantId for App Registration or use the -interactive switch for interactive login."
+            }
+        }
+        catch {
+            Write-Error "Failed to connect to Microsoft Graph: $_"
+        }
+    }
+}
+function ConvertTo-ObjectToHtmlTable {
+    param (
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Generic.List[Object]]$Objects
+    )
+
+    $sb = [System.Text.StringBuilder]::new()
+
+    # Start the HTML table with the 'rounded-table' class
+    [void]$sb.Append('<table class="rounded-table">')
+    [void]$sb.Append('<thead><tr>')
+
+    # Add column headers based on the properties of the first object
+    $Objects[0].PSObject.Properties.Name | ForEach-Object {
+        [void]$sb.Append("<th>$_</th>")
+    }
+
+    [void]$sb.Append('</tr></thead><tbody>')
+
+    # Add table rows with alternating row colors handled by CSS
+    foreach ($obj in $Objects) {
+        [void]$sb.Append("<tr>")
+        foreach ($prop in $obj.PSObject.Properties.Name) {
+            # Include 'data-label' for responsive design
+            [void]$sb.Append("<td data-label='$prop'>$($obj.$prop)</td>")
+        }
+        [void]$sb.Append('</tr>')
+    }
+
+    [void]$sb.Append('</tbody></table>')
+    return $sb.ToString()
+}
+function GenerateReport {
+    param (
+        [Parameter(Mandatory = $true)]
+        [array]$DataSets, # Accepts an ordered array of objects with Title and Data
+    
+        [Parameter(Mandatory = $false)]
+        [switch]$json,
+    
+        [Parameter(Mandatory = $false)]
+        [switch]$psObject,
+    
+        [Parameter(Mandatory = $false)]
+        [switch]$RawHTML,
+    
+        [Parameter(Mandatory = $false)]
+        [switch]$Html,
+    
+        [Parameter(Mandatory = $false)]
+        [string]$htmlOutputPath = "Report.html",
+    
+        [Parameter(Mandatory = $false)]
+        [string]$logoUrl = "https://github.com/Get-Nerdio/NMM-SE/assets/52416805/5c8dd05e-84a7-49f9-8218-64412fdaffaf",
+    
+        [Parameter(Mandatory = $false)]
+        [string]$summaryText = "This report shows information about your Microsoft 365 environment.",
+    
+        [Parameter(Mandatory = $false)]
+        [string]$fontFamily = "Roboto"  # Allow user to specify a custom font family
+    )
+    
+    begin {
+        # Initialize a string builder for HTML content
+        $htmlContent = [System.Text.StringBuilder]::new()
+    }
+    
+    process {
+        # Create a header section with the logo, summary, and font for HTML output
+        if ($Html -or $RawHTML) {
+            [void]$htmlContent.Append("<!DOCTYPE html>")
+            [void]$htmlContent.Append("<html>")
+            [void]$htmlContent.Append("<head>")
+            [void]$htmlContent.Append("<meta charset='UTF-8'>")
+            [void]$htmlContent.Append("<meta name='viewport' content='width=device-width, initial-scale=1.0'>")
+            [void]$htmlContent.Append("<title>Microsoft 365 Tenant Report</title>")
+            [void]$htmlContent.Append("<style>")
+            # Existing Styles
+            [void]$htmlContent.Append("body { font-family: '$fontFamily', sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }")
+            [void]$htmlContent.Append("h2 { color: #FFFFFF; margin: 10px; }")
+            [void]$htmlContent.Append("h3 { color: #151515; margin-top: 30px; margin-bottom: 10px; }")
+            [void]$htmlContent.Append(".report-header { background-color: #13ba7c; color: white; padding: 20px 0; text-align: center; }")
+            [void]$htmlContent.Append(".report-header img { width: 150px; height: auto; }")
+            [void]$htmlContent.Append(".content { font-family: '$fontFamily', sans-serif; padding: 20px; }")
+            
+            # Accordion Styles
+            [void]$htmlContent.Append("
+                /* Accordion Styles */
+                details {
+                    margin-bottom: 10px;
+                }
+
+                summary {
+                    cursor: pointer;
+                    font-weight: bold;
+                    padding: 10px;
+                    background-color: #f2f2f2;
+                    border: 1px solid #ddd;
+                    border-radius: 5px;
+                }
+
+                summary::-webkit-details-marker {
+                    display: none;
+                }
+
+                /* Enhanced CSS for Rounded Tables */
+                table.rounded-table {
+                    width: 100%;
+                    border-collapse: separate; /* Allows border-radius to work */
+                    border-spacing: 0;
+                    border: 1px solid #ddd;
+                    border-radius: 8px; /* Rounded corners */
+                    overflow: hidden; /* Ensures child elements don't overflow the rounded corners */
+                    margin-bottom: 20px;
+                    font-family: 'Inter', sans-serif;
+                }
+                table.rounded-table thead tr {
+                    background-color: #13ba7c;
+                    color: white;
+                }
+                table.rounded-table th,
+                table.rounded-table td {
+                    border: 1px solid #ddd;
+                    padding: 12px;
+                    text-align: left;
+                }
+                table.rounded-table tbody tr:nth-child(even) {
+                    background-color: #f9f9f9;
+                }
+                table.rounded-table tbody tr:nth-child(odd) {
+                    background-color: #ffffff;
+                }
+                /* Optional: Add hover effect */
+                table.rounded-table tbody tr:hover {
+                    background-color: #f1f1f1;
+                }
+
+                /* Responsive Design */
+                @media (max-width: 768px) {
+                    table.rounded-table thead {
+                        display: none;
+                    }
+                    table.rounded-table, 
+                    table.rounded-table tbody, 
+                    table.rounded-table tr, 
+                    table.rounded-table td {
+                        display: block;
+                        width: 100%;
+                    }
+                    table.rounded-table tr {
+                        margin-bottom: 15px;
+                    }
+                    table.rounded-table td {
+                        text-align: right;
+                        padding-left: 50%;
+                        position: relative;
+                    }
+                    table.rounded-table td::before {
+                        content: attr(data-label);
+                        position: absolute;
+                        left: 0;
+                        width: 50%;
+                        padding-left: 15px;
+                        font-weight: bold;
+                        text-align: left;
+                    }
+                }
+                      /* New CSS for Nested Tables */
+  table.rounded-table table {
+      color: #000000; /* Set font color to black for nested tables */
+      background-color: #ffffff; /* Optional: Set background color if needed */
+  }
+  table.rounded-table table thead tr {
+      background-color: #f2f2f2; /* Optional: Different header color for nested tables */
+                    color: #000000; /* Ensure header text is readable */
+                }
+            ")
+            [void]$htmlContent.Append("</style>")
+            [void]$htmlContent.Append("</head>")
+            [void]$htmlContent.Append("<body>")
+
+            # Add a header section with a logo and summary text
+            [void]$htmlContent.Append("<div class='report-header'>")
+            [void]$htmlContent.Append("<img src='$logoUrl' alt='Logo' /><br/>")
+            [void]$htmlContent.Append("<h2>Microsoft 365 Tenant Report</h2>")
+            [void]$htmlContent.Append("<p>$summaryText</p>")
+            [void]$htmlContent.Append("</div>")
+
+            [void]$htmlContent.Append("<div class='content'>")
+        }
+
+        # Iterate through the ordered array of dataSets
+        foreach ($section in $DataSets) {
+            $sectionTitle = $section.Title
+            $data = $section.Data
+            $itemCount = if ($data -and $data.PSObject.Properties.Name -ne 'Info') { $data.Count } else { 0 }
+
+            if ($Html -or $RawHTML) {
+                # Wrap each table section within <details> and <summary> for collapsible functionality
+                [void]$htmlContent.Append("<details>")
+                [void]$htmlContent.Append("<summary>$sectionTitle ($itemCount)</summary>")
+                [void]$htmlContent.Append((ConvertTo-ObjectToHtmlTable -Objects $data))  # Convert the data to an HTML table
+                [void]$htmlContent.Append("</details>")
+            }
+        }
+
+        # HTML Output: Close the content section and body
+        if ($Html) {
+            [void]$htmlContent.Append("</div></body></html>")
+            $htmlContentString = $htmlContent.ToString()
+            Set-Content -Path $htmlOutputPath -Value $htmlContentString
+            Write-Output "HTML report generated at: $htmlOutputPath"
+        }
+
+        # Raw HTML Output
+        if ($RawHTML) {
+            [void]$htmlContent.Append("</div></body></html>")
+            $htmlContentString = $htmlContent.ToString()
+            return $htmlContentString
+        }
+
+        # JSON Output
+        if ($json) {
+            return $DataSets | ConvertTo-Json
+        }
+
+        # PSObject Output
+        if ($psObject) {
+            return $DataSets
+        }
+    }
+}
+function Compare-JsonDifference {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$firstJson,
+
+        [Parameter(Mandatory = $true)]
+        [string]$secondJson
+    )
+
+    # Convert JSON strings to PowerShell objects
+    try {
+        $firstObject = $firstJson | ConvertFrom-Json -Depth 10
+    }
+    catch {
+        Write-Error "Failed to parse first JSON: $_"
+        return
+    }
+
+    try {
+        $secondObject = $secondJson | ConvertFrom-Json -Depth 10
+    }
+    catch {
+        Write-Error "Failed to parse second JSON: $_"
+        return
+    }
+
+    # Flatten the objects for comparison
+    function FlattenObject {
+        param (
+            [Parameter(Mandatory = $true)]
+            [object]$obj,
+
+            [string]$prefix = ""
+        )
+        $result = [System.Collections.Generic.Dictionary[string, object]]::new()
+
+        foreach ($prop in $obj.PSObject.Properties) {
+            $propName = if ($prefix) { "$prefix.$($prop.Name)" } else { $prop.Name }
+            if ($prop.Value -is [System.Management.Automation.PSCustomObject]) {
+                $flattened = FlattenObject -obj $prop.Value -prefix $propName
+                foreach ($key in $flattened.Keys) {
+                    if (-not $result.ContainsKey($key)) {
+                        $result.Add($key, $flattened[$key])
+                    }
+                }
+            }
+            elseif ($prop.Value -is [System.Collections.IEnumerable] -and -not ($prop.Value -is [string])) {
+                $index = 0
+                foreach ($item in $prop.Value) {
+                    if ($item -is [System.Management.Automation.PSCustomObject]) {
+                        $flattened = FlattenObject -obj $item -prefix "$propName[$index]"
+                        foreach ($key in $flattened.Keys) {
+                            if (-not $result.ContainsKey($key)) {
+                                $result.Add($key, $flattened[$key])
+                            }
+                        }
+                    }
+                    else {
+                        $key = "$propName[$index]"
+                        if (-not $result.ContainsKey($key)) {
+                            $result.Add($key, $item)
+                        }
+                    }
+                    $index++
+                }
+            }
+            else {
+                if (-not $result.ContainsKey($propName)) {
+                    $result.Add($propName, $prop.Value)
+                }
+            }
+        }
+
+        return $result
+    }
+
+    $flatFirst = FlattenObject -obj $firstObject
+    $flatSecond = FlattenObject -obj $secondObject
+
+    # Convert dictionaries to arrays of PSCustomObjects
+    $flatFirstArray = $flatFirst.GetEnumerator() | ForEach-Object {
+        [PSCustomObject]@{
+            Path  = $_.Key
+            Value = $_.Value
+        }
+    }
+
+    $flatSecondArray = $flatSecond.GetEnumerator() | ForEach-Object {
+        [PSCustomObject]@{
+            Path  = $_.Key
+            Value = $_.Value
+        }
+    }
+
+    # Compare the flattened objects using Compare-Object
+    $comparison = Compare-Object -ReferenceObject $flatFirstArray -DifferenceObject $flatSecondArray -Property Path, Value -PassThru
+
+    if ($comparison) {
+        $differences = [System.Collections.Generic.List[PSCustomObject]]::new()
+
+        foreach ($diff in $comparison) {
+            $path = $diff.Path
+            $sideIndicator = $diff.SideIndicator
+
+            switch ($sideIndicator) {
+                "<=" {
+                    $changeType = "Removed"
+                    $oldValue = $diff.Value
+                    $newValue = $null
+                }
+                "=>" {
+                    $changeType = "Added"
+                    $oldValue = $null
+                    $newValue = $diff.Value
+                }
+                default {
+                    $changeType = "Modified"
+                    # Retrieve old and new values
+                    $oldValue = $flatFirst[$path]
+                    $newValue = $flatSecond[$path]
+                }
+            }
+
+            # Only capture meaningful changes
+            if ($changeType -ne "==") {
+                $differences.Add([PSCustomObject]@{
+                        Path       = $path
+                        ChangeType = $changeType
+                        OldValue   = $oldValue
+                        NewValue   = $newValue
+                    })
+            }
+        }
+
+        return $differences | Sort-Object Path
+    }
+    else {
+        Write-Output "No differences found between the provided JSON strings."
+    }
+}
+function Invoke-GraphRequestWithPaging {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Uri,
+
+        [Parameter(Mandatory = $false)]
+        [hashtable]$Headers
+    )
+
+    # Initialize an array to store all results
+    $allResults = [System.Collections.Generic.List[PSObject]]::new()
+
+    do {
+        Write-Verbose "Fetching data from URI: $Uri"
+
+        try {
+            # Invoke the Graph API request with or without headers based on the presence of $Headers
+            if ($PSBoundParameters.ContainsKey('Headers')) {
+                $response = Invoke-MgGraphRequest -Uri $Uri -OutputType PSObject -Headers $Headers
+            }
+            else {
+                $response = Invoke-MgGraphRequest -Uri $Uri -OutputType PSObject
+            }
+        }
+        catch {
+            Write-Error "Failed to fetch data from $Uri. Error: $_"
+            break
+        }
+
+        if ($response.value) {
+            # Append the current page's items to the results
+            $allResults.add($response.value)
+            Write-Verbose "Retrieved $($response.value.Count) items."
+        }
+        else {
+            Write-Verbose "No items found in the current response."
+        }
+
+        # Update the URI to the next page if available
+        if ($response.'@odata.nextLink') {
+            $Uri = $response.'@odata.nextLink'
+        }
+        else {
+            $Uri = $null
+        }
+
+    } while ($Uri)
+
+    return $allResults
+}
+function Connect-Pax8 {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ClientID,
+        [Parameter(Mandatory = $true)]
+        [string]$ClientSecret
+
+    )
+
+    $auth = @{
+        client_id     = $ClientID
+        client_secret = $ClientSecret
+        audience      = "api://p8p.client"
+        grant_type    = "client_credentials"
+    }
+    
+    $json = $auth | ConvertTo-json -Depth 2
+
+    try {
+        $Response = Invoke-WebRequest -Method POST -Uri 'https://login.pax8.com/oauth/token' -ContentType 'application/json' -Body $json
+        $script:Pax8Token = ($Response | ConvertFrom-Json).access_token
+        $script:Pax8BaseURL = 'https://api.pax8.com/v1/'
+        $script:Pax8BaseURLv2 = 'https://app.pax8.com/p8p/api-v2/1/'
+    }
+    catch {
+        Write-Host $_ -ForegroundColor Red
+    }
+
+    
+
+}
+function Get-Pax8Subscriptions {
+    [CmdletBinding()]
+    Param(
+        [ValidateSet("quantity", "startDate", "endDate", "createdDate", "billingStart", "price")]    
+        [string]$sort,
+        [ValidateSet("Active", "Cancelled", "PendingManual", "PendingAutomated", "PendingCancel", "WaitingForDetails", "Trial", "Converted", "PendingActivation", "Activated")]  
+        [string]$status,
+        [ValidateSet("Monthly", "Annual", "2-Year", "3-Year", "One-Time", "Trial", "Activation")]    
+        [string]$billingTerm,
+        [string]$companyId,
+        [string]$productId,
+        [string]$subscriptionId
+    )
+  
+    if ($subscriptionId) {
+        $Subscriptions = Invoke-Pax8Request -method get -resource "subscriptions/$subscriptionId"
+    }
+    else {
+  
+        $resourcefilter = ''
+  
+        if ($sort) {
+            $resourcefilter = "$($resourcefilter)&sort=$($sort)"
+        }
+  
+        if ($status) {
+            $resourcefilter = "$($resourcefilter)&status=$($status)"
+        }
+  
+        if ($billingTerm) {
+            $resourcefilter = "$($resourcefilter)&billingTerm=$($billingTerm)"
+        }
+  
+        if ($companyId) {
+            $resourcefilter = "$($resourcefilter)&companyId=$($companyId)"
+        }
+  
+        if ($productId) {
+            $resourcefilter = "$($resourcefilter)&productId=$($productId)"
+        }
+  
+        $Subscriptions = Invoke-Pax8Request -method get -resource "subscriptions" -ResourceFilter $resourcefilter
+    
+    }
+    return $Subscriptions
+  
+}
+function Get-Pax8LicenseDetails {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $false)]
+        [string]$ClientID,
+        
+        [Parameter(Mandatory = $false)]
+        [string]$ClientSecret,
+        
+        [Parameter(Mandatory = $true)]
+        [string]$CompanyId
+    )
+    
+    try {
+        # Connect to Pax8 if credentials are provided
+        if ($ClientID -and $ClientSecret) {
+            Connect-Pax8 -ClientID $ClientID -ClientSecret $ClientSecret
+        }
+        elseif (-not $script:Pax8Token) {
+            [PSCustomObject]@{
+                Info = "Pax8 Integration not configured, please provide Pax8ClientSecret and Pax8ClientID"
+            }
+        }
+        
+        # Retrieve subscriptions for the specified company
+        $subscriptions = Get-Pax8Subscriptions -companyId $CompanyId
+        
+        if (-not $subscriptions) {
+            Write-Warning "No subscriptions found for Company ID: $CompanyId"
+            return
+        }
+        
+        # Extract unique Product IDs from subscriptions
+        $productIds = $subscriptions | Select-Object -ExpandProperty productId | Sort-Object -Unique
+        
+        if (-not $productIds) {
+            Write-Warning "No Product IDs found in the subscriptions for Company ID: $CompanyId"
+            return
+        }
+        
+        # Retrieve only the products associated with the subscriptions
+        $products = [System.Collections.Generic.List[PSObject]]::new()
+        foreach ($productId in $productIds) {
+            $productDetails = Get-Pax8Products -id $productId
+            if ($productDetails) {
+                $products.Add($productDetails)
+            }
+            else {
+                Write-Warning "Product with ID $productId not found."
+            }
+        }
+        
+        if ($products.Count -eq 0) {
+            Write-Warning "No valid products retrieved for the specified Product IDs."
+            return
+        }
+        
+        # Create a lookup table for product details based on Product ID
+        $productLookup = @{}
+        foreach ($product in $products) {
+            $productLookup[$product.id] = $product
+        }
+        
+        # Initialize a list to store license details
+        $licenseDetailsList = [System.Collections.Generic.List[PSCustomObject]]::new()
+        
+        # Process each subscription and compile license details
+        foreach ($subscription in $subscriptions) {
+            try {
+                # Retrieve associated product details from the lookup
+                $product = $productLookup[$subscription.productId]
+                
+                if (-not $product) {
+                    Write-Warning "Product ID $($subscription.productId) not found in the retrieved products."
+                    continue
+                }
+                
+                
+                # Create a PSCustomObject with license details
+                $licenseDetail = [PSCustomObject]@{
+                    LicenseName = $product.name
+                    Quantity    = $subscription.quantity
+                    Status      = $subscription.status
+                    BillingTerm = $subscription.billingTerm
+                    StartDate   = $subscription.startDate
+                    CreatedDate = $subscription.createdDate
+                    Currency    = $subscription.currencyCode
+                    VendorName  = $product.vendorName
+                    Description = $product.shortDescription
+                }
+                
+                # Add the license detail to the list
+                $licenseDetailsList.Add($licenseDetail)
+            }
+            catch {
+                Write-Warning "Failed to process subscription ID $($subscription.id): $_"
+            }
+        }
+        
+        # Output the compiled license details
+        return $licenseDetailsList
+    }
+    catch {
+        Write-Error "Error in Get-Pax8LicenseDetails: $_"
+    }
+}
+function Invoke-Pax8Request {
+    [CmdletBinding()]
+    Param(
+        [string]$Method,
+        [string]$Resource,
+        [string]$ResourceFilter,
+        [string]$Body,
+        [bool]$v2API
+    )
+	
+    if (!$script:Pax8Token) {
+        Write-Host "Please run 'Connect-Pax8' first" -ForegroundColor Red
+    }
+    else {
+	
+        $headers = @{
+            Authorization = "Bearer $($script:Pax8Token)"
+        }
+
+        If (!$v2API) {
+
+            try {
+                if (($Method -eq "put") -or ($Method -eq "post") -or ($Method -eq "delete")) {
+                    $Response = Invoke-WebRequest -Method $method -Uri ($Script:Pax8BaseURL + $Resource) -ContentType 'application/json' -Body $Body -Headers $headers -ea stop
+                    $Result = $Response | ConvertFrom-Json
+                }
+                else {
+                    $Complete = $false
+                    $PageNo = 0
+                    $Result = do {
+                        $Response = Invoke-WebRequest -Method $method -Uri ($Script:Pax8BaseURL + $Resource + "?page=$PageNo&size=200" + $ResourceFilter) -ContentType 'application/json' -Headers $headers -ea stop
+                        $JSON = $Response | ConvertFrom-Json
+                        if ($JSON.Page) {
+                            if (($JSON.Page.totalPages - 1) -eq $PageNo -or $JSON.Page.totalPages -eq 0) {
+                                $Complete = $true
+                            }
+                            $PageNo = $PageNo + 1
+                            $JSON.content
+                        }
+                        else {
+                            $Complete = $true
+                            $JSON
+                        }
+                    } while ($Complete -eq $false)
+                }
+            }
+            catch {
+                if ($_.Response.StatusCode -eq 429) {
+                    Write-Warning "Rate limit exceeded. Waiting to try again."
+                    Start-Sleep 8
+                    $Result = Invoke-Pax8Request -Method $Method -Resource $Resource -ResourceFilter $ResourceFilter -Body $Body
+                }
+                else {
+                    Write-Error "An Error Occured $($_) "
+                }
+            }
+		
+            return $Result
+        }
+        else {
+            try {
+                if (($Method -eq "put") -or ($Method -eq "post") -or ($Method -eq "delete")) {
+                    $Response = Invoke-WebRequest -Method $method -Uri ($script:Pax8BaseURLv2 + $Resource) -ContentType 'application/json' -Body $Body -Headers $headers -ea stop
+                    $Result = $Response | ConvertFrom-Json
+                }
+                else {
+                    $Complete = $false
+                    $PageNo = 0
+                    $Result = do {
+                        $Response = Invoke-WebRequest -Method $method -Uri ($script:Pax8BaseURLv2 + $Resource + "?page=$PageNo&size=200" + $ResourceFilter) -ContentType 'application/json' -Headers $headers -ea stop
+                        $JSON = $Response | ConvertFrom-Json
+                        $Complete = $true
+                        $JSON
+                    } while ($Complete -eq $false)
+                }
+            }
+            catch {
+                if ($_.Response.StatusCode -eq 429) {
+                    Write-Warning "Rate limit exceeded. Waiting to try again."
+                    Start-Sleep 8
+                    $Result = Invoke-Pax8Request -Method $Method -Resource $Resource -ResourceFilter $ResourceFilter -Body $Body
+                }
+                else {
+                    Write-Error "An Error Occured $($_) "
+                }
+            }
+		
+            return $Result
+        }
+    }	
+}
+function Get-Pax8Products {
+    [CmdletBinding()]
+    Param(
+        [ValidateSet("name", "vendor")]    
+        [string]$sort,
+        [string]$vendorName,
+        [string]$id
+    )
+  
+    if ($id) {
+        $Products = Invoke-Pax8Request -method get -resource "products/$id"
+    }
+    else {
+  
+        $resourcefilter = ''
+        if ($sort) {
+            $resourcefilter = "$($resourcefilter)&sort=$($sort)"
+        }
+        if ($vendorName) {
+            $resourcefilter = "$($resourcefilter)&vendorName=$($vendorName)"
+        }
+     
+        $Products = Invoke-Pax8Request -method get -resource "products" -ResourceFilter $resourcefilter
+    }
+  
+    return $Products
+  
+}
+function Send-EmailWithGraphAPI {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Recipient, # The recipient's email address
+
+        [Parameter(Mandatory = $true)]
+        [string]$Subject, # The subject of the email
+
+        [Parameter(Mandatory = $true)]
+        [string]$HtmlBody, # The HTML content to send
+
+        [Parameter(Mandatory = $false)]
+        [switch]$Attachment, # Switch to attach the HTML content as a file
+
+        [Parameter(Mandatory = $false)]
+        [string]$Sender  # Use "me" for the authenticated user, or specify another sender
+    )
+
+    try {
+        # Create the email payload with correct emailAddress structure
+        $emailPayload = @{
+            message         = @{
+                subject      = $Subject
+                body         = @{
+                    contentType = "HTML"
+                    content     = $HtmlBody
+                }
+                toRecipients = @(@{
+                        emailAddress = @{
+                            address = $Recipient
+                        }
+                    })
+            }
+            saveToSentItems = "true"
+        }
+
+        # If the -Attachment parameter is set, attach the HTML content as a file
+        if ($Attachment) {
+            # Convert the HTML body content to base64
+            $htmlFileBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($HtmlBody))
+
+            # Add the attachment to the email payload
+            $emailPayload.message.attachments = @(@{
+                    '@odata.type' = "#microsoft.graph.fileAttachment"
+                    name          = "Report.html"
+                    contentType   = "text/html"
+                    contentBytes  = $htmlFileBase64
+                })
+        }
+
+        # Convert the payload to JSON with increased depth
+        $jsonPayload = $emailPayload | ConvertTo-Json -Depth 10
+
+        # Send the email using Microsoft Graph API
+        Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/users/$Sender/sendMail" `
+            -Method POST `
+            -Body $jsonPayload `
+            -ContentType "application/json"
+                              
+        Write-Host "Email sent successfully to $Recipient"
+    }
+    catch {
+        Write-Error "Error sending email: $_"
+    }
+}
 function DownloadLicenseDefinitions {
     [CmdletBinding()]
     param (
@@ -212,6 +1099,10 @@ function LicenseConversionTable {
         }
     }
 }
+
+#Start of Report Functions
+############################################################################################################
+
 function Get-AssignedRoleMembers {
     [CmdletBinding()]
     param()
@@ -368,7 +1259,7 @@ function Get-InactiveUsers {
         $cutoffDateFormatted = $cutoffDate.ToString("yyyy-MM-ddTHH:mm:ssZ")
 
         # Retrieve users with last sign-in before the cutoff date
-         $signIns = Invoke-GraphRequestWithPaging -Uri "https://graph.microsoft.com/beta/users?`$filter=signInActivity/lastSuccessfulSignInDateTime le $cutoffDateFormatted"
+        $signIns = Invoke-GraphRequestWithPaging -Uri "https://graph.microsoft.com/beta/users?`$filter=signInActivity/lastSuccessfulSignInDateTime le $cutoffDateFormatted"
 
         if ($null -eq $signIns -or $signIns.Count -eq 0) {
             return [PSCustomObject]@{
@@ -609,7 +1500,7 @@ function Get-RecentEnterpriseAppsAndRegistrations {
 
         # Define the initial URIs with server-side filtering
         $servicePrincipalsUri = "https://graph.microsoft.com/v1.0/servicePrincipals?`$filter=$filter&`$top=999"
-        $applicationsUri     = "https://graph.microsoft.com/v1.0/applications?`$filter=$filter&`$top=999"
+        $applicationsUri = "https://graph.microsoft.com/v1.0/applications?`$filter=$filter&`$top=999"
 
         # Retrieve recent Enterprise Applications using Invoke-GraphRequestWithPaging
         $servicePrincipals = Invoke-GraphRequestWithPaging -Uri $servicePrincipalsUri
@@ -617,11 +1508,11 @@ function Get-RecentEnterpriseAppsAndRegistrations {
         foreach ($app in $servicePrincipals) {
             # Add Enterprise Application details to the list
             $recentApps.Add([PSCustomObject]@{
-                AppType         = "Enterprise Application"
-                AppId           = $app.appId
-                DisplayName     = $app.displayName
-                CreatedDateTime = $app.createdDateTime
-            })
+                    AppType         = "Enterprise Application"
+                    AppId           = $app.appId
+                    DisplayName     = $app.displayName
+                    CreatedDateTime = $app.createdDateTime
+                })
         }
 
         # Retrieve recent App Registrations using Invoke-GraphRequestWithPaging
@@ -630,11 +1521,11 @@ function Get-RecentEnterpriseAppsAndRegistrations {
         foreach ($app in $applications) {
             # Add App Registration details to the list
             $recentApps.Add([PSCustomObject]@{
-                AppType         = "App Registration"
-                AppId           = $app.appId
-                DisplayName     = $app.displayName
-                CreatedDateTime = $app.createdDateTime
-            })
+                    AppType         = "App Registration"
+                    AppId           = $app.appId
+                    DisplayName     = $app.displayName
+                    CreatedDateTime = $app.createdDateTime
+                })
         }
 
         # Return the list of recent apps
@@ -780,7 +1671,7 @@ function Get-LicensedUsers {
         $users = Invoke-GraphRequestWithPaging -Uri "https://graph.microsoft.com/v1.0/users?`$filter=assignedLicenses/`$count ne 0&`$count=true&`$select=$selectedProperties" -Headers $headers
 
         # Use ForEach-Object for handling large collections efficiently
-        $users.value | ForEach-Object {
+        $users | ForEach-Object {
             try {
                 # Ensure assignedLicenses and skuid are not null
                 if ($_.assignedLicenses -and $_.assignedLicenses.skuid) {
@@ -856,7 +1747,7 @@ function Get-LicenseEndDate {
         $licenseEndDates = [System.Collections.Generic.List[PSObject]]::new()
 
         # Define the API endpoint
-        $uri = "https://graph.microsoft.com/V1.0/directory/subscriptions"
+        $uri = "https://graph.microsoft.com/beta/directory/subscriptions"
 
         # Invoke the Graph API request to retrieve all subscriptions
         $subscriptionsResponse = Invoke-MgGraphRequest -Uri $uri -Method GET -OutputType PSObject
@@ -992,11 +1883,11 @@ function Get-ConditionalAccessPolicyModifications {
                         $DataObj = Compare-JsonDifference -firstJson $oldValue -secondJson $newValue | Where-Object { $_.Path -ne "modifiedDateTime" }
                         $DataObj | ForEach-Object {
                             $diff.Add([PSCustomObject]@{
-                                Setting    = $_.Path
-                                ChangeType = $_.ChangeType
-                                OldValue   = $_.OldValue
-                                NewValue   = $_.NewValue
-                            })
+                                    Setting    = $_.Path
+                                    ChangeType = $_.ChangeType
+                                    OldValue   = $_.OldValue
+                                    NewValue   = $_.NewValue
+                                })
                         }
                     }
 
@@ -1049,507 +1940,21 @@ function Get-ConditionalAccessPolicyModifications {
         return @()  # Return an empty array on error
     }
 }
-function ConvertTo-ObjectToHtmlTable {
-    param (
-        [Parameter(Mandatory = $true)]
-        [System.Collections.Generic.List[Object]]$Objects
-    )
 
-    $sb = [System.Text.StringBuilder]::new()
-
-    # Start the HTML table with the 'rounded-table' class
-    [void]$sb.Append('<table class="rounded-table">')
-    [void]$sb.Append('<thead><tr>')
-
-    # Add column headers based on the properties of the first object
-    $Objects[0].PSObject.Properties.Name | ForEach-Object {
-        [void]$sb.Append("<th>$_</th>")
-    }
-
-    [void]$sb.Append('</tr></thead><tbody>')
-
-    # Add table rows with alternating row colors handled by CSS
-    foreach ($obj in $Objects) {
-        [void]$sb.Append("<tr>")
-        foreach ($prop in $obj.PSObject.Properties.Name) {
-            # Include 'data-label' for responsive design
-            [void]$sb.Append("<td data-label='$prop'>$($obj.$prop)</td>")
-        }
-        [void]$sb.Append('</tr>')
-    }
-
-    [void]$sb.Append('</tbody></table>')
-    return $sb.ToString()
-}
-function GenerateReport {
-    param (
-        [Parameter(Mandatory = $true)]
-        [System.Collections.Hashtable]$dataSets, # Accepts multiple datasets, each with a title
-
-        [Parameter(Mandatory = $false)]
-        [switch]$json,
-
-        [Parameter(Mandatory = $false)]
-        [switch]$psObject,
-
-        [Parameter(Mandatory = $false)]
-        [switch]$RawHTML,
-
-        [Parameter(Mandatory = $false)]
-        [switch]$Html,
-
-        [Parameter(Mandatory = $false)]
-        [string]$htmlOutputPath = "Report.html",
-
-        [Parameter(Mandatory = $false)]
-        [string]$logoUrl = "https://github.com/Get-Nerdio/NMM-SE/assets/52416805/5c8dd05e-84a7-49f9-8218-64412fdaffaf",
-
-        [Parameter(Mandatory = $false)]
-        [string]$summaryText = "This report shows information about your Microsoft 365 environment.",
-
-        [Parameter(Mandatory = $false)]
-        [string]$fontFamily = "Roboto"  # Allow user to specify a custom font family
-    )
-
-    begin {
-        # Initialize a string builder for HTML content
-        $htmlContent = [System.Text.StringBuilder]::new()
-    }
-
-    process {
-        # Create a header section with the logo, summary, and font for HTML output
-        if ($Html -or $RawHTML) {
-            [void]$htmlContent.Append("<!DOCTYPE html>")
-            [void]$htmlContent.Append("<html>")
-            [void]$htmlContent.Append("<head>")
-            [void]$htmlContent.Append("<meta charset='UTF-8'>")
-            [void]$htmlContent.Append("<meta name='viewport' content='width=device-width, initial-scale=1.0'>")
-            [void]$htmlContent.Append("<title>Microsoft 365 Tenant Report</title>")
-            [void]$htmlContent.Append("<style>")
-            # Existing Styles
-            [void]$htmlContent.Append("body { font-family: '$fontFamily', sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }")
-            [void]$htmlContent.Append("h2 { color: #FFFFFF; margin: 10px; }")
-            [void]$htmlContent.Append("h3 { color: #151515; margin-top: 30px; margin-bottom: 10px; }")
-            [void]$htmlContent.Append(".report-header { background-color: #13ba7c; color: white; padding: 20px 0; text-align: center; }")
-            [void]$htmlContent.Append(".report-header img { width: 150px; height: auto; }")
-            [void]$htmlContent.Append(".content { font-family: '$fontFamily', sans-serif; padding: 20px; }")
-            
-            # Accordion Styles
-            [void]$htmlContent.Append("
-                /* Accordion Styles */
-                details {
-                    margin-bottom: 10px;
-                }
-
-                summary {
-                    cursor: pointer;
-                    font-weight: bold;
-                    padding: 10px;
-                    background-color: #f2f2f2;
-                    border: 1px solid #ddd;
-                    border-radius: 5px;
-                }
-
-                summary::-webkit-details-marker {
-                    display: none;
-                }
-
-                /* Enhanced CSS for Rounded Tables */
-                table.rounded-table {
-                    width: 100%;
-                    border-collapse: separate; /* Allows border-radius to work */
-                    border-spacing: 0;
-                    border: 1px solid #ddd;
-                    border-radius: 8px; /* Rounded corners */
-                    overflow: hidden; /* Ensures child elements don't overflow the rounded corners */
-                    margin-bottom: 20px;
-                    font-family: 'Inter', sans-serif;
-                }
-                table.rounded-table thead tr {
-                    background-color: #13ba7c;
-                    color: white;
-                }
-                table.rounded-table th,
-                table.rounded-table td {
-                    border: 1px solid #ddd;
-                    padding: 12px;
-                    text-align: left;
-                }
-                table.rounded-table tbody tr:nth-child(even) {
-                    background-color: #f9f9f9;
-                }
-                table.rounded-table tbody tr:nth-child(odd) {
-                    background-color: #ffffff;
-                }
-                /* Optional: Add hover effect */
-                table.rounded-table tbody tr:hover {
-                    background-color: #f1f1f1;
-                }
-
-                /* Responsive Design */
-                @media (max-width: 768px) {
-                    table.rounded-table thead {
-                        display: none;
-                    }
-                    table.rounded-table, 
-                    table.rounded-table tbody, 
-                    table.rounded-table tr, 
-                    table.rounded-table td {
-                        display: block;
-                        width: 100%;
-                    }
-                    table.rounded-table tr {
-                        margin-bottom: 15px;
-                    }
-                    table.rounded-table td {
-                        text-align: right;
-                        padding-left: 50%;
-                        position: relative;
-                    }
-                    table.rounded-table td::before {
-                        content: attr(data-label);
-                        position: absolute;
-                        left: 0;
-                        width: 50%;
-                        padding-left: 15px;
-                        font-weight: bold;
-                        text-align: left;
-                    }
-                }
-                      /* New CSS for Nested Tables */
-  table.rounded-table table {
-      color: #000000; /* Set font color to black for nested tables */
-      background-color: #ffffff; /* Optional: Set background color if needed */
-  }
-  table.rounded-table table thead tr {
-      background-color: #f2f2f2; /* Optional: Different header color for nested tables */
-                    color: #000000; /* Ensure header text is readable */
-                }
-            ")
-            [void]$htmlContent.Append("</style>")
-            [void]$htmlContent.Append("</head>")
-            [void]$htmlContent.Append("<body>")
-
-            # Add a header section with a logo and summary text
-            [void]$htmlContent.Append("<div class='report-header'>")
-            [void]$htmlContent.Append("<img src='$logoUrl' alt='Logo' /><br/>")
-            [void]$htmlContent.Append("<h2>Microsoft 365 Tenant Report</h2>")
-            [void]$htmlContent.Append("<p>$summaryText</p>")
-            [void]$htmlContent.Append("</div>")
-
-            [void]$htmlContent.Append("<div class='content'>")
-        }
-
-        # Iterate through the datasets in the hashtable
-        foreach ($key in $dataSets.Keys) {
-            $sectionTitle = $key   # The title for the section is the hashtable key
-            $data = $dataSets[$key]  # The data for this section is the hashtable value
-            $itemCount = if ($data.PSObject.Properties.Name -eq 'Info') { 0 } else { $data.Count }
-
-
-             
-
-            if ($Html -or $RawHTML) {
-                # Wrap each table section within <details> and <summary> for collapsible functionality
-                [void]$htmlContent.Append("<details>")
-                [void]$htmlContent.Append("<summary>$sectionTitle ($itemCount)</summary>")
-                [void]$htmlContent.Append((ConvertTo-ObjectToHtmlTable -Objects $data))  # Convert the data to an HTML table
-                [void]$htmlContent.Append("</details>")
-            }
-        }
-
-        # HTML Output: Close the content section and body
-        if ($Html) {
-            [void]$htmlContent.Append("</div></body></html>")
-            $htmlContentString = $htmlContent.ToString()
-            Set-Content -Path $htmlOutputPath -Value $htmlContentString
-            Write-Output "HTML report generated at: $htmlOutputPath"
-        }
-
-        # Raw HTML Output
-        if ($RawHTML) {
-            [void]$htmlContent.Append("</div></body></html>")
-            $htmlContentString = $htmlContent.ToString()
-            return $htmlContentString
-        }
-
-        # JSON Output
-        if ($json) {
-            return $dataSets | ConvertTo-Json
-        }
-
-        # PSObject Output
-        if ($psObject) {
-            return $dataSets
-        }
-    }
-}
-function Compare-JsonDifference {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$firstJson,
-
-        [Parameter(Mandatory = $true)]
-        [string]$secondJson
-    )
-
-    # Convert JSON strings to PowerShell objects
-    try {
-        $firstObject = $firstJson | ConvertFrom-Json -Depth 100
-    }
-    catch {
-        Write-Error "Failed to parse first JSON: $_"
-        return
-    }
-
-    try {
-        $secondObject = $secondJson | ConvertFrom-Json -Depth 100
-    }
-    catch {
-        Write-Error "Failed to parse second JSON: $_"
-        return
-    }
-
-    # Flatten the objects for comparison
-    function FlattenObject {
-        param (
-            [Parameter(Mandatory = $true)]
-            [object]$obj,
-
-            [string]$prefix = ""
-        )
-        $result = [System.Collections.Generic.Dictionary[string, object]]::new()
-
-        foreach ($prop in $obj.PSObject.Properties) {
-            $propName = if ($prefix) { "$prefix.$($prop.Name)" } else { $prop.Name }
-            if ($prop.Value -is [System.Management.Automation.PSCustomObject]) {
-                $flattened = FlattenObject -obj $prop.Value -prefix $propName
-                foreach ($key in $flattened.Keys) {
-                    if (-not $result.ContainsKey($key)) {
-                        $result.Add($key, $flattened[$key])
-                    }
-                }
-            }
-            elseif ($prop.Value -is [System.Collections.IEnumerable] -and -not ($prop.Value -is [string])) {
-                $index = 0
-                foreach ($item in $prop.Value) {
-                    if ($item -is [System.Management.Automation.PSCustomObject]) {
-                        $flattened = FlattenObject -obj $item -prefix "$propName[$index]"
-                        foreach ($key in $flattened.Keys) {
-                            if (-not $result.ContainsKey($key)) {
-                                $result.Add($key, $flattened[$key])
-                            }
-                        }
-                    }
-                    else {
-                        $key = "$propName[$index]"
-                        if (-not $result.ContainsKey($key)) {
-                            $result.Add($key, $item)
-                        }
-                    }
-                    $index++
-                }
-            }
-            else {
-                if (-not $result.ContainsKey($propName)) {
-                    $result.Add($propName, $prop.Value)
-                }
-            }
-        }
-
-        return $result
-    }
-
-    $flatFirst = FlattenObject -obj $firstObject
-    $flatSecond = FlattenObject -obj $secondObject
-
-    # Convert dictionaries to arrays of PSCustomObjects
-    $flatFirstArray = $flatFirst.GetEnumerator() | ForEach-Object {
-        [PSCustomObject]@{
-            Path  = $_.Key
-            Value = $_.Value
-        }
-    }
-
-    $flatSecondArray = $flatSecond.GetEnumerator() | ForEach-Object {
-        [PSCustomObject]@{
-            Path  = $_.Key
-            Value = $_.Value
-        }
-    }
-
-    # Compare the flattened objects using Compare-Object
-    $comparison = Compare-Object -ReferenceObject $flatFirstArray -DifferenceObject $flatSecondArray -Property Path, Value -PassThru
-
-    if ($comparison) {
-        $differences = [System.Collections.Generic.List[PSCustomObject]]::new()
-
-        foreach ($diff in $comparison) {
-            $path = $diff.Path
-            $sideIndicator = $diff.SideIndicator
-
-            switch ($sideIndicator) {
-                "<=" {
-                    $changeType = "Removed"
-                    $oldValue = $diff.Value
-                    $newValue = $null
-                }
-                "=>" {
-                    $changeType = "Added"
-                    $oldValue = $null
-                    $newValue = $diff.Value
-                }
-                default {
-                    $changeType = "Modified"
-                    # Retrieve old and new values
-                    $oldValue = $flatFirst[$path]
-                    $newValue = $flatSecond[$path]
-                }
-            }
-
-            # Only capture meaningful changes
-            if ($changeType -ne "==") {
-                $differences.Add([PSCustomObject]@{
-                    Path       = $path
-                    ChangeType = $changeType
-                    OldValue   = $oldValue
-                    NewValue   = $newValue
-                })
-            }
-        }
-
-        return $differences | Sort-Object Path
-    }
-    else {
-        Write-Output "No differences found between the provided JSON strings."
-    }
-}
-function Invoke-GraphRequestWithPaging {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$Uri,
-
-        [Parameter(Mandatory = $false)]
-        [hashtable]$Headers
-    )
-
-    # Initialize an array to store all results
-    $allResults = [System.Collections.Generic.List[PSObject]]::new()
-
-    do {
-        Write-Verbose "Fetching data from URI: $Uri"
-
-        try {
-            # Invoke the Graph API request with or without headers based on the presence of $Headers
-            if ($PSBoundParameters.ContainsKey('Headers')) {
-                $response = Invoke-MgGraphRequest -Uri $Uri -OutputType PSObject -Headers $Headers
-            } else {
-                $response = Invoke-MgGraphRequest -Uri $Uri -OutputType PSObject
-            }
-        }
-        catch {
-            Write-Error "Failed to fetch data from $Uri. Error: $_"
-            break
-        }
-
-        if ($response.value) {
-            # Append the current page's items to the results
-            $allResults.add($response.value)
-            Write-Verbose "Retrieved $($response.value.Count) items."
-        }
-        else {
-            Write-Verbose "No items found in the current response."
-        }
-
-        # Update the URI to the next page if available
-        if ($response.'@odata.nextLink') {
-            $Uri = $response.'@odata.nextLink'
-        }
-        else {
-            $Uri = $null
-        }
-
-    } while ($Uri)
-
-    return $allResults
-}
-function Send-EmailWithGraphAPI {
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$Recipient, # The recipient's email address
-
-        [Parameter(Mandatory = $true)]
-        [string]$Subject, # The subject of the email
-
-        [Parameter(Mandatory = $true)]
-        [string]$HtmlBody, # The HTML content to send
-
-        [Parameter(Mandatory = $false)]
-        [switch]$Attachment, # Switch to attach the HTML content as a file
-
-        [Parameter(Mandatory = $false)]
-        [string]$Sender = "me"  # Use "me" for the authenticated user, or specify another sender
-    )
-
-    try {
-        # Create the email payload with correct emailAddress structure
-        $emailPayload = @{
-            message         = @{
-                subject      = $Subject
-                body         = @{
-                    contentType = "HTML"
-                    content     = $HtmlBody
-                }
-                toRecipients = @(@{
-                        emailAddress = @{
-                            address = $Recipient
-                        }
-                    })
-            }
-            saveToSentItems = "true"
-        }
-
-        # If the -Attachment parameter is set, attach the HTML content as a file
-        if ($Attachment) {
-            # Convert the HTML body content to base64
-            $htmlFileBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($HtmlBody))
-
-            # Add the attachment to the email payload
-            $emailPayload.message.attachments = @(@{
-                    '@odata.type' = "#microsoft.graph.fileAttachment"
-                    name          = "Report.html"
-                    contentType   = "text/html"
-                    contentBytes  = $htmlFileBase64
-                })
-        }
-
-        # Convert the payload to JSON with increased depth
-        $jsonPayload = $emailPayload | ConvertTo-Json -Depth 10
-
-        # Send the email using Microsoft Graph API
-        Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/$Sender/sendMail" `
-            -Method POST `
-            -Body $jsonPayload `
-            -ContentType "application/json"
-                              
-        Write-Host "Email sent successfully to $Recipient"
-    }
-    catch {
-        Write-Error "Error sending email: $_"
-    }
-}
-
-#End of Report Functions
+#End of Functions
 ############################################################################################################
+
+#Connect to MS Graph with App Registration
+Import-Module Microsoft.Graph.Authentication
+
+Connect-MgGraphHelper -clientId $clientId -clientSecret $clientSecret -tenantId $tenantId
 
 #Cache Data in $Script Variables
 $script:CacheGroups = Invoke-GraphRequestWithPaging -Uri "https://graph.microsoft.com/v1.0/groups"
 $script:CacheUsers = Invoke-GraphRequestWithPaging -Uri "https://graph.microsoft.com/v1.0/users"
 $script:CacheRoles = Invoke-GraphRequestWithPaging -Uri "https://graph.microsoft.com/v1.0/directoryRoles"
 
-# Save Data in Vars
+# Save Data in Vars for the ordered array
 $unusedLicenses = Get-UnusedLicenses
 $AssignedRoles = Get-AssignedRoleMembers
 $recentRoleAssignments = Get-RecentAssignedRoleMembers
@@ -1560,35 +1965,34 @@ $licensedUsers = Get-LicensedUsers
 $latestCreatedUsers = Get-LatestCreatedUsers
 $inactiveUsers = Get-InactiveUsers
 $caPolicyModifications = Get-ConditionalAccessPolicyModifications
+$Pax8LicenseDetails = Get-Pax8LicenseDetails -ClientID $Pax8ClientID -ClientSecret $Pax8ClientSecret -CompanyId $Pax8CompanyID
 
 
-
-
-
-# Create a hashtable where the keys are the section titles and the values are the datasets
-$dataSets = @{
-    "Unused Licenses"                         = $unusedLicenses
-    "AssignedRoles"                           = $AssignedRoles
-    "Recent Role Assignments"                 = $recentRoleAssignments
-    "Enterprise App Registrations"            = $AppsAndRegistrations
-    "Recent Groups and Members"               = $GroupsAndMembers
-    "Recent Devices"                          = $recentDevices
-    "Licensed Users"                          = $licensedUsers
-    "Latest Created Users"                    = $latestCreatedUsers
-    "Inactive Users"                          = $inactiveUsers
-    "Conditional Access Policy Modifications" = $caPolicyModifications
-    
-}
+# Define an ordered array of objects with Title and Data properties
+$dataSets = @(
+    @{ Title = "Latest Created Users"; Data = $latestCreatedUsers },
+    @{ Title = "Inactive Users"; Data = $inactiveUsers },
+    @{ Title = "Licensed Users"; Data = $licensedUsers },
+    @{ Title = "Unused Licenses"; Data = $unusedLicenses },
+    @{ Title = "Pax8 License Details"; Data = $Pax8LicenseDetails },
+    @{ Title = "Recent Groups and Members"; Data = $GroupsAndMembers },
+    @{ Title = "Recent Role Assignments"; Data = $recentRoleAssignments },
+    @{ Title = "Assigned Roles"; Data = $AssignedRoles },
+    @{ Title = "Enterprise App Registrations"; Data = $AppsAndRegistrations },
+    @{ Title = "Recent Devices"; Data = $recentDevices },
+    @{ Title = "Conditional Access Policy Modifications"; Data = $caPolicyModifications }
+)
 
 # Generate the HTML report and send it via email
-$htmlcontent = GenerateReport -DataSets $dataSets -RawHTML -Html -HtmlOutputPath ".\M365Report-NMM.html"
+$htmlContent = GenerateReport -DataSets $dataSets -RawHTML -Html
 
 #Mail sned is still if you auth with a user, so no mail send from Runbook yet.
-Send-EmailWithGraphAPI -Recipient "test@msp.com" -Subject "M365 Report - $(Get-Date -Format "yyyy-MM-dd")" -HtmlBody ($htmlContent | Out-String) -Attachment
+Send-EmailWithGraphAPI -Recipient $MailReportRecipient -Sender $MailReportSender -Subject "M365 Report - $(Get-Date -Format "yyyy-MM-dd")" -HtmlBody ($htmlContent | Out-String) -Attachment
 
 
 #Todo: 
-# - Setup with azure communication service or appsreg for email send
 # - Use the Cache data in the variables to reduce the number of API calls
 # - Add a seperate function that can enumerate the object IDs and resolve the display names for the settings in the CA Policy Modifications
+# - Document the shared mailbox setup
+# - Create nice summary for the main mail body and then add the details in the attachment
 
