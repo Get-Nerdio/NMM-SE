@@ -1,6 +1,7 @@
 <#
 .SYNOPSIS
     Generates a comprehensive Microsoft 365 environment report using Microsoft Graph API and Pax8 API.
+    #Pax8 API Code i used from Luke Whitlock his module: https://github.com/lwhitelock/Pax8API Thanks Luke!
 
 .DESCRIPTION
     The M365Report.ps1 script connects to Microsoft Graph API and Pax8 API to gather detailed information about the Microsoft 365 environment. 
