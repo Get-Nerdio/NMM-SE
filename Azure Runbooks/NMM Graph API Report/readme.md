@@ -16,36 +16,36 @@ Keep in mind that the script is using the Pax8 API to get some extra details for
 Further for each customer you assign the runbook to you need to change the variables values to the corresponding customer.
 
    - Create a new inherited variable in NMM with the following values:
-     - Name: M365ReportClientId
-     - Value: The Client ID of the App Registration
+     - **Name:** M365ReportClientId
+     - **Value:** The Client ID of the App Registration
    - Create a new inherited variable in NMM with the following values:
-     - Name: Pax8CompanyID
-     - Value: The Company ID of the Pax8 API
+     - **Name:** Pax8CompanyID
+     - **Value:** The Company ID of the Pax8 API
    - Create a new inherited variable in NMM with the following values:
-     - Name: Pax8ClientID
-     - Value: The Client ID of the Pax8 API
+     - **Name:** Pax8ClientID
+     - **Value:** The Client ID of the Pax8 API
    - Create a new inherited variable in NMM with the following values:
-     - Name: M365ReportMailRecip
-     - Value: The email address of the recipient of the report
+     - **Name:** M365ReportMailRecip
+     - **Value:** The email address of the recipient of the report
    - Create a new inherited variable in NMM with the following values:
-     - Name: M365ReportMailSender (See step 5 below)
-     - Value: The email address of the sender of the report
+     - **Name:** M365ReportMailSender (See step 5 below)
+     - **Value:** The email address of the sender of the report
 
 2. **Create NMM Secure Variables**:
 Nerdio KB Article: [Secure Account Variables](https://nmmhelp.getnerdio.com/hc/en-us/articles/25498291119629-Scripted-Actions-Account-Level-Variables)
 The Secure Variables need to be set per customer, so you need to create one for each customer you want to run the report for.
    - Create a new secure variable in NMM with the following values:
-     - Name: Pax8Secret
-     - Value: The Client Secret of the Pax8 API
+     - **Name:** Pax8Secret
+     - **Value:** The Client Secret of the Pax8 API
    - Create a new secure variable in NMM with the following values:
-     - Name: M365ReportSecret
-     - Value: The Client Secret of the Azure AD App Registration
+     - **Name:** M365ReportSecret
+     - **Value:** The Client Secret of the Azure AD App Registration
 
 3. **Create Runbook in NMM**:
    - Create a new runbook in NMM with the following values:
-     - Name: M365Report
-     - Script: The contents of the M365Report script: [M365Report.ps1](https://github.com/Get-Nerdio/NMM-SE/blob/main/Azure%20Runbooks/NMM%20Graph%20API%20Report/M365Report.ps1)
-     - Note: You can create the runbook on the Global level in NMM so you can assign it to multiple customer environments, dont forget to update the variables values corrosponding to the managed tenant environment of that customer.
+     - **Name:** M365Report
+     - **Script:** The contents of the M365Report script: [M365Report.ps1](https://github.com/Get-Nerdio/NMM-SE/blob/main/Azure%20Runbooks/NMM%20Graph%20API%20Report/M365Report.ps1)
+     - **Note:** You can create the runbook on the Global level in NMM so you can assign it to multiple customer environments, dont forget to update the variables values corrosponding to the managed tenant environment of that customer.
 
 4. **Enable Runbook Integration in NMM**:
    - Go to the account where you want to run the report from and click on the "Settings" menu and click on Azure.
@@ -62,7 +62,7 @@ The Secure Variables need to be set per customer, so you need to create one for 
    - Give the App Registration a Name and selecte the Single Tenant option.
    - Then generate a client secret for the App Registration, and note this down for later use, we need to save this client secret in the NMM Secure Variables.
    - Use the following permissions:
-   
+
      - "Reports.Read.All"
      - "ReportSettings.Read.All"
      - "User.Read.All"
