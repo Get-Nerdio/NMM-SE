@@ -61,7 +61,7 @@ The Secure Variables need to be set per customer, so you need to create one for 
    - Create an App Registration in Azure AD with the necessary permissions to access the Microsoft Graph API.
    - Give the App Registration a Name and selecte the Single Tenant option.
    - Then generate a client secret for the App Registration, and note this down for later use, we need to save this client secret in the NMM Secure Variables.
-   - Use the following permissions:
+   - Use the following Graph API "Application" permissions:
 
      - "Reports.Read.All"
      - "ReportSettings.Read.All"
