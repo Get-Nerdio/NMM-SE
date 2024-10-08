@@ -8,65 +8,67 @@ This script is designed to generate a comprehensive report on the Microsoft 365 
 
 Before running the script, ensure you have the following prerequisites:
 
-1. **Managed Identities Azure Automation**:
-   - Enable the managed identity in the Azure Automation account managed by NMM or feel free to create your own but keep in mind you need to run the script from there instead of NMM Runbooks.
-   - Assign the necessary permissions to the managed identity. Use the code below to assign the necessary permissions to the managed identity.
-    - Make sure you replace the $managedIdentityName with the name of your managed identity. You can find the Name if you navigate within a customer to Settings -> Azure -> Azure runbooks scripted actions and click the Enabled button, a screenshot will be shown with the name of the Automation Account.
+1. **Create NMM Inherited Variables**:
 
-```powershell
+Keep in mind that the script is using the Pax8 API to get some extra details for the report, if you are not a Pax8 customer you can ignore the Pax8 variables.
+Further for each customer you assign the runbook to you need to change the variables values to the corresponding customer.
 
-$TenantId = '000-000-0000-000' #Tenant ID M365 Environment
+   - Create a new inherited variable in NMM with the following values:
+     - Name: M365ReportClientId
+     - Value: The Client ID of the App Registration
+   - Create a new inherited variable in NMM with the following values:
+     - Name: Pax8CompanyID
+     - Value: The Company ID of the Pax8 API
+   - Create a new inherited variable in NMM with the following values:
+     - Name: Pax8ClientID
+     - Value: The Client ID of the Pax8 API
+   - Create a new inherited variable in NMM with the following values:
+     - Name: M365ReportMailRecip
+     - Value: The email address of the recipient of the report
+   - Create a new inherited variable in NMM with the following values:
+     - Name: M365ReportMailSender (See step 5 below)
+     - Value: The email address of the sender of the report
 
-$managedIdentityName = "nmm-app-runbooks-06e6" #Name of the Managed Identity of the Automation Account.
+2. **Create NMM Secure Variables**:
+   - Create a new secure variable in NMM with the following values:
+     - Name: Pax8Secret
+     - Value: The Client Secret of the Pax8 API
+   - Create a new secure variable in NMM with the following values:
+     - Name: M365ReportSecret
+     - Value: The Client Secret of the Azure AD App Registration
 
-Connect-MgGraph -Scopes Application.Read.All, AppRoleAssignment.ReadWrite.All -TenantId $TenantId #Authenticate with your Global Admin account or Application Administrator account
+3. **Create Runbook in NMM**:
+   - Create a new runbook in NMM with the following values:
+     - Name: M365Report
+     - Script: The contents of the M365Report script: [M365Report.ps1](https://github.com/Get-Nerdio/NMM-SE/blob/main/Azure%20Runbooks/NMM%20Graph%20API%20Report/M365Report.ps1)
+     - Note: You can create the runbook on the Global level in NMM so you can assign it to multiple customer environments, dont forget to update the variables values corrosponding to the managed tenant environment of that customer.
 
-$permissions = @(
-    "Reports.Read.All"
-    "ReportSettings.Read.All"
-    "User.Read.All"
-    "Group.Read.All"
-    "Mail.Read"
-    "Mail.Send"
-    "Calendars.Read"
-    "Sites.Read.All"
-    "Directory.Read.All"
-    "RoleManagement.Read.Directory"
-    "AuditLog.Read.All"
-    "Organization.Read.All"
-)
+4. **Create App Registration**:
+   - Create an App Registration in Azure AD with the necessary permissions to access the Microsoft Graph API.
+   - Give the App Registration a Name and selecte the Single Tenant option.
+   - Then generate a client secret for the App Registration, and note this down for later use, we need to save this client secret in the NMM Secure Variables.
+   - Use the following permissions:
+     - "Reports.Read.All"
+     - "ReportSettings.Read.All"
+     - "User.Read.All"
+     - "Group.Read.All"
+     - "Mail.Read"
+     - "Mail.Send"
+     - "Calendars.Read"
+     - "Sites.Read.All"
+     - "Directory.Read.All"
+     - "RoleManagement.Read.Directory"
+     - "AuditLog.Read.All"
+     - "Organization.Read.All"
 
-$managedIdentity = (Get-MgServicePrincipal -Filter "DisplayName eq '$managedIdentityName'")
-$managedIdentityId = $managedIdentity.Id
-$getPerms = (Get-MgServicePrincipal -Filter "AppId eq '00000003-0000-0000-c000-000000000000'").AppRoles | Where { $_.Value -in $permissions }
-$graphAppId = (Get-MgServicePrincipal -Filter "AppId eq '00000003-0000-0000-c000-000000000000'").Id
+5. **Create Shared Mailbox**:
+   - Create a new Shared Mailbox in your Microsoft 365 environment this is used to send the report to the recipient email address.
 
-foreach ($perm in $getPerms) {
-    New-MgServicePrincipalAppRoleAssignment -ServicePrincipalId $managedIdentityId `
-        -PrincipalId $managedIdentityId -ResourceId $graphAppId -AppRoleId $perm.id
-}
+6. **Optional: Create Pax8 API Key**:
+    - If you are a Pax8 customer you can create a new API key in your Pax8 account and note this down for later use, we need to save this API key in the NMM Inherited Variables.
+    - Link to KB article: [Pax8 API setup](https://devx.pax8.com/docs/integrationrequest)
 
-```
 
-2. **Graph API Permissions**:
-   - Ensure the managed identity has the required permissions to access the Microsoft Graph API.
-   - This script will automatically assign the necessary permissions to the managed identity.
-   - You can verify the permissions in the Entra portal under Enterprise applications -> Managed identity name -> API permissions.
-   - The following permissions are required:
-     - Reports.Read.All
-     - ReportSettings.Read.All
-     - User.Read.All
-     - Group.Read.All
-     - Mail.Read
-     - Mail.Send
-     - Calendars.Read
-     - Sites.Read.All
-     - Directory.Read.All
-     - RoleManagement.Read.Directory
-     - AuditLog.Read.All
-     - Organization.Read.All
 
-3. **NMM Runbook**:
-- Paste the contents of the M365Report script into a new runbook in NMM.
-- Do a test run
-- Set a schedule to run the runbook as needed.
+
+
