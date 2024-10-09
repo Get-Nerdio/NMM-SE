@@ -27,5 +27,6 @@ Get-ChildItem -Recurse -Path .\Modules\*.psm1\* | Unblock-File -Confirm:$false
 ```
 
 - Accept the license and the script open a new window where you can select the options.
+- Besides "Live Diag" mode afther the script has finished a folder will open with a zip and extracted folder where you can find a nice html report.
 
 ![Menu MSRD-Collect Tool](https://github.com/user-attachments/assets/ccfd0b12-1f8e-49a0-9c7b-fc5d36d74849)
