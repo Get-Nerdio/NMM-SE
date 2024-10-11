@@ -60,7 +60,7 @@ $clientId = $InheritedVars.M365ReportClientId #Client ID of the Azure AD App Reg
 $clientSecret = $SecureVars.M365ReportSecret #Client Secret of the Azure AD App Registration
 $Pax8CompanyID = $InheritedVars.Pax8CompanyID #Company ID of the Pax8 API
 $Pax8ClientID = $InheritedVars.Pax8ClientID #Client ID of the Pax8 API
-$Pax8ClientSecret = $SecureVars.Pax8ClientSecret #Client Secret of the Pax8 API
+$Pax8ClientSecret = $SecureVars.Pax8Secret #Client Secret of the Pax8 API
 $MailReportRecipient = $InheritedVars.M365ReportMailRecip #Mail recipient of the report
 $MailReportSender = $InheritedVars.M365ReportMailSender #Mail sender of the report
 
@@ -383,7 +383,7 @@ function Compare-JsonDifference {
 
     # Convert JSON strings to PowerShell objects
     try {
-        $firstObject = $firstJson | ConvertFrom-Json -Depth 10
+        $firstObject = $firstJson | ConvertFrom-Json
     }
     catch {
         Write-Error "Failed to parse first JSON: $_"
@@ -391,7 +391,7 @@ function Compare-JsonDifference {
     }
 
     try {
-        $secondObject = $secondJson | ConvertFrom-Json -Depth 10
+        $secondObject = $secondJson | ConvertFrom-Json
     }
     catch {
         Write-Error "Failed to parse second JSON: $_"
@@ -580,10 +580,10 @@ function Connect-Pax8 {
         grant_type    = "client_credentials"
     }
     
-    $json = $auth | ConvertTo-json -Depth 2
+    $json = $auth | ConvertTo-json
 
     try {
-        $Response = Invoke-WebRequest -Method POST -Uri 'https://login.pax8.com/oauth/token' -ContentType 'application/json' -Body $json
+        $Response = Invoke-WebRequest -Method POST -Uri 'https://login.pax8.com/oauth/token' -ContentType 'application/json' -Body $json -UseBasicParsing
         $script:Pax8Token = ($Response | ConvertFrom-Json).access_token
         $script:Pax8BaseURL = 'https://api.pax8.com/v1/'
         $script:Pax8BaseURLv2 = 'https://app.pax8.com/p8p/api-v2/1/'
@@ -771,14 +771,14 @@ function Invoke-Pax8Request {
 
             try {
                 if (($Method -eq "put") -or ($Method -eq "post") -or ($Method -eq "delete")) {
-                    $Response = Invoke-WebRequest -Method $method -Uri ($Script:Pax8BaseURL + $Resource) -ContentType 'application/json' -Body $Body -Headers $headers -ea stop
+                    $Response = Invoke-WebRequest -Method $method -Uri ($Script:Pax8BaseURL + $Resource) -ContentType 'application/json' -Body $Body -Headers $headers -ea stop -UseBasicParsing
                     $Result = $Response | ConvertFrom-Json
                 }
                 else {
                     $Complete = $false
                     $PageNo = 0
                     $Result = do {
-                        $Response = Invoke-WebRequest -Method $method -Uri ($Script:Pax8BaseURL + $Resource + "?page=$PageNo&size=200" + $ResourceFilter) -ContentType 'application/json' -Headers $headers -ea stop
+                        $Response = Invoke-WebRequest -Method $method -Uri ($Script:Pax8BaseURL + $Resource + "?page=$PageNo&size=200" + $ResourceFilter) -ContentType 'application/json' -Headers $headers -ea stop -UseBasicParsing
                         $JSON = $Response | ConvertFrom-Json
                         if ($JSON.Page) {
                             if (($JSON.Page.totalPages - 1) -eq $PageNo -or $JSON.Page.totalPages -eq 0) {
@@ -798,7 +798,7 @@ function Invoke-Pax8Request {
                 if ($_.Response.StatusCode -eq 429) {
                     Write-Warning "Rate limit exceeded. Waiting to try again."
                     Start-Sleep 8
-                    $Result = Invoke-Pax8Request -Method $Method -Resource $Resource -ResourceFilter $ResourceFilter -Body $Body
+                    $Result = Invoke-Pax8Request -Method $Method -Resource $Resource -ResourceFilter $ResourceFilter -Body $Body -UseBasicParsing
                 }
                 else {
                     Write-Error "An Error Occured $($_) "
@@ -810,14 +810,14 @@ function Invoke-Pax8Request {
         else {
             try {
                 if (($Method -eq "put") -or ($Method -eq "post") -or ($Method -eq "delete")) {
-                    $Response = Invoke-WebRequest -Method $method -Uri ($script:Pax8BaseURLv2 + $Resource) -ContentType 'application/json' -Body $Body -Headers $headers -ea stop
+                    $Response = Invoke-WebRequest -Method $method -Uri ($script:Pax8BaseURLv2 + $Resource) -ContentType 'application/json' -Body $Body -Headers $headers -ea stop -UseBasicParsing
                     $Result = $Response | ConvertFrom-Json
                 }
                 else {
                     $Complete = $false
                     $PageNo = 0
                     $Result = do {
-                        $Response = Invoke-WebRequest -Method $method -Uri ($script:Pax8BaseURLv2 + $Resource + "?page=$PageNo&size=200" + $ResourceFilter) -ContentType 'application/json' -Headers $headers -ea stop
+                        $Response = Invoke-WebRequest -Method $method -Uri ($script:Pax8BaseURLv2 + $Resource + "?page=$PageNo&size=200" + $ResourceFilter) -ContentType 'application/json' -Headers $headers -ea stop -UseBasicParsing
                         $JSON = $Response | ConvertFrom-Json
                         $Complete = $true
                         $JSON
@@ -828,7 +828,7 @@ function Invoke-Pax8Request {
                 if ($_.Response.StatusCode -eq 429) {
                     Write-Warning "Rate limit exceeded. Waiting to try again."
                     Start-Sleep 8
-                    $Result = Invoke-Pax8Request -Method $Method -Resource $Resource -ResourceFilter $ResourceFilter -Body $Body
+                    $Result = Invoke-Pax8Request -Method $Method -Resource $Resource -ResourceFilter $ResourceFilter -Body $Body -UseBasicParsing
                 }
                 else {
                     Write-Error "An Error Occured $($_) "
@@ -911,7 +911,7 @@ function Send-EmailWithGraphAPI {
             # Add the attachment to the email payload
             $emailPayload.message.attachments = @(@{
                     '@odata.type' = "#microsoft.graph.fileAttachment"
-                    name          = "Report.html"
+                    name          = "Report - $($EnvironmentVars.CustomerName) - $(Get-Date -Format "yyyy-MM-dd").html"
                     contentType   = "text/html"
                     contentBytes  = $htmlFileBase64
                 })
@@ -1988,12 +1988,8 @@ $dataSets = @(
 $htmlContent = GenerateReport -DataSets $dataSets -RawHTML -Html
 
 #Mail sned is still if you auth with a user, so no mail send from Runbook yet.
-Send-EmailWithGraphAPI -Recipient $MailReportRecipient -Sender $MailReportSender -Subject "M365 Report - $(Get-Date -Format "yyyy-MM-dd")" -HtmlBody ($htmlContent | Out-String) -Attachment
+Send-EmailWithGraphAPI -Recipient $MailReportRecipient -Sender $MailReportSender -Subject "M365 Report - $(Get-Date -Format "yyyy-MM-dd") - $($EnvironmentVars.CustomerName)" -HtmlBody ($htmlContent | Out-String) -Attachment
 
 
-#Todo: 
-# - Use the Cache data in the variables to reduce the number of API calls
-# - Add a seperate function that can enumerate the object IDs and resolve the display names for the settings in the CA Policy Modifications
-# - Document the shared mailbox setup
-# - Create nice summary for the main mail body and then add the details in the attachment
+
 
