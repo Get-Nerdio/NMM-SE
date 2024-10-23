@@ -56,7 +56,7 @@ Start-Process -FilePath $DownloadPath -ArgumentList "/allusers" | Out-Null
 #Remove previous installers
 Write-Host "OneDrive installed successfully"
 Write-Host "Cleaning-up the installers"
-start-sleep 10
+start-sleep 30
 Remove-Item $DownloadPath -Force
 
 Write-Host "Install and clean-up successful"
