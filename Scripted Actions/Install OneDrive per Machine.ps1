@@ -3,7 +3,7 @@
 
 <#
 Notes:
-This script will download the OneDriveSetup.exe file from the Microsoft link, remove per-user OneDrive, and install OneDriver per-machine for all users.
+This script will download the OneDriveSetup.exe file from the Microsoft link, remove per-user OneDrive, and install OneDrive per-machine for all users.
 #>
 
 # Define the URL of the OneDriveSetup.exe file
@@ -56,7 +56,7 @@ Start-Process -FilePath $DownloadPath -ArgumentList "/allusers" | Out-Null
 #Remove previous installers
 Write-Host "OneDrive installed successfully"
 Write-Host "Cleaning-up the installers"
-sleep 10
+start-sleep 10
 Remove-Item $DownloadPath -Force
 
 Write-Host "Install and clean-up successful"
