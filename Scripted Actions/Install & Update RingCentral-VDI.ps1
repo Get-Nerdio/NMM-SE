@@ -163,16 +163,16 @@ catch {
 ###################################################################################################
 
 $ErrorActionPreference = "Stop"
-$logfile = "C:\temp\$(get-content env:computername)-remove-RCApps.log"
+$2ndlogfile = "C:\Windows\temp\$(get-content env:computername)-remove-RCApps.log"
 $dtFormat = 'dd-MMM-yyyy HH:mm:ss'
-add-content $logfile -value "----------------------------------------------------------------------------------------------------"
-add-content $logfile -value "$(Get-Date -Format $dtFormat) Attempting to remove RC apps"
+add-content $2ndlogfile -value "----------------------------------------------------------------------------------------------------"
+add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Attempting to remove RC apps"
 
 $isAdmin = (New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-add-content $logfile -value "$(Get-Date -Format $dtFormat) Running in Administrator context: $isAdmin"
+add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Running in Administrator context: $isAdmin"
 
 if (!$isAdmin){
-    add-content $logfile -value "$(Get-Date -Format $dtFormat) Script must be executed as an administrator: powershell.exe -noprofile -executionpolicy Bypass -file `"admin.ps1`""
+    add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Script must be executed as an administrator: powershell.exe -noprofile -executionpolicy Bypass -file `"admin.ps1`""
     exit(-5)
 }
 
@@ -181,11 +181,11 @@ get-process | where-object {$_.Company -like "*RingCentral*" -or $_.Path -like "
 
 #Uninstall any RingCentral installed applications that the administrator can remove
 foreach ($app in (Get-WmiObject -Class Win32_Product | Where-Object{$_.Vendor -like "*RingCentral*"})) {
-    add-content $logfile -value "$(Get-Date -Format $dtFormat) Attempting to uninstall $($app)"
+    add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Attempting to uninstall $($app)"
     try {
         $app.Uninstall() | Out-Null 
     } catch {
-        add-content $logfile -value $_
+        add-content $2ndlogfile -value $_
     }
 }
 
@@ -196,36 +196,36 @@ foreach($path in $paths) {
     if (test-path($path)) {
         $list = Get-ItemProperty "$path\*" | Where-Object {$_.DisplayName -like "*RingCentral*"} | Select-Object -Property PSPath, UninstallString
         foreach($regkey in $list) {
-            add-content $logfile -value "$(Get-Date -Format $dtFormat) Examining Registry Key $($regkey.PSpath)"
+            add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Examining Registry Key $($regkey.PSpath)"
             try {
                 $cmd = $regkey.UninstallString
                 if ($cmd -like "msiexec.exe*") {
-                    add-content $logfile -value "$(Get-Date -Format $dtFormat)     Uninstall string is using msiexec.exe"
+                    add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat)     Uninstall string is using msiexec.exe"
                     if ($cmd -notlike "*/X*") { 
-                        add-content $logfile -value "$(Get-Date -Format $dtFormat)     no /X flag - this isn't for uninstalling"
+                        add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat)     no /X flag - this isn't for uninstalling"
                         $cmd = "" 
                     } #don't do anything if it's not an uninstall
                     elseif ($cmd -notlike "*/qn*") { 
-                        add-content $logfile -value "$(Get-Date -Format $dtFormat)     adding /qn flag to try and uninstall quietly"
+                        add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat)     adding /qn flag to try and uninstall quietly"
                         $cmd = "$cmd /qn" 
                     } #don't display UI
                 }
                 if ($cmd) {
-                    add-content $logfile -value "$(Get-Date -Format $dtFormat)     executing $($cmd)"
+                    add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat)     executing $($cmd)"
                     cmd.exe /c "$($cmd)"
-                    add-content $logfile -value "$(Get-Date -Format $dtFormat)     done"
+                    add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat)     done"
                 }
             } catch {
-                add-content $logfile -value $_
+                add-content $2ndlogfile -value $_
             }
         }
         $list = Get-ItemProperty "$path\*" | Where-Object {$_.DisplayName -like "*RingCentral*"} | Select-Object -Property PSPath
         foreach($regkey in $list) {
-            add-content $logfile -value "$(Get-Date -Format $dtFormat) Removing Registry Key $($regkey.PSpath)"
+            add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Removing Registry Key $($regkey.PSpath)"
             try {
                 remove-item $regkey.PSPath -recurse -force
             } catch {
-                add-content $logfile -value $_
+                add-content $2ndlogfile -value $_
             }
         }
     } ##else { add-content $logfile -value "$(Get-Date -Format $dtFormat) Path $($item) not found" }
@@ -241,23 +241,23 @@ if (Get-PSDrive -Name HKU -ErrorAction SilentlyContinue) {
 New-PSDrive -PSProvider registry -Root HKEY_USERS        -Name HKU  | Out-Null
 
 if (test-path(${Env:ProgramFiles(x86)})) { $pf86 = ${Env:ProgramFiles(x86)} }  else { $pf86 = "C:\Program Files (x86)" }
-add-content $logfile -value "$(Get-Date -Format $dtFormat) Program Files (x86) location: $($pf86)"
+add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Program Files (x86) location: $($pf86)"
 
 if (test-path(${Env:ProgramFiles}))      { $pf = ${Env:ProgramFiles} }         else { $pf = "C:\Program Files" }
-add-content $logfile -value "$(Get-Date -Format $dtFormat) Program Files location: $($pf)"
+add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Program Files location: $($pf)"
 
 if (test-path(${Env:ProgramData}))       { $pd = ${Env:ProgramData} }          else { $pd = "C:\ProgramData" }
-add-content $logfile -value "$(Get-Date -Format $dtFormat) ProgramData location: $($pd)"
+add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) ProgramData location: $($pd)"
 
 if (test-path(${Env:PUBLIC}))            { $pub = ${Env:PUBLIC} }              else { $pub = "C:\Users\Public" }
-add-content $logfile -value "$(Get-Date -Format $dtFormat) Public profile location: $($pub)"
+add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Public profile location: $($pub)"
 
 if (test-path(${Env:SystemRoot}))        { $win = ${Env:SystemRoot} }          else { $win = "C:\Windows" }
-add-content $logfile -value "$(Get-Date -Format $dtFormat) Windows root location: $($win)"
+add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Windows root location: $($win)"
 
 #Populate the lists of items to remove
 $Brand = "RingCentral"  #RingCentral/TELUS/ATT/Avaya/BT/Rainbow/Unify
-add-content $logfile -value "$(Get-Date -Format $dtFormat) Brand set to: $($Brand)"
+add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Brand set to: $($Brand)"
 
 $HKLM = [System.Collections.ArrayList]@()
 $HKLM.add("HKLM:\SOFTWARE\$Brand") | Out-Null
@@ -312,11 +312,11 @@ $HKLM.add("HKLM:\SOFTWARE\WOW6432Node\RingCentralMeetings") | Out-Null
 foreach ($regkey in $HKLM) {
     try {
         if (test-path($regkey)) {
-            add-content $logfile -value "$(Get-Date -Format $dtFormat) Removing Registry Key $($regkey)"
+            add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Removing Registry Key $($regkey)"
             remove-item $regkey -recurse -force
-        } ##else { add-content $logfile -value "$(Get-Date -Format $dtFormat) Registry Key $($regkey) not found" }
+        } ##else { add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Registry Key $($regkey) not found" }
     } catch {
-        add-content $logfile -value $_
+        add-content $2ndlogfile -value $_
     }
 }
 
@@ -345,11 +345,11 @@ $MachineFolders.add("$win\Prefetch\*SOFTPHONE*.pf") | Out-Null
 foreach ($item in $MachineFolders) {
     try {
         if (test-path($item)) {
-            add-content $logfile -value "$(Get-Date -Format $dtFormat) Removing $($item)"
+            add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Removing $($item)"
             remove-item $item -recurse -force
-        } ##else { add-content $logfile -value "$(Get-Date -Format $dtFormat) Path $($item) not found" }
+        } ##else { add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Path $($item) not found" }
     } catch {
-        add-content $logfile -value $_
+        add-content $2ndlogfile -value $_
     }
 }
 
@@ -360,19 +360,19 @@ $paths = @("HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\Folders",
            "HKLM:\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules")
 foreach($path in $paths) {
     if (test-path($path)) {
-        add-content $logfile -value "$(Get-Date -Format $dtFormat) Checking registry path: $($path)"
+        add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Checking registry path: $($path)"
         Get-Item -Path $path | Select-Object -ExpandProperty Property | ForEach-Object {
             $propValue = (Get-ItemProperty -Path "$path" -Name "$_")."$_"
             if (($_ -like "*RingCentral*") -or ($propValue -like "*RingCentral*")) {
                 try {
-                    add-content $logfile -value "$(Get-Date -Format $dtFormat)     Removing property: $($_) containing value: $($propValue)"
+                    add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat)     Removing property: $($_) containing value: $($propValue)"
                     Remove-ItemProperty -path "$path" -Name $_
                 } catch {
-                    add-content $logfile -value $_
+                    add-content $2ndlogfile -value $_
                 }
             }
         }
-    } ##else { add-content $logfile -value "$(Get-Date -Format $dtFormat) Path $($item) not found" }
+    } ##else { add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Path $($item) not found" }
 }
 
 #Build list of items that need to be removed for each user profile
@@ -446,7 +446,7 @@ $UserFolders.add("%roaming%\ZoomSDK") | Out-Null
 $UserFolders.add("%roaming%\com.ringcentral.rcoutlook") | Out-Null
 
 #Look at every user profile on the computer and remove the registry keys and associated folders for each RC application
-add-content $logfile -value "$(Get-Date -Format $dtFormat) Removing applications for all user profiles"
+add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Removing applications for all user profiles"
 #$PatternSID = 'S-1-5-21-\d+-\d+\-\d+\-\d+$'
 #$ProfileList = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\*' | Where-Object {$_.PSChildName -match $PatternSID} | Select-Object @{name="SID";expression={$_.PSChildName}}, @{name="UserProfile";expression={"$($_.ProfileImagePath)"}}, @{name="Username";expression={$_.ProfileImagePath -replace '^(.*[\\\/])', ''}}
 $ProfileList = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\*' | Select-Object @{name="SID";expression={$_.PSChildName}}, @{name="UserProfile";expression={"$($_.ProfileImagePath)"}}, @{name="Username";expression={$_.ProfileImagePath -replace '^(.*[\\\/])', ''}}
@@ -460,22 +460,22 @@ $UnloadedHives = Compare-Object $ProfileList.SID $LoadedHives.SID | Select-Objec
 foreach ($item in $ProfileList) {
     try {
         if ($item.SID -in $UnloadedHives.SID) {
-            add-content $logfile -value "$(Get-Date -Format $dtFormat) Loading profile $($item.username) - located at $($item.UserProfile)\ntuser.dat"
+            add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Loading profile $($item.username) - located at $($item.UserProfile)\ntuser.dat"
             reg load HKU\$($item.SID) "$($item.UserProfile)\ntuser.dat" | Out-Null
         } else { 
-            add-content $logfile -value "$(Get-Date -Format $dtFormat) Checking profile $($item.username)"
+            add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Checking profile $($item.username)"
         }
         
         $folders = "HKU:\$($item.sid)\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
         $desktop = (Get-Item -Path $folders).GetValue("Desktop", "$($item.UserProfile)\Desktop", "DoNotExpandEnvironmentNames") -replace "%USERPROFILE%", $item.UserProfile
-        add-content $logfile -value "$(Get-Date -Format $dtFormat)     User Desktop location: $($desktop)"
+        add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat)     User Desktop location: $($desktop)"
         $local = (Get-Item -Path $folders).GetValue("Local AppData", "$($item.UserProfile)\AppData\Local", "DoNotExpandEnvironmentNames") -replace "%USERPROFILE%", $item.UserProfile
-        add-content $logfile -value "$(Get-Date -Format $dtFormat)     User Local AppData location: $($local)"
+        add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat)     User Local AppData location: $($local)"
         $roaming = (Get-Item -Path $folders).GetValue("AppData", "$($item.UserProfile)\AppData\Roaming", "DoNotExpandEnvironmentNames") -replace "%USERPROFILE%", $item.UserProfile
-        add-content $logfile -value "$(Get-Date -Format $dtFormat)     User AppData location: $($roaming)"
+        add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat)     User AppData location: $($roaming)"
 
         if ($item.SID -in $UnloadedHives.SID) {
-            add-content $logfile -value "$(Get-Date -Format $dtFormat) Loading user classes for profile $($item.username) - located at $($local)\Microsoft\Windows\UsrClass.dat"
+            add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Loading user classes for profile $($item.username) - located at $($local)\Microsoft\Windows\UsrClass.dat"
             reg load HKU\$($item.SID)_classes "$($local)\Microsoft\Windows\UsrClass.dat" | Out-Null
         }
 
@@ -483,11 +483,11 @@ foreach ($item in $ProfileList) {
             try {
                 $key = $regkey -replace "%SID%", $item.SID
                 if (test-path($key)) {
-                    add-content $logfile -value "$(Get-Date -Format $dtFormat)     Removing Registry Key $($key)"
+                    add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat)     Removing Registry Key $($key)"
                     remove-item $key -recurse -force
-                } ##else { add-content $logfile -value "$(Get-Date -Format $dtFormat)     Registry Key $($key) not found" }
+                } ##else { add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat)     Registry Key $($key) not found" }
             } catch {
-                add-content $logfile -value $_
+                add-content $2ndlogfile -value $_
             }
         }
         
@@ -495,11 +495,11 @@ foreach ($item in $ProfileList) {
             $temp = (($path -replace "%roaming%", $roaming) -replace "%local%", $local) -replace "%desktop%", $desktop 
             try {
                 if (test-path($temp)) {
-                    add-content $logfile -value "$(Get-Date -Format $dtFormat)     Removing $($temp)"
+                    add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat)     Removing $($temp)"
                     remove-item $temp -recurse -force
-                } ##else { add-content $logfile -value "$(Get-Date -Format $dtFormat)     Path $($temp) not found" }
+                } ##else { add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat)     Path $($temp) not found" }
             } catch {
-                add-content $logfile -value $_
+                add-content $2ndlogfile -value $_
             }
         }
 
@@ -509,14 +509,14 @@ foreach ($item in $ProfileList) {
             if (test-path($path)) {
                 $list = Get-ItemProperty "$path\*" | Where-Object {$_.DisplayName -like "*RingCentral*"} | Select-Object -Property PSPath
                 foreach($regkey in $list) {
-                    add-content $logfile -value "$(Get-Date -Format $dtFormat)     Removing Uninstall Registry Key $($regkey.PSPath)"
+                    add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat)     Removing Uninstall Registry Key $($regkey.PSPath)"
                     try {
                         remove-item $regkey.PSPath -recurse -force
                     } catch {
-                        add-content $logfile -value $_
+                        add-content $2ndlogfile -value $_
                     }
                 }
-            } ##else { add-content $logfile -value "$(Get-Date -Format $dtFormat) Path $($item) not found" }
+            } ##else { add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Path $($item) not found" }
         }
 
         #Remove any user install keys - this is done both in the user hive and the user data part of the local machine
@@ -540,14 +540,14 @@ foreach ($item in $ProfileList) {
             if (test-path($path)) {
                 $list = Get-ItemProperty "$path\*\*" | Where-Object {$_.Publisher -like "*RingCentral*"} | Select-Object -Property PSParentPath
                 foreach($regkey in $list) {
-                    add-content $logfile -value "$(Get-Date -Format $dtFormat)     Removing Install Registry Key $($regkey.PSParentPath)"
+                    add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat)     Removing Install Registry Key $($regkey.PSParentPath)"
                     try {
                         remove-item $regkey.PSParentPath -recurse -force
                     } catch {
-                        add-content $logfile -value $_
+                        add-content $2ndlogfile -value $_
                     }
                 }
-            } ##else { add-content $logfile -value "$(Get-Date -Format $dtFormat) Path $($item) not found" }
+            } ##else { add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Path $($item) not found" }
         }
 
         #Loop through the keys and remove any RC entries
@@ -556,39 +556,39 @@ foreach ($item in $ProfileList) {
                    "HKU:\$($item.sid)\SOFTWARE\Microsoft\Windows\CurrentVersion\UFH\SHC")
         foreach($path in $paths) {
             if (test-path($path)) {
-                add-content $logfile -value "$(Get-Date -Format $dtFormat)     Checking registry path: $($path)"
+                add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat)     Checking registry path: $($path)"
                 Get-Item -Path $path | Select-Object -ExpandProperty Property | ForEach-Object {
                     $propValue = (Get-ItemProperty -Path "$path" -Name "$_")."$_"
                     if (($_ -like "*RingCentral*") -or ($propValue -like "*RingCentral*")) {
                         try {
-                            add-content $logfile -value "$(Get-Date -Format $dtFormat)         Removing property: $($_) containing value: $($propValue)"
+                            add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat)         Removing property: $($_) containing value: $($propValue)"
                             Remove-ItemProperty -path "$path" -Name $_
                         } catch {
-                            add-content $logfile -value $_
+                            add-content $2ndlogfile -value $_
                         }
                     }
                 }
-            } ##else { add-content $logfile -value "$(Get-Date -Format $dtFormat) Path $($item) not found" }
+            } ##else { add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Path $($item) not found" }
         }
 
         if ($item.SID -in $UnloadedHives.SID) {
             [gc]::Collect()
-            add-content $logfile -value "$(Get-Date -Format $dtFormat) Unloading profile"
+            add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) Unloading profile"
             reg unload HKU\$($item.SID) | Out-Null
             reg unload HKU\$($item.SID)_classes | Out-Null
         }
     } catch {
-        add-content $logfile -value $_
+        add-content $2ndlogfile -value $_
     }
 }
-add-content $logfile -value "$(Get-Date -Format $dtFormat) End of removal script"
+add-content $2ndlogfile -value "$(Get-Date -Format $dtFormat) End of removal script"
 
 #Remove PS Drive from previous installs
 if (Get-PSDrive -Name HKU -ErrorAction SilentlyContinue) {
     Remove-PSDrive -Name HKU -Force | Out-Null
 }
 
-
+#>
 
 #Remove previous installers
 if (Test-Path $InstallerPath) {
