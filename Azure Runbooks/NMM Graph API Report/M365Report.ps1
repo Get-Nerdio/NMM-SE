@@ -109,7 +109,7 @@ function Connect-MgGraphHelper {
             elseif ($PSCmdlet.ParameterSetName -eq 'Interactive') {
                 # Connect to Microsoft Graph using interactive browser session
                 $params = @{
-                    Scopes    = @(
+                    Scopes   = @(
                         "Reports.Read.All",
                         "ReportSettings.Read.All",
                         "User.Read.All",
@@ -124,7 +124,7 @@ function Connect-MgGraphHelper {
                         "Organization.Read.All",
                         "PartnerBilling.Read.All"
                     )
-                    TenantId  = $tenantId
+                    TenantId = $tenantId
                 }
                 Connect-MgGraph @params
 
@@ -1694,13 +1694,29 @@ function Get-LicensedUsers {
                     $assignedLicensesString = "No Licenses Assigned"
                 }
 
-                # Pre-calculate the license end dates and join them with a comma
-                $licenseEndDates = ($_.assignedLicenses.skuid | ForEach-Object {
-                        $licenseDetails = Get-LicenseDetails -LicenseId $_
-                        $endDate = (Get-LicenseEndDate -LicenseId $_).EndDate
-                        "$licenseDetails : $endDate"
-                    }) -join ", "
+                $licenseDetails = [System.Collections.Generic.List[PSObject]]::new()
 
+                $_.assignedLicenses.skuid | ForEach-Object {
+                    $license = Get-LicenseDetails -LicenseId $_
+                    $endDateRaw = (Get-LicenseEndDate -LicenseId $_).EndDate
+                    
+                    # Format the end date
+                    $endDate = if ($endDateRaw -like "9999-12-31*") {
+                        "No End Date"
+                    }
+                    elseif ($endDateRaw -match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$') {
+                        [DateTime]::ParseExact($endDateRaw, "yyyy-MM-ddTHH:mm:ssZ", [System.Globalization.CultureInfo]::InvariantCulture).ToString("yyyy-MM-dd")
+                    }
+                    else {
+                        $endDateRaw  # Keep original value if it doesn't match expected format
+                    }
+                
+                    $licenseDetails.Add([PSCustomObject]@{
+                            License = $license
+                            EndDate = $endDate
+                        })
+                }
+                # Later, when creating the $userDetails PSObject:
                 $userDetails = [PSCustomObject][Ordered]@{
                     displayName       = $_.displayName
                     givenName         = $_.givenName
@@ -1708,7 +1724,7 @@ function Get-LicensedUsers {
                     userPrincipalName = $_.userPrincipalName
                     mail              = $_.mail
                     assignedLicenses  = $assignedLicensesString
-                    licenseEndDate    = $licenseEndDates
+                    licenseEndDate    = ConvertTo-ObjectToHtmlTable -Objects $licenseDetails
                     department        = $_.department
                     location          = $_.usageLocation
                     jobTitle          = $_.jobTitle
@@ -1989,7 +2005,4 @@ $htmlContent = GenerateReport -DataSets $dataSets -RawHTML -Html
 
 #Mail sned is still if you auth with a user, so no mail send from Runbook yet.
 Send-EmailWithGraphAPI -Recipient $MailReportRecipient -Sender $MailReportSender -Subject "M365 Report - $(Get-Date -Format "yyyy-MM-dd") - $($EnvironmentVars.CustomerName)" -HtmlBody ($htmlContent | Out-String) -Attachment
-
-
-
 
