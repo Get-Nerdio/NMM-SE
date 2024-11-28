@@ -1,6 +1,8 @@
 <#
 This is based on this script from Microsoft (see https://learn.microsoft.com/en-us/azure/virtual-desktop/configure-single-sign-on), but takes it one step further and automatically creates a dynamic device security group to automate the process without needing to be tied to an AVD naming scheme.
 It can be run from Azure Cloud Shell or a local PowerShell session where you're signed in with Azure PowerShell and your Azure context is set to the subscription you want to use. Also, make sure you've installed the Microsoft Graph PowerShell SDK.
+
+NOTE: You can modify the group that's created by modifying the groupName variable.
 #>
 
 
@@ -17,8 +19,8 @@ $groupDescription = "This is a dynamic device group for EntraID joined AVD Hosts
 $dynamicRule = '(device.devicePhysicalIds -any (_ -contains "[AzureResourceId]"))'   
 
 # Create the dynamic group with correct parameter names
-$group = New-MgGroup -DisplayName $groupName -Description $groupDescription -SecurityEnabled:$true -MailEnabled:$false -GroupTypes @("DynamicMembership") -MembershipRule $dynamicRule -MembershipRuleProcessingState "On" -mailNickname $groupName
-$group
+New-MgGroup -DisplayName $groupName -Description $groupDescription -SecurityEnabled:$true -MailEnabled:$false -GroupTypes @("DynamicMembership") -MembershipRule $dynamicRule -MembershipRuleProcessingState "On" -mailNickname $groupName
+
 # Wait for the group to be created and resolved (it may take a few minutes for the group to populate)
 Start-Sleep -Seconds 30  # Adjust the sleep time if necessary, depending on your environment
 
