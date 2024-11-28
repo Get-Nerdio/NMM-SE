@@ -18,7 +18,7 @@ $dynamicRule = '(device.devicePhysicalIds -any (_ -contains "[AzureResourceId]")
 
 # Create the dynamic group with correct parameter names
 $group = New-MgGroup -DisplayName $groupName -Description $groupDescription -SecurityEnabled:$true -MailEnabled:$false -GroupTypes @("DynamicMembership") -MembershipRule $dynamicRule -MembershipRuleProcessingState "On" -mailNickname $groupName
-
+$group
 # Wait for the group to be created and resolved (it may take a few minutes for the group to populate)
 Start-Sleep -Seconds 30  # Adjust the sleep time if necessary, depending on your environment
 
