@@ -83,3 +83,9 @@ catch {
 
 
 
+# Parameters
+$subscriptionId = "da1a2fbb-3c08-48dc-bef8-2edabdc08f3f"
+$resourceGroupName = "NMM-SalesDemos-WinHart"
+$existingHostPoolName = "Dev-ISV Template Hostpool"
+$newHostPoolName = "Dev-ISV Clone"
+$location = "centralus"

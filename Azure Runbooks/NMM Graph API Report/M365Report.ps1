@@ -2005,4 +2005,3 @@ $htmlContent = GenerateReport -DataSets $dataSets -RawHTML -Html
 
 #Mail sned is still if you auth with a user, so no mail send from Runbook yet.
 Send-EmailWithGraphAPI -Recipient $MailReportRecipient -Sender $MailReportSender -Subject "M365 Report - $(Get-Date -Format "yyyy-MM-dd") - $($EnvironmentVars.CustomerName)" -HtmlBody ($htmlContent | Out-String) -Attachment
-
