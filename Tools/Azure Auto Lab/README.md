@@ -155,11 +155,13 @@ SKUs:
 - win10-22h2-ent-g2
 ```
 
-## Common VM Sizes
+## Common VM Sizes for Lab Environments
 - Standard_B2s (2 vCPU, 4 GB RAM)
 - Standard_B2ms (2 vCPU, 8 GB RAM)
 - Standard_D2as_v4 (2 vCPU, 8 GB RAM)
+- Standard_D2as_v5 (2 vCPU, 8 GB RAM)
 - Standard_E2as_v4 (2 vCPU, 16 GB RAM)
+- Standard_E2as_v5 (2 vCPU, 16 GB RAM)
 
 ## Cleaning Up
 
