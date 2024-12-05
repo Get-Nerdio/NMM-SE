@@ -43,7 +43,7 @@ $labConfig = [PSCustomObject]@{
     VNetAddressPrefix = "10.0.0.0/16"
     SubnetAddressPrefix = "10.0.1.0/24"
     OsDiskSku         = "StandardSSD_LRS"    # Optional: Default is "StandardSSD_LRS"
-    ShutdownNotificationEmail = "jscholte@getnerdio.com"  # Optional: Email for shutdown notifications
+    ShutdownNotificationEmail = "username@company.com"  # Optional: Email for shutdown notifications
 }
 
 # Create the lab environment
@@ -67,7 +67,7 @@ $labConfig = [PSCustomObject]@{
     VNetAddressPrefix = "10.0.0.0/16"
     SubnetAddressPrefix = "10.0.1.0/24"
     OsDiskSku         = "Premium_LRS"        # Optional: Default is "StandardSSD_LRS"
-    ShutdownNotificationEmail = "jscholte@getnerdio.com"  # Optional: Email for shutdown notifications
+    ShutdownNotificationEmail = "username@company.com"  # Optional: Email for shutdown notifications
     VMs = @(
         @{
             Name = "DevVM1-Windows11"
