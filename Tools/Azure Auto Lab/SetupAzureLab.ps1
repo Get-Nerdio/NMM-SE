@@ -11,6 +11,15 @@ function New-AzureLabEnvironment {
     )
 
     begin {
+        # Check Azure connection and set correct tenant/subscription
+        $currentContext = Get-AzContext
+        if (-not $currentContext -or 
+            $currentContext.Tenant.Id -ne $LabConfig.TenantId -or 
+            $currentContext.Subscription.Id -ne $LabConfig.SubscriptionId) {
+            Write-Output "Connecting to Azure with specified tenant and subscription..."
+            Connect-AzAccount -TenantId $LabConfig.TenantId -Subscription $LabConfig.SubscriptionId -ErrorAction Stop
+        }
+
         # Initialize collections using .NET Generic List for better performance
         $resourceList = [System.Collections.Generic.List[string]]::new()
         
@@ -318,14 +327,29 @@ function Remove-AzureLabEnvironment {
         [string]$SubscriptionId,
 
         [Parameter(Mandatory = $true)]
-        [string]$ResourceGroupName
+        [string]$ResourceGroupName,
+
+        [Parameter(Mandatory = $false)]
+        [string]$TenantId
     )
 
     begin {
         try {
-            # Set Azure context
-            Write-Output "Setting Azure context to subscription: $SubscriptionId"
-            Set-AzContext -SubscriptionId $SubscriptionId -ErrorAction Stop
+            # Check Azure connection and set correct tenant/subscription
+            $currentContext = Get-AzContext
+            if (-not $currentContext -or 
+                ($TenantId -and $currentContext.Tenant.Id -ne $TenantId) -or 
+                $currentContext.Subscription.Id -ne $SubscriptionId) {
+                Write-Output "Connecting to Azure with specified subscription..."
+                $params = @{
+                    Subscription = $SubscriptionId
+                    ErrorAction = 'Stop'
+                }
+                if ($TenantId) {
+                    $params['TenantId'] = $TenantId
+                }
+                Connect-AzAccount @params
+            }
         }
         catch {
             Write-Error "Error setting Azure context: $_"
@@ -402,7 +426,8 @@ function Remove-AzureLabEnvironment {
 # Example usage:
 
 #Set Params
-$SubscriptionId = "00000000-0000-0000-0000-000000000000" # Replace with your actual subscription ID
+$SubscriptionId = "00000000-0000-0000-0000-000000000000"
+$TenantId = "00000000-0000-0000-0000-000000000000"
 $ResourceGroupName = "ResourceGroupName"
 $Location = "northeurope"
 $AdminUsername = "labadmin"
@@ -411,6 +436,7 @@ $AdminPassword = "Lab2024@Nerdio!"
 # Example 1: Simple configuration with plaintext credentials and email notification
 $labConfig = [PSCustomObject]@{
     SubscriptionId     = $SubscriptionId
+    TenantId           = $TenantId
     ResourceGroupName  = $ResourceGroupName
     Location          = $Location
     VMCount           = 1
@@ -432,6 +458,7 @@ $labConfig = [PSCustomObject]@{
 # Example 2: Advanced configuration with different VM specifications
 $labConfig = [PSCustomObject]@{
     SubscriptionId     = $SubscriptionId
+    TenantId           = $TenantId 
     ResourceGroupName  = $ResourceGroupName
     Location          = $Location
     AdminUsername     = $AdminUsername           # Optional: Default is "labadmin"
