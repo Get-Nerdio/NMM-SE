@@ -7,6 +7,34 @@ function ConvertTo-StyledHTMLReport {
         [string]$LogoUrl = "https://raw.githubusercontent.com/Get-Nerdio/NMM-SE/main/Azure%20Runbooks/Montly%20Avarage%20Users%20Report/Static/NerrdioMSPLogo.png"
     )
 
+    # Helper function to process array data for charts
+    function Get-ChartData {
+        param (
+            [Parameter(Mandatory = $true)]
+            [string]$JsonArray
+        )
+        
+        $items = $JsonArray | ConvertFrom-Json
+        $counts = @{}
+        foreach ($item in $items) {
+            if ($item -eq "<>") { continue }
+            if ($counts.ContainsKey($item)) {
+                $counts[$item]++
+            }
+            else {
+                $counts[$item] = 1
+            }
+        }
+        return $counts
+    }
+
+    # Process data for charts
+    $monthlyData = $ReportData.MonthlyMetrics.Stats | Select-Object -Last 1
+    $gatewayRegions = Get-ChartData -JsonArray $monthlyData.GatewayRegions
+    $transportTypes = Get-ChartData -JsonArray $monthlyData.TransportTypes
+    $clientTypes = Get-ChartData -JsonArray $monthlyData.ClientTypes
+    $clientOSs = Get-ChartData -JsonArray $monthlyData.ClientOSs
+
     $html = @"
 <!DOCTYPE html>
 <html lang="en">
@@ -14,6 +42,7 @@ function ConvertTo-StyledHTMLReport {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>$Title</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --nerdio-blue: #1B9CB9;
@@ -63,7 +92,7 @@ function ConvertTo-StyledHTMLReport {
             text-align: right;
         }
 
-        h1, h2 {
+        h1, h2, h3 {
             color: var(--nerdio-dark-blue);
             margin-bottom: 10px;
         }
@@ -114,6 +143,21 @@ function ConvertTo-StyledHTMLReport {
             border-bottom: 2px solid var(--nerdio-blue);
         }
 
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            height: 400px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -155,17 +199,6 @@ function ConvertTo-StyledHTMLReport {
             margin-top: 10px;
         }
 
-        .details-list {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .details-list li {
-            padding: 5px 0;
-            border-bottom: 1px solid #eee;
-        }
-
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
@@ -183,21 +216,12 @@ function ConvertTo-StyledHTMLReport {
             .metrics-summary {
                 grid-template-columns: 1fr;
             }
-        }
-    </style>
-    <script>
-        function toggleDetails(buttonId) {
-            const content = document.getElementById('content-' + buttonId);
-            const button = document.getElementById('button-' + buttonId);
-            if (content.style.display === 'none' || content.style.display === '') {
-                content.style.display = 'block';
-                button.textContent = 'Hide Details';
-            } else {
-                content.style.display = 'none';
-                button.textContent = 'View Details';
+
+            .charts-grid {
+                grid-template-columns: 1fr;
             }
         }
-    </script>
+    </style>
 </head>
 <body>
     <div class="container">
@@ -227,6 +251,29 @@ function ConvertTo-StyledHTMLReport {
             <div class="metric-card">
                 <div class="metric-title">Peak Daily Users</div>
                 <div class="metric-value">$([math]::Round($ReportData.DailyMetrics.PeakDailyUsers, 1))</div>
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="section">
+            <h2 class="section-title">Detailed Analytics</h2>
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>Transport Types Distribution</h3>
+                    <canvas id="transportTypesChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Gateway Regions Distribution</h3>
+                    <canvas id="gatewayRegionsChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Client Types Distribution</h3>
+                    <canvas id="clientTypesChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Client OS Distribution</h3>
+                    <canvas id="clientOSChart"></canvas>
+                </div>
             </div>
         </div>
 
@@ -264,10 +311,6 @@ function ConvertTo-StyledHTMLReport {
                             <button id="button-$detailId" class="details-button" onclick="toggleDetails('$detailId')">View Details</button>
                             <div id="content-$detailId" class="details-content">
                                 <h4>Average Session Duration: $($stat.AvgSessionDuration)</h4>
-                                <h4>Client Operating Systems:</h4>
-                                <ul class="details-list">
-                                    $(($stat.ClientOSs | ConvertFrom-Json | ForEach-Object { "<li>$_</li>" }) -join '')
-                                </ul>
                             </div>
                         </td>
                     </tr>
@@ -311,10 +354,6 @@ function ConvertTo-StyledHTMLReport {
                             <button id="button-$detailId" class="details-button" onclick="toggleDetails('$detailId')">View Details</button>
                             <div id="content-$detailId" class="details-content">
                                 <h4>Average Session Duration: $($stat.AvgSessionDuration)</h4>
-                                <h4>Transport Types:</h4>
-                                <ul class="details-list">
-                                    $(($stat.TransportTypes | ConvertFrom-Json | ForEach-Object { "<li>$_</li>" }) -join '')
-                                </ul>
                             </div>
                         </td>
                     </tr>
@@ -358,10 +397,6 @@ function ConvertTo-StyledHTMLReport {
                             <button id="button-$detailId" class="details-button" onclick="toggleDetails('$detailId')">View Details</button>
                             <div id="content-$detailId" class="details-content">
                                 <h4>Average Session Duration: $($stat.AvgSessionDuration)</h4>
-                                <h4>Gateway Regions:</h4>
-                                <ul class="details-list">
-                                    $(($stat.GatewayRegions | ConvertFrom-Json | ForEach-Object { "<li>$_</li>" }) -join '')
-                                </ul>
                             </div>
                         </td>
                     </tr>
@@ -373,6 +408,83 @@ function ConvertTo-StyledHTMLReport {
             </table>
         </div>
     </div>
+
+    <script>
+        function toggleDetails(id) {
+            const content = document.getElementById('content-' + id);
+            const button = document.getElementById('button-' + id);
+            if (content.style.display === 'none' || content.style.display === '') {
+                content.style.display = 'block';
+                button.textContent = 'Hide Details';
+            } else {
+                content.style.display = 'none';
+                button.textContent = 'View Details';
+            }
+        }
+
+        // Chart.js configurations
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        };
+
+        // Transport Types Chart
+        new Chart(document.getElementById('transportTypesChart'), {
+            type: 'pie',
+            data: {
+                labels: $($transportTypes.Keys | ConvertTo-Json),
+                datasets: [{
+                    data: $($transportTypes.Values | ConvertTo-Json),
+                    backgroundColor: ['#1B9CB9', '#D7DF23', '#13BA7C', '#1D3557']
+                }]
+            },
+            options: chartOptions
+        });
+
+        // Gateway Regions Chart
+        new Chart(document.getElementById('gatewayRegionsChart'), {
+            type: 'pie',
+            data: {
+                labels: $($gatewayRegions.Keys | ConvertTo-Json),
+                datasets: [{
+                    data: $($gatewayRegions.Values | ConvertTo-Json),
+                    backgroundColor: ['#1B9CB9', '#D7DF23', '#13BA7C', '#1D3557', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD']
+                }]
+            },
+            options: chartOptions
+        });
+
+        // Client Types Chart
+        new Chart(document.getElementById('clientTypesChart'), {
+            type: 'pie',
+            data: {
+                labels: $($clientTypes.Keys | ConvertTo-Json),
+                datasets: [{
+                    data: $($clientTypes.Values | ConvertTo-Json),
+                    backgroundColor: ['#1B9CB9', '#D7DF23', '#13BA7C', '#1D3557', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD']
+                }]
+            },
+            options: chartOptions
+        });
+
+        // Client OS Chart
+        new Chart(document.getElementById('clientOSChart'), {
+            type: 'pie',
+            data: {
+                labels: $($clientOSs.Keys | ConvertTo-Json),
+                datasets: [{
+                    data: $($clientOSs.Values | ConvertTo-Json),
+                    backgroundColor: ['#1B9CB9', '#D7DF23', '#13BA7C', '#1D3557', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD']
+                }]
+            },
+            options: chartOptions
+        });
+    </script>
 </body>
 </html>
 "@
