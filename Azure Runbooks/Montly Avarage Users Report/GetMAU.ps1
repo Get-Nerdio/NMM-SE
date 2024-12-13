@@ -1,5 +1,386 @@
-function GetMAU {
+function ConvertTo-StyledHTMLReport {
+    param (
+        [Parameter(Mandatory = $true)]
+        [Object]$ReportData,
+        [string]$Title = "Report",
+        [string]$Description = "",
+        [string]$LogoUrl = "https://raw.githubusercontent.com/Get-Nerdio/NMM-SE/main/Azure%20Runbooks/Montly%20Avarage%20Users%20Report/Static/NerrdioMSPLogo.png"
+    )
 
+    $html = @"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>$Title</title>
+    <style>
+        :root {
+            --nerdio-blue: #1B9CB9;
+            --nerdio-dark-blue: #1D3557;
+            --nerdio-yellow: #D7DF23;
+            --nerdio-green: #13BA7C;
+            --nerdio-white: #FFFFFF;
+            --nerdio-black: #151515;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: var(--nerdio-black);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            height: 50px;
+            width: auto;
+        }
+
+        .title-section {
+            text-align: right;
+        }
+
+        h1, h2 {
+            color: var(--nerdio-dark-blue);
+            margin-bottom: 10px;
+        }
+
+        .description {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .metrics-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .metric-title {
+            color: var(--nerdio-blue);
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--nerdio-dark-blue);
+        }
+
+        .section {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            padding: 20px;
+        }
+
+        .section-title {
+            color: var(--nerdio-dark-blue);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--nerdio-blue);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+        }
+
+        th {
+            background-color: var(--nerdio-blue);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .details-button {
+            background-color: var(--nerdio-blue);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .details-content {
+            display: none;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .details-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .details-list li {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .logo {
+                margin-bottom: 15px;
+            }
+
+            .title-section {
+                text-align: center;
+            }
+
+            .metrics-summary {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <script>
+        function toggleDetails(buttonId) {
+            const content = document.getElementById('content-' + buttonId);
+            const button = document.getElementById('button-' + buttonId);
+            if (content.style.display === 'none' || content.style.display === '') {
+                content.style.display = 'block';
+                button.textContent = 'Hide Details';
+            } else {
+                content.style.display = 'none';
+                button.textContent = 'View Details';
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="$LogoUrl" alt="Nerdio Logo" class="logo">
+            <div class="title-section">
+                <h1>$Title</h1>
+                <p class="description">$($ReportData.TimeRange)</p>
+                <p class="description">Host Pool: $($ReportData.HostPoolName)</p>
+            </div>
+        </div>
+
+        <!-- Summary Metrics -->
+        <div class="metrics-summary">
+            <div class="metric-card">
+                <div class="metric-title">Average Monthly Users</div>
+                <div class="metric-value">$([math]::Round($ReportData.MonthlyMetrics.AverageMonthlyUsers, 1))</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Average Weekly Users</div>
+                <div class="metric-value">$([math]::Round($ReportData.WeeklyMetrics.AverageWeeklyUsers, 1))</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Average Daily Users</div>
+                <div class="metric-value">$([math]::Round($ReportData.DailyMetrics.AverageDailyUsers, 1))</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Peak Daily Users</div>
+                <div class="metric-value">$([math]::Round($ReportData.DailyMetrics.PeakDailyUsers, 1))</div>
+            </div>
+        </div>
+
+        <!-- Monthly Stats -->
+        <div class="section">
+            <h2 class="section-title">Monthly Statistics</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Users</th>
+                        <th>Active Sessions</th>
+                        <th>Completed Sessions</th>
+                        <th>Total Sessions</th>
+                        <th>Unique Clients</th>
+                        <th>Unique Hosts</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+"@
+
+    foreach ($stat in $ReportData.MonthlyMetrics.Stats) {
+        $detailId = "monthly-$($stat.Month)"
+        $html += @"
+                    <tr>
+                        <td>$($stat.Month)</td>
+                        <td>$($stat.MonthlyUsers)</td>
+                        <td>$($stat.ActiveSessions)</td>
+                        <td>$($stat.CompletedSessions)</td>
+                        <td>$($stat.TotalSessions)</td>
+                        <td>$($stat.UniqueClients)</td>
+                        <td>$($stat.UniqueHosts)</td>
+                        <td>
+                            <button id="button-$detailId" class="details-button" onclick="toggleDetails('$detailId')">View Details</button>
+                            <div id="content-$detailId" class="details-content">
+                                <h4>Average Session Duration: $($stat.AvgSessionDuration)</h4>
+                                <h4>Client Operating Systems:</h4>
+                                <ul class="details-list">
+                                    $(($stat.ClientOSs | ConvertFrom-Json | ForEach-Object { "<li>$_</li>" }) -join '')
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+"@
+    }
+
+    $html += @"
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Weekly Stats -->
+        <div class="section">
+            <h2 class="section-title">Weekly Statistics</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Week</th>
+                        <th>Users</th>
+                        <th>Active Sessions</th>
+                        <th>Completed Sessions</th>
+                        <th>Total Sessions</th>
+                        <th>Unique Hosts</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+"@
+
+    foreach ($stat in $ReportData.WeeklyMetrics.Stats) {
+        $detailId = "weekly-$($stat.Week)"
+        $html += @"
+                    <tr>
+                        <td>$($stat.Week)</td>
+                        <td>$($stat.WeeklyUsers)</td>
+                        <td>$($stat.ActiveSessions)</td>
+                        <td>$($stat.CompletedSessions)</td>
+                        <td>$($stat.TotalSessions)</td>
+                        <td>$($stat.UniqueHosts)</td>
+                        <td>
+                            <button id="button-$detailId" class="details-button" onclick="toggleDetails('$detailId')">View Details</button>
+                            <div id="content-$detailId" class="details-content">
+                                <h4>Average Session Duration: $($stat.AvgSessionDuration)</h4>
+                                <h4>Transport Types:</h4>
+                                <ul class="details-list">
+                                    $(($stat.TransportTypes | ConvertFrom-Json | ForEach-Object { "<li>$_</li>" }) -join '')
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+"@
+    }
+
+    $html += @"
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Daily Stats -->
+        <div class="section">
+            <h2 class="section-title">Daily Statistics (Last 7 Days)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Users</th>
+                        <th>Active Sessions</th>
+                        <th>Completed Sessions</th>
+                        <th>Total Sessions</th>
+                        <th>Unique Clients</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+"@
+
+    foreach ($stat in $ReportData.DailyMetrics.TrendAnalysis) {
+        $detailId = "daily-$($stat.Date)"
+        $html += @"
+                    <tr>
+                        <td>$($stat.Date)</td>
+                        <td>$($stat.DailyUsers)</td>
+                        <td>$($stat.ActiveSessions)</td>
+                        <td>$($stat.CompletedSessions)</td>
+                        <td>$($stat.TotalSessions)</td>
+                        <td>$($stat.UniqueClients)</td>
+                        <td>
+                            <button id="button-$detailId" class="details-button" onclick="toggleDetails('$detailId')">View Details</button>
+                            <div id="content-$detailId" class="details-content">
+                                <h4>Average Session Duration: $($stat.AvgSessionDuration)</h4>
+                                <h4>Gateway Regions:</h4>
+                                <ul class="details-list">
+                                    $(($stat.GatewayRegions | ConvertFrom-Json | ForEach-Object { "<li>$_</li>" }) -join '')
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+"@
+    }
+
+    $html += @"
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
+"@
+
+    return $html
+}
+
+function GetMAU {
     param(
         [Parameter(Mandatory = $true)]
         [string]$WorkspaceId,
@@ -80,7 +461,6 @@ WVDConnections
 ) on Date
 | sort by Date asc
 "@
-
 
     # Query for weekly metrics
     $weeklyQuery = @"
@@ -227,149 +607,11 @@ WVDConnections
         }
     }
 
-    # Generate HTML report with enhanced details
-    # Generate HTML report with enhanced details
-    $htmlReport = @"
-        <html>
-        <head>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 20px; }
-                table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
-                th, td { padding: 8px; text-align: left; border: 1px solid #ddd; }
-                th { background-color: #f2f2f2; }
-                .metric { font-weight: bold; }
-                h1, h2, h3 { color: #333; }
-                .details { font-size: 0.9em; color: #666; }
-                .section { margin-bottom: 30px; }
-                .list-container { margin: 10px 0; }
-                .list-item { margin: 5px 0; padding: 5px; background-color: #f9f9f9; }
-            </style>
-        </head>
-        <body>
-            <h1>AVD Host Pool Usage Report - $($results.HostPoolName)</h1>
-            <h2>Time Range: $($results.TimeRange)</h2>
-            
-            <div class="section">
-                <h3>Monthly Summary</h3>
-                <table>
-                    <tr>
-                        <th>Metric</th>
-                        <th>Value</th>
-                    </tr>
-                    $(foreach ($month in $monthlyResultsArray) {
-                        @"
-                        <tr><td>Monthly Users</td><td>$($month.MonthlyUsers)</td></tr>
-                        <tr><td>Active Sessions</td><td>$($month.ActiveSessions)</td></tr>
-                        <tr><td>Completed Sessions</td><td>$($month.CompletedSessions)</td></tr>
-                        <tr><td>Total Sessions</td><td>$($month.TotalSessions)</td></tr>
-                        <tr><td>Unique Clients</td><td>$($month.UniqueClients)</td></tr>
-                        <tr><td>Unique Hosts</td><td>$($month.UniqueHosts)</td></tr>
-                        <tr><td>Average Session Duration</td><td>$($month.AvgSessionDuration)</td></tr>
-"@
-                    })
-                </table>
-            </div>
-        
-            <div class="section">
-                <h3>Weekly Trends</h3>
-                <table>
-                    <tr>
-                        <th>Week</th>
-                        <th>Users</th>
-                        <th>Active Sessions</th>
-                        <th>Completed Sessions</th>
-                        <th>Total Sessions</th>
-                        <th>Unique Hosts</th>
-                        <th>Avg Session Duration</th>
-                    </tr>
-                    $(foreach ($week in $weeklyResultsArray) {
-                        "<tr>
-                            <td>$($week.Week)</td>
-                            <td>$($week.WeeklyUsers)</td>
-                            <td>$($week.ActiveSessions)</td>
-                            <td>$($week.CompletedSessions)</td>
-                            <td>$($week.TotalSessions)</td>
-                            <td>$($week.UniqueHosts)</td>
-                            <td>$($week.AvgSessionDuration)</td>
-                        </tr>"
-                    })
-                </table>
-            </div>
-        
-            <div class="section">
-                <h3>Recent Daily Activity</h3>
-                <table>
-                    <tr>
-                        <th>Date</th>
-                        <th>Users</th>
-                        <th>Active Sessions</th>
-                        <th>Completed Sessions</th>
-                        <th>Total Sessions</th>
-                        <th>Unique Clients</th>
-                        <th>Unique Hosts</th>
-                        <th>Avg Session Duration</th>
-                    </tr>
-                    $(foreach ($day in ($dailyResultsArray | Select-Object -Last 7)) {
-                        "<tr>
-                            <td>$($day.Date)</td>
-                            <td>$($day.DailyUsers)</td>
-                            <td>$($day.ActiveSessions)</td>
-                            <td>$($day.CompletedSessions)</td>
-                            <td>$($day.TotalSessions)</td>
-                            <td>$($day.UniqueClients)</td>
-                            <td>$($day.UniqueHosts)</td>
-                            <td>$($day.AvgSessionDuration)</td>
-                        </tr>"
-                    })
-                </table>
-            </div>
-        
-            <div class="section">
-                <h3>Client Details (Last Month)</h3>
-                $(foreach ($month in ($monthlyResultsArray | Select-Object -Last 1)) {
-                    $clientOSs = $month.ClientOSs | ConvertFrom-Json
-                    $clientTypes = $month.ClientTypes | ConvertFrom-Json
-                    $transportTypes = $month.TransportTypes | ConvertFrom-Json
-                    $gatewayRegions = $month.GatewayRegions | ConvertFrom-Json
-        
-                    @"
-                    <h4>Operating Systems</h4>
-                    <div class="list-container">
-                        $(foreach ($os in $clientOSs) {
-                            "<div class='list-item'>$os</div>"
-                        })
-                    </div>
-        
-                    <h4>Client Types</h4>
-                    <div class="list-container">
-                        $(foreach ($client in $clientTypes) {
-                            "<div class='list-item'>$client</div>"
-                        })
-                    </div>
-        
-                    <h4>Transport Types</h4>
-                    <div class="list-container">
-                        $(foreach ($transport in $transportTypes) {
-                            "<div class='list-item'>$transport</div>"
-                        })
-                    </div>
-        
-                    <h4>Gateway Regions</h4>
-                    <div class="list-container">
-                        $(foreach ($region in $gatewayRegions) {
-                            "<div class='list-item'>$region</div>"
-                        })
-                    </div>
-"@
-                })
-            </div>
-        </body>
-        </html>
-"@
-
     # Save results
-    $reportPath = "AVDUsageReport_$(Get-Date -Format 'yyyyMMdd').html"
-    $htmlReport | Out-File -FilePath $reportPath
+    $reportName = "AVDUsageReport_$(Get-Date -Format 'yyyyMMdd')"
+    
+    $htmlReport = ConvertTo-StyledHTMLReport -ReportData $results -Title $reportName -Description "Overview of system usage for the current month"
+    $htmlReport | Out-File -FilePath "$reportName.html"
 
     # Export detailed data for further analysis
     $results | ConvertTo-Json -Depth 10 | Out-File "AVDUsageData_$(Get-Date -Format 'yyyyMMdd').json"
@@ -377,12 +619,8 @@ WVDConnections
     return $results
 }
 
-
-
-
 $WorkspaceId = '177678ee-d784-44b9-bebc-0e144b4db4fd'
 $HostPoolName = 'nerdio desktop win10'
 $DaysToAnalyze = 30
 
 GetMAU -WorkspaceId $WorkspaceId -HostPoolName $HostPoolName -DaysToAnalyze $DaysToAnalyze -Verbose
-
