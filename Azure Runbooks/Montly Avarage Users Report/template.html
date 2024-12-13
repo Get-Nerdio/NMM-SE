@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{TITLE}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --nerdio-blue: #1B9CB9;
+            --nerdio-dark-blue: #1D3557;
+            --nerdio-yellow: #D7DF23;
+            --nerdio-green: #13BA7C;
+            --nerdio-white: #FFFFFF;
+            --nerdio-black: #151515;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: var(--nerdio-black);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            height: 50px;
+            width: auto;
+        }
+
+        .title-section {
+            text-align: right;
+        }
+
+        h1, h2, h3 {
+            color: var(--nerdio-dark-blue);
+            margin-bottom: 10px;
+        }
+
+        .description {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .metrics-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .metric-title {
+            color: var(--nerdio-blue);
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--nerdio-dark-blue);
+        }
+
+        .section {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            padding: 20px;
+        }
+
+        .section-title {
+            color: var(--nerdio-dark-blue);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--nerdio-blue);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            height: 400px;
+            position: relative;
+        }
+
+        .time-range-selector {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .time-range-selector select {
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: 1px solid var(--nerdio-blue);
+            font-size: 14px;
+            background-color: white;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .time-range-selector select:hover {
+            border-color: var(--nerdio-dark-blue);
+        }
+
+        .time-range-selector select:focus {
+            border-color: var(--nerdio-dark-blue);
+            box-shadow: 0 0 0 2px rgba(27, 156, 185, 0.2);
+        }
+
+        .analytics-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .analytics-card {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+
+        .analytics-card h4 {
+            color: var(--nerdio-blue);
+            margin-bottom: 10px;
+            font-size: 1em;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .analytics-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .analytics-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9em;
+        }
+
+        .analytics-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .analytics-label {
+            flex: 1;
+            margin-right: 10px;
+            word-break: break-word;
+        }
+
+        .analytics-value {
+            font-weight: 500;
+            color: var(--nerdio-dark-blue);
+            white-space: nowrap;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+        }
+
+        th {
+            background-color: var(--nerdio-blue);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .session-duration {
+            color: var(--nerdio-dark-blue);
+            font-weight: 500;
+        }
+
+        .chart-info {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #666;
+            text-align: center;
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .logo {
+                margin-bottom: 15px;
+            }
+
+            .title-section {
+                text-align: center;
+            }
+
+            .metrics-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{LOGO_URL}" alt="Nerdio Logo" class="logo">
+            <div class="title-section">
+                <h1>{TITLE}</h1>
+                <p class="description">{TIME_RANGE}</p>
+                <p class="description">Host Pool: {HOST_POOL}</p>
+            </div>
+        </div>
+
+        <!-- Summary Metrics -->
+        <div class="metrics-summary">
+            {SUMMARY_METRICS}
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="section">
+            <h2 class="section-title">Detailed Analytics</h2>
+            <div class="time-range-selector">
+                <label for="timeRange">Time Range:</label>
+                <select id="timeRange" onchange="updateTimeRange(this.value)">
+                    <option value="monthly">Last 3 Months</option>
+                    <option value="weekly">Last 4 Weeks</option>
+                    <option value="daily">Last 7 Days</option>
+                </select>
+            </div>
+
+            <!-- Analytics Summary -->
+            <div class="analytics-summary">
+                <div class="analytics-card">
+                    <h4>Transport Types</h4>
+                    <div id="transportTypesSummary" class="analytics-list"></div>
+                </div>
+                <div class="analytics-card">
+                    <h4>Client Types</h4>
+                    <div id="clientTypesSummary" class="analytics-list"></div>
+                </div>
+                <div class="analytics-card">
+                    <h4>Client OS Distribution</h4>
+                    <div id="clientOSSummary" class="analytics-list"></div>
+                </div>
+                <div class="analytics-card">
+                    <h4>Gateway Regions</h4>
+                    <div id="gatewayRegionsSummary" class="analytics-list"></div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>Transport Types Distribution</h3>
+                    <canvas id="transportTypesChart"></canvas>
+                    <div class="chart-info">Distribution of connection transport types</div>
+                </div>
+                <div class="chart-container">
+                    <h3>Gateway Regions Distribution</h3>
+                    <canvas id="gatewayRegionsChart"></canvas>
+                    <div class="chart-info">Distribution of Azure gateway regions used</div>
+                </div>
+                <div class="chart-container">
+                    <h3>Client Types Distribution</h3>
+                    <canvas id="clientTypesChart"></canvas>
+                    <div class="chart-info">Distribution of client applications used</div>
+                </div>
+                <div class="chart-container">
+                    <h3>Client OS Distribution</h3>
+                    <canvas id="clientOSChart"></canvas>
+                    <div class="chart-info">Distribution of client operating systems</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Tables -->
+        <div class="section">
+            <h2 class="section-title">Monthly Statistics</h2>
+            {MONTHLY_STATS}
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Weekly Statistics</h2>
+            {WEEKLY_STATS}
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Daily Statistics (Last 7 Days)</h2>
+            {DAILY_STATS}
+        </div>
+    </div>
+
+    <script>
+        // Chart data will be injected here
+        {CHART_DATA}
+
+        // Chart configuration and functions
+        const charts = {
+            transportTypes: null,
+            gatewayRegions: null,
+            clientTypes: null,
+            clientOS: null
+        };
+
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        boxWidth: 12,
+                        padding: 10,
+                        font: {
+                            size: 11
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${label}: ${value.toLocaleString()} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        };
+
+        function createChart(id, data, labels) {
+            return new Chart(document.getElementById(id), {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#1B9CB9', '#D7DF23', '#13BA7C', '#1D3557', '#FF6B6B',
+                            '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD', '#FF9F1C'
+                        ]
+                    }]
+                },
+                options: chartOptions
+            });
+        }
+
+        function updateSummary(elementId, data, labels) {
+            const total = data.reduce((a, b) => a + b, 0);
+            const summaryHtml = labels.map((label, index) => {
+                const value = data[index];
+                const percentage = ((value / total) * 100).toFixed(1);
+                return `<div class="analytics-list-item">
+                    <span class="analytics-label">${label}</span>
+                    <span class="analytics-value">${value.toLocaleString()} (${percentage}%)</span>
+                </div>`;
+            }).join('');
+            document.getElementById(elementId).innerHTML = summaryHtml;
+        }
+
+        function updateTimeRange(timeRange) {
+            const data = timeRange === 'weekly' ? weeklyData :
+                        timeRange === 'daily' ? dailyData : monthlyData;
+
+            // Update time range description
+            const timeDesc = timeRange === 'weekly' ? 'Last 4 Weeks' :
+                           timeRange === 'daily' ? 'Last 7 Days' : 'Last 3 Months';
+            document.querySelectorAll('.chart-info').forEach(el => {
+                const baseText = el.textContent.split('(')[0].trim();
+                el.textContent = `${baseText} (${timeDesc})`;
+            });
+
+            // Update summaries
+            updateSummary('transportTypesSummary', data.transportTypes.data, data.transportTypes.labels);
+            updateSummary('gatewayRegionsSummary', data.gatewayRegions.data, data.gatewayRegions.labels);
+            updateSummary('clientTypesSummary', data.clientTypes.data, data.clientTypes.labels);
+            updateSummary('clientOSSummary', data.clientOSs.data, data.clientOSs.labels);
+
+            // Destroy existing charts
+            Object.values(charts).forEach(chart => chart?.destroy());
+
+            // Create new charts
+            charts.transportTypes = createChart('transportTypesChart', 
+                data.transportTypes.data, data.transportTypes.labels);
+            charts.gatewayRegions = createChart('gatewayRegionsChart',
+                data.gatewayRegions.data, data.gatewayRegions.labels);
+            charts.clientTypes = createChart('clientTypesChart',
+                data.clientTypes.data, data.clientTypes.labels);
+            charts.clientOS = createChart('clientOSChart',
+                data.clientOSs.data, data.clientOSs.labels);
+        }
+
+        // Initialize charts with monthly data
+        updateTimeRange('monthly');
+
+        // Add event listener to time range selector
+        document.getElementById('timeRange').addEventListener('change', function(e) {
+            updateTimeRange(e.target.value);
+        });
+    </script>
+</body>
+</html>

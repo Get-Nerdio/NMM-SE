@@ -1,3 +1,88 @@
+function Get-AggregatedData {
+    param (
+        [Parameter(Mandatory = $true)]
+        [Object[]]$Data,
+        [string]$TimeRange = 'Monthly'
+    )
+
+    # Helper function to process arrays and count occurrences
+    function Process-ArrayData {
+        param (
+            [Object[]]$Items,
+            [string]$JsonProperty
+        )
+        
+        $allItems = @{}
+        foreach ($item in $Items) {
+            $values = $item.$JsonProperty | ConvertFrom-Json
+            $sessionsPerItem = [int]($item.TotalSessions / ($values | Measure-Object).Count)
+            foreach ($value in $values) {
+                if ($value -eq "<>" -or [string]::IsNullOrWhiteSpace($value)) { continue }
+                if ($allItems.ContainsKey($value)) {
+                    $allItems[$value] += $sessionsPerItem
+                }
+                else {
+                    $allItems[$value] = $sessionsPerItem
+                }
+            }
+        }
+
+        # Sort by usage count descending and take top 10
+        $sortedItems = $allItems.GetEnumerator() | Sort-Object Value -Descending | Select-Object -First 10
+        $result = [ordered]@{}
+        foreach ($item in $sortedItems) {
+            # Truncate long names to improve readability
+            $key = $item.Key
+            if ($key.Length -gt 50) {
+                $key = $key.Substring(0, 47) + "..."
+            }
+            $result[$key] = $item.Value
+        }
+        return $result
+    }
+
+    # Get the appropriate data based on time range
+    $relevantData = switch ($TimeRange) {
+        'Daily' { $Data | Sort-Object Date | Select-Object -Last 7 }  # Last 7 days
+        'Weekly' { $Data | Sort-Object Week | Select-Object -Last 4 }  # Last 4 weeks
+        'Monthly' { $Data | Sort-Object Month | Select-Object -Last 3 }  # Last 3 months
+        default { $Data | Sort-Object Month | Select-Object -Last 3 }
+    }
+
+    # Process each type of data
+    $gatewayRegions = Process-ArrayData -Items $relevantData -JsonProperty 'GatewayRegions'
+    $transportTypes = Process-ArrayData -Items $relevantData -JsonProperty 'TransportTypes'
+    $clientTypes = Process-ArrayData -Items $relevantData -JsonProperty 'ClientTypes'
+    $clientOSs = Process-ArrayData -Items $relevantData -JsonProperty 'ClientOSs'
+
+    # Calculate time range description
+    $timeDesc = switch ($TimeRange) {
+        'Daily' { 
+            $start = ($relevantData | Select-Object -First 1).Date
+            $end = ($relevantData | Select-Object -Last 1).Date
+            "Daily view ($start to $end)" 
+        }
+        'Weekly' { 
+            $start = ($relevantData | Select-Object -First 1).Week
+            $end = ($relevantData | Select-Object -Last 1).Week
+            "Weekly view ($start to $end)" 
+        }
+        'Monthly' { 
+            $start = ($relevantData | Select-Object -First 1).Month
+            $end = ($relevantData | Select-Object -Last 1).Month
+            "Monthly view ($start to $end)" 
+        }
+    }
+
+    return @{
+        GatewayRegions = $gatewayRegions
+        TransportTypes = $transportTypes
+        ClientTypes = $clientTypes
+        ClientOSs = $clientOSs
+        TimeRange = $timeDesc
+    }
+}
+
 function ConvertTo-StyledHTMLReport {
     param (
         [Parameter(Mandatory = $true)]
@@ -7,487 +92,291 @@ function ConvertTo-StyledHTMLReport {
         [string]$LogoUrl = "https://raw.githubusercontent.com/Get-Nerdio/NMM-SE/main/Azure%20Runbooks/Montly%20Avarage%20Users%20Report/Static/NerrdioMSPLogo.png"
     )
 
-    # Helper function to process array data for charts
-    function Get-ChartData {
-        param (
-            [Parameter(Mandatory = $true)]
-            [string]$JsonArray
-        )
-        
-        $items = $JsonArray | ConvertFrom-Json
-        $counts = @{}
-        foreach ($item in $items) {
-            if ($item -eq "<>") { continue }
-            if ($counts.ContainsKey($item)) {
-                $counts[$item]++
-            }
-            else {
-                $counts[$item] = 1
-            }
-        }
-        return $counts
-    }
+    # Read HTML template
+    $template = Get-Content -Path "template.html" -Raw
 
-    # Process data for charts
-    $monthlyData = $ReportData.MonthlyMetrics.Stats | Select-Object -Last 1
-    $gatewayRegions = Get-ChartData -JsonArray $monthlyData.GatewayRegions
-    $transportTypes = Get-ChartData -JsonArray $monthlyData.TransportTypes
-    $clientTypes = Get-ChartData -JsonArray $monthlyData.ClientTypes
-    $clientOSs = Get-ChartData -JsonArray $monthlyData.ClientOSs
+    # Process data for different time ranges
+    $monthlyAnalytics = Get-AggregatedData -Data $ReportData.MonthlyMetrics.Stats -TimeRange 'Monthly'
+    $weeklyAnalytics = Get-AggregatedData -Data $ReportData.WeeklyMetrics.Stats -TimeRange 'Weekly'
+    $dailyAnalytics = Get-AggregatedData -Data $ReportData.DailyMetrics.Stats -TimeRange 'Daily'
 
-    $html = @"
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>$Title</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --nerdio-blue: #1B9CB9;
-            --nerdio-dark-blue: #1D3557;
-            --nerdio-yellow: #D7DF23;
-            --nerdio-green: #13BA7C;
-            --nerdio-white: #FFFFFF;
-            --nerdio-black: #151515;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: #f5f5f5;
-            color: var(--nerdio-black);
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .header {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .logo {
-            height: 50px;
-            width: auto;
-        }
-
-        .title-section {
-            text-align: right;
-        }
-
-        h1, h2, h3 {
-            color: var(--nerdio-dark-blue);
-            margin-bottom: 10px;
-        }
-
-        .description {
-            color: #666;
-            margin-bottom: 20px;
-        }
-
-        .metrics-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .metric-card {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .metric-title {
-            color: var(--nerdio-blue);
-            font-size: 1.1em;
-            margin-bottom: 10px;
-        }
-
-        .metric-value {
-            font-size: 2em;
-            font-weight: bold;
-            color: var(--nerdio-dark-blue);
-        }
-
-        .section {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-            padding: 20px;
-        }
-
-        .section-title {
-            color: var(--nerdio-dark-blue);
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--nerdio-blue);
-        }
-
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .chart-container {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 20px;
-            height: 400px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 0;
-        }
-
-        th {
-            background-color: var(--nerdio-blue);
-            color: white;
-            padding: 15px;
-            text-align: left;
-            font-weight: 600;
-        }
-
-        td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #eee;
-        }
-
-        tr:hover {
-            background-color: #f8f9fa;
-        }
-
-        .details-button {
-            background-color: var(--nerdio-blue);
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-
-        .details-content {
-            display: none;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .logo {
-                margin-bottom: 15px;
-            }
-
-            .title-section {
-                text-align: center;
-            }
-
-            .metrics-summary {
-                grid-template-columns: 1fr;
-            }
-
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <img src="$LogoUrl" alt="Nerdio Logo" class="logo">
-            <div class="title-section">
-                <h1>$Title</h1>
-                <p class="description">$($ReportData.TimeRange)</p>
-                <p class="description">Host Pool: $($ReportData.HostPoolName)</p>
-            </div>
+    # Generate summary metrics HTML
+    $summaryMetrics = @"
+        <div class="metric-card">
+            <div class="metric-title">Average Monthly Users</div>
+            <div class="metric-value">$([math]::Round($ReportData.MonthlyMetrics.AverageMonthlyUsers, 1))</div>
         </div>
-
-        <!-- Summary Metrics -->
-        <div class="metrics-summary">
-            <div class="metric-card">
-                <div class="metric-title">Average Monthly Users</div>
-                <div class="metric-value">$([math]::Round($ReportData.MonthlyMetrics.AverageMonthlyUsers, 1))</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-title">Average Weekly Users</div>
-                <div class="metric-value">$([math]::Round($ReportData.WeeklyMetrics.AverageWeeklyUsers, 1))</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-title">Average Daily Users</div>
-                <div class="metric-value">$([math]::Round($ReportData.DailyMetrics.AverageDailyUsers, 1))</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-title">Peak Daily Users</div>
-                <div class="metric-value">$([math]::Round($ReportData.DailyMetrics.PeakDailyUsers, 1))</div>
-            </div>
+        <div class="metric-card">
+            <div class="metric-title">Average Weekly Users</div>
+            <div class="metric-value">$([math]::Round($ReportData.WeeklyMetrics.AverageWeeklyUsers, 1))</div>
         </div>
-
-        <!-- Analytics Section -->
-        <div class="section">
-            <h2 class="section-title">Detailed Analytics</h2>
-            <div class="charts-grid">
-                <div class="chart-container">
-                    <h3>Transport Types Distribution</h3>
-                    <canvas id="transportTypesChart"></canvas>
-                </div>
-                <div class="chart-container">
-                    <h3>Gateway Regions Distribution</h3>
-                    <canvas id="gatewayRegionsChart"></canvas>
-                </div>
-                <div class="chart-container">
-                    <h3>Client Types Distribution</h3>
-                    <canvas id="clientTypesChart"></canvas>
-                </div>
-                <div class="chart-container">
-                    <h3>Client OS Distribution</h3>
-                    <canvas id="clientOSChart"></canvas>
-                </div>
-            </div>
+        <div class="metric-card">
+            <div class="metric-title">Average Daily Users</div>
+            <div class="metric-value">$([math]::Round($ReportData.DailyMetrics.AverageDailyUsers, 1))</div>
         </div>
-
-        <!-- Monthly Stats -->
-        <div class="section">
-            <h2 class="section-title">Monthly Statistics</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Month</th>
-                        <th>Users</th>
-                        <th>Active Sessions</th>
-                        <th>Completed Sessions</th>
-                        <th>Total Sessions</th>
-                        <th>Unique Clients</th>
-                        <th>Unique Hosts</th>
-                        <th>Details</th>
-                    </tr>
-                </thead>
-                <tbody>
+        <div class="metric-card">
+            <div class="metric-title">Peak Daily Users</div>
+            <div class="metric-value">$([math]::Round($ReportData.DailyMetrics.PeakDailyUsers, 1))</div>
+        </div>
 "@
 
+    # Generate monthly stats table
+    $monthlyStats = @"
+        <table>
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Users</th>
+                    <th>Active Sessions</th>
+                    <th>Completed Sessions</th>
+                    <th>Total Sessions</th>
+                    <th>Unique Clients</th>
+                    <th>Unique Hosts</th>
+                    <th>Avg Session Duration</th>
+                </tr>
+            </thead>
+            <tbody>
+"@
     foreach ($stat in $ReportData.MonthlyMetrics.Stats) {
-        $detailId = "monthly-$($stat.Month)"
-        $html += @"
-                    <tr>
-                        <td>$($stat.Month)</td>
-                        <td>$($stat.MonthlyUsers)</td>
-                        <td>$($stat.ActiveSessions)</td>
-                        <td>$($stat.CompletedSessions)</td>
-                        <td>$($stat.TotalSessions)</td>
-                        <td>$($stat.UniqueClients)</td>
-                        <td>$($stat.UniqueHosts)</td>
-                        <td>
-                            <button id="button-$detailId" class="details-button" onclick="toggleDetails('$detailId')">View Details</button>
-                            <div id="content-$detailId" class="details-content">
-                                <h4>Average Session Duration: $($stat.AvgSessionDuration)</h4>
-                            </div>
-                        </td>
-                    </tr>
+        $monthlyStats += @"
+                <tr>
+                    <td>$($stat.Month)</td>
+                    <td>$($stat.MonthlyUsers)</td>
+                    <td>$($stat.ActiveSessions)</td>
+                    <td>$($stat.CompletedSessions)</td>
+                    <td>$($stat.TotalSessions)</td>
+                    <td>$($stat.UniqueClients)</td>
+                    <td>$($stat.UniqueHosts)</td>
+                    <td class="session-duration">$($stat.AvgSessionDuration)</td>
+                </tr>
 "@
     }
-
-    $html += @"
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Weekly Stats -->
-        <div class="section">
-            <h2 class="section-title">Weekly Statistics</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Week</th>
-                        <th>Users</th>
-                        <th>Active Sessions</th>
-                        <th>Completed Sessions</th>
-                        <th>Total Sessions</th>
-                        <th>Unique Hosts</th>
-                        <th>Details</th>
-                    </tr>
-                </thead>
-                <tbody>
+    $monthlyStats += @"
+            </tbody>
+        </table>
 "@
 
+    # Generate weekly stats table
+    $weeklyStats = @"
+        <table>
+            <thead>
+                <tr>
+                    <th>Week</th>
+                    <th>Users</th>
+                    <th>Active Sessions</th>
+                    <th>Completed Sessions</th>
+                    <th>Total Sessions</th>
+                    <th>Unique Hosts</th>
+                    <th>Avg Session Duration</th>
+                </tr>
+            </thead>
+            <tbody>
+"@
     foreach ($stat in $ReportData.WeeklyMetrics.Stats) {
-        $detailId = "weekly-$($stat.Week)"
-        $html += @"
-                    <tr>
-                        <td>$($stat.Week)</td>
-                        <td>$($stat.WeeklyUsers)</td>
-                        <td>$($stat.ActiveSessions)</td>
-                        <td>$($stat.CompletedSessions)</td>
-                        <td>$($stat.TotalSessions)</td>
-                        <td>$($stat.UniqueHosts)</td>
-                        <td>
-                            <button id="button-$detailId" class="details-button" onclick="toggleDetails('$detailId')">View Details</button>
-                            <div id="content-$detailId" class="details-content">
-                                <h4>Average Session Duration: $($stat.AvgSessionDuration)</h4>
-                            </div>
-                        </td>
-                    </tr>
+        $weeklyStats += @"
+                <tr>
+                    <td>$($stat.Week)</td>
+                    <td>$($stat.WeeklyUsers)</td>
+                    <td>$($stat.ActiveSessions)</td>
+                    <td>$($stat.CompletedSessions)</td>
+                    <td>$($stat.TotalSessions)</td>
+                    <td>$($stat.UniqueHosts)</td>
+                    <td class="session-duration">$($stat.AvgSessionDuration)</td>
+                </tr>
 "@
     }
-
-    $html += @"
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Daily Stats -->
-        <div class="section">
-            <h2 class="section-title">Daily Statistics (Last 7 Days)</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Users</th>
-                        <th>Active Sessions</th>
-                        <th>Completed Sessions</th>
-                        <th>Total Sessions</th>
-                        <th>Unique Clients</th>
-                        <th>Details</th>
-                    </tr>
-                </thead>
-                <tbody>
+    $weeklyStats += @"
+            </tbody>
+        </table>
 "@
 
+    # Generate daily stats table
+    $dailyStats = @"
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Users</th>
+                    <th>Active Sessions</th>
+                    <th>Completed Sessions</th>
+                    <th>Total Sessions</th>
+                    <th>Unique Clients</th>
+                    <th>Avg Session Duration</th>
+                </tr>
+            </thead>
+            <tbody>
+"@
     foreach ($stat in $ReportData.DailyMetrics.TrendAnalysis) {
-        $detailId = "daily-$($stat.Date)"
-        $html += @"
-                    <tr>
-                        <td>$($stat.Date)</td>
-                        <td>$($stat.DailyUsers)</td>
-                        <td>$($stat.ActiveSessions)</td>
-                        <td>$($stat.CompletedSessions)</td>
-                        <td>$($stat.TotalSessions)</td>
-                        <td>$($stat.UniqueClients)</td>
-                        <td>
-                            <button id="button-$detailId" class="details-button" onclick="toggleDetails('$detailId')">View Details</button>
-                            <div id="content-$detailId" class="details-content">
-                                <h4>Average Session Duration: $($stat.AvgSessionDuration)</h4>
-                            </div>
-                        </td>
-                    </tr>
+        $dailyStats += @"
+                <tr>
+                    <td>$($stat.Date)</td>
+                    <td>$($stat.DailyUsers)</td>
+                    <td>$($stat.ActiveSessions)</td>
+                    <td>$($stat.CompletedSessions)</td>
+                    <td>$($stat.TotalSessions)</td>
+                    <td>$($stat.UniqueClients)</td>
+                    <td class="session-duration">$($stat.AvgSessionDuration)</td>
+                </tr>
 "@
     }
+    $dailyStats += @"
+            </tbody>
+        </table>
+"@
 
-    $html += @"
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <script>
-        function toggleDetails(id) {
-            const content = document.getElementById('content-' + id);
-            const button = document.getElementById('button-' + id);
-            if (content.style.display === 'none' || content.style.display === '') {
-                content.style.display = 'block';
-                button.textContent = 'Hide Details';
-            } else {
-                content.style.display = 'none';
-                button.textContent = 'View Details';
+    # Generate chart data
+    $chartData = @"
+        const monthlyData = {
+            transportTypes: {
+                labels: $($monthlyAnalytics.TransportTypes.Keys | ConvertTo-Json -Compress),
+                data: $($monthlyAnalytics.TransportTypes.Values | ConvertTo-Json -Compress)
+            },
+            gatewayRegions: {
+                labels: $($monthlyAnalytics.GatewayRegions.Keys | ConvertTo-Json -Compress),
+                data: $($monthlyAnalytics.GatewayRegions.Values | ConvertTo-Json -Compress)
+            },
+            clientTypes: {
+                labels: $($monthlyAnalytics.ClientTypes.Keys | ConvertTo-Json -Compress),
+                data: $($monthlyAnalytics.ClientTypes.Values | ConvertTo-Json -Compress)
+            },
+            clientOSs: {
+                labels: $($monthlyAnalytics.ClientOSs.Keys | ConvertTo-Json -Compress),
+                data: $($monthlyAnalytics.ClientOSs.Values | ConvertTo-Json -Compress)
             }
-        }
+        };
 
-        // Chart.js configurations
+        const weeklyData = {
+            transportTypes: {
+                labels: $($weeklyAnalytics.TransportTypes.Keys | ConvertTo-Json -Compress),
+                data: $($weeklyAnalytics.TransportTypes.Values | ConvertTo-Json -Compress)
+            },
+            gatewayRegions: {
+                labels: $($weeklyAnalytics.GatewayRegions.Keys | ConvertTo-Json -Compress),
+                data: $($weeklyAnalytics.GatewayRegions.Values | ConvertTo-Json -Compress)
+            },
+            clientTypes: {
+                labels: $($weeklyAnalytics.ClientTypes.Keys | ConvertTo-Json -Compress),
+                data: $($weeklyAnalytics.ClientTypes.Values | ConvertTo-Json -Compress)
+            },
+            clientOSs: {
+                labels: $($weeklyAnalytics.ClientOSs.Keys | ConvertTo-Json -Compress),
+                data: $($weeklyAnalytics.ClientOSs.Values | ConvertTo-Json -Compress)
+            }
+        };
+
+        const dailyData = {
+            transportTypes: {
+                labels: $($dailyAnalytics.TransportTypes.Keys | ConvertTo-Json -Compress),
+                data: $($dailyAnalytics.TransportTypes.Values | ConvertTo-Json -Compress)
+            },
+            gatewayRegions: {
+                labels: $($dailyAnalytics.GatewayRegions.Keys | ConvertTo-Json -Compress),
+                data: $($dailyAnalytics.GatewayRegions.Values | ConvertTo-Json -Compress)
+            },
+            clientTypes: {
+                labels: $($dailyAnalytics.ClientTypes.Keys | ConvertTo-Json -Compress),
+                data: $($dailyAnalytics.ClientTypes.Values | ConvertTo-Json -Compress)
+            },
+            clientOSs: {
+                labels: $($dailyAnalytics.ClientOSs.Keys | ConvertTo-Json -Compress),
+                data: $($dailyAnalytics.ClientOSs.Values | ConvertTo-Json -Compress)
+            }
+        };
+"@
+
+    # Generate chart functions
+    $chartFunctions = @"
+        let charts = {
+            transportTypes: null,
+            gatewayRegions: null,
+            clientTypes: null,
+            clientOS: null
+        };
+
         const chartOptions = {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'right'
+                    position: 'right',
+                    labels: {
+                        boxWidth: 12,
+                        padding: 10,
+                        font: {
+                            size: 11
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            let value = context.raw || 0;
+                            let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            let percentage = ((value / total) * 100).toFixed(1);
+                            return `${label}: ${value} (${percentage}%)`;
+                        }
+                    }
                 }
             }
         };
 
-        // Transport Types Chart
-        new Chart(document.getElementById('transportTypesChart'), {
-            type: 'pie',
-            data: {
-                labels: $($transportTypes.Keys | ConvertTo-Json),
-                datasets: [{
-                    data: $($transportTypes.Values | ConvertTo-Json),
-                    backgroundColor: ['#1B9CB9', '#D7DF23', '#13BA7C', '#1D3557']
-                }]
-            },
-            options: chartOptions
-        });
+        function createChart(id, data, labels) {
+            return new Chart(document.getElementById(id), {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#1B9CB9', '#D7DF23', '#13BA7C', '#1D3557', '#FF6B6B',
+                            '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD', '#FF9F1C'
+                        ]
+                    }]
+                },
+                options: chartOptions
+            });
+        }
 
-        // Gateway Regions Chart
-        new Chart(document.getElementById('gatewayRegionsChart'), {
-            type: 'pie',
-            data: {
-                labels: $($gatewayRegions.Keys | ConvertTo-Json),
-                datasets: [{
-                    data: $($gatewayRegions.Values | ConvertTo-Json),
-                    backgroundColor: ['#1B9CB9', '#D7DF23', '#13BA7C', '#1D3557', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD']
-                }]
-            },
-            options: chartOptions
-        });
+        function updateCharts(timeRange) {
+            const data = timeRange === 'weekly' ? weeklyData :
+                        timeRange === 'daily' ? dailyData : monthlyData;
 
-        // Client Types Chart
-        new Chart(document.getElementById('clientTypesChart'), {
-            type: 'pie',
-            data: {
-                labels: $($clientTypes.Keys | ConvertTo-Json),
-                datasets: [{
-                    data: $($clientTypes.Values | ConvertTo-Json),
-                    backgroundColor: ['#1B9CB9', '#D7DF23', '#13BA7C', '#1D3557', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD']
-                }]
-            },
-            options: chartOptions
-        });
+            // Update time range description
+            const timeDesc = timeRange === 'weekly' ? 'Last 4 Weeks' :
+                           timeRange === 'daily' ? 'Last 7 Days' : 'Last 3 Months';
+            document.querySelector('.chart-info').textContent = `Data shown for ${timeDesc}`;
 
-        // Client OS Chart
-        new Chart(document.getElementById('clientOSChart'), {
-            type: 'pie',
-            data: {
-                labels: $($clientOSs.Keys | ConvertTo-Json),
-                datasets: [{
-                    data: $($clientOSs.Values | ConvertTo-Json),
-                    backgroundColor: ['#1B9CB9', '#D7DF23', '#13BA7C', '#1D3557', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD']
-                }]
-            },
-            options: chartOptions
-        });
-    </script>
-</body>
-</html>
+            // Destroy existing charts
+            Object.values(charts).forEach(chart => chart?.destroy());
+
+            // Create new charts
+            charts.transportTypes = createChart('transportTypesChart', 
+                data.transportTypes.data, data.transportTypes.labels);
+            charts.gatewayRegions = createChart('gatewayRegionsChart',
+                data.gatewayRegions.data, data.gatewayRegions.labels);
+            charts.clientTypes = createChart('clientTypesChart',
+                data.clientTypes.data, data.clientTypes.labels);
+            charts.clientOS = createChart('clientOSChart',
+                data.clientOSs.data, data.clientOSs.labels);
+        }
+
+        // Initialize charts with monthly data
+        updateCharts('monthly');
 "@
+
+    # Replace placeholders in template
+    $html = $template
+    $html = $html.Replace('{TITLE}', $Title)
+    $html = $html.Replace('{LOGO_URL}', $LogoUrl)
+    $html = $html.Replace('{TIME_RANGE}', $ReportData.TimeRange)
+    $html = $html.Replace('{HOST_POOL}', $ReportData.HostPoolName)
+    $html = $html.Replace('{SUMMARY_METRICS}', $summaryMetrics)
+    $html = $html.Replace('{MONTHLY_STATS}', $monthlyStats)
+    $html = $html.Replace('{WEEKLY_STATS}', $weeklyStats)
+    $html = $html.Replace('{DAILY_STATS}', $dailyStats)
+    $html = $html.Replace('{CHART_DATA}', $chartData)
+    $html = $html.Replace('{CHART_FUNCTIONS}', $chartFunctions)
 
     return $html
 }
