@@ -1,100 +1,298 @@
-function Get-AggregatedData {
+# Get Monthly Average Users Report
+[CmdletBinding()]
+param (
+    [Parameter(Mandatory = $false)]
+    [string]$HostPoolName = "nerdio desktop win10",
+    
+    [Parameter(Mandatory = $false)]
+    [string]$ReportName = "AVDUsageReport_$(Get-Date -Format 'yyyyMMdd')",
+    
+    [Parameter(Mandatory = $false)]
+    [int]$DaysToAnalyze = 30
+)
+
+# Function to calculate percentages for distribution data
+function Get-DistributionPercentages {
     param (
         [Parameter(Mandatory = $true)]
-        [Object[]]$Data,
-        [string]$TimeRange = 'Monthly'
+        [array]$items
     )
-
-    # Helper function to process arrays and count occurrences
-    function Process-ArrayData {
-        param (
-            [Object[]]$Items,
-            [string]$JsonProperty
-        )
-        
-        $allItems = @{}
-        foreach ($item in $Items) {
-            $values = $item.$JsonProperty | ConvertFrom-Json
-            $sessionsPerItem = [int]($item.TotalSessions / ($values | Measure-Object).Count)
-            foreach ($value in $values) {
-                if ($value -eq "<>" -or [string]::IsNullOrWhiteSpace($value)) { continue }
-                if ($allItems.ContainsKey($value)) {
-                    $allItems[$value] += $sessionsPerItem
-                }
-                else {
-                    $allItems[$value] = $sessionsPerItem
-                }
-            }
+    
+    if ($items.Count -eq 0) { return @() }
+    
+    # Count occurrences of each item
+    $itemCounts = @{}
+    foreach ($item in $items) {
+        if ($null -eq $item -or $item -eq '') {
+            $item = '<>'
         }
-
-        # Sort by usage count descending and take top 10
-        $sortedItems = $allItems.GetEnumerator() | Sort-Object Value -Descending | Select-Object -First 10
-        $result = [ordered]@{}
-        foreach ($item in $sortedItems) {
-            # Truncate long names to improve readability
-            $key = $item.Key
-            if ($key.Length -gt 50) {
-                $key = $key.Substring(0, 47) + "..."
-            }
-            $result[$key] = $item.Value
+        if ($itemCounts.ContainsKey($item)) {
+            $itemCounts[$item]++
         }
-        return $result
-    }
-
-    # Get the appropriate data based on time range
-    $relevantData = switch ($TimeRange) {
-        'Daily' { $Data | Sort-Object Date | Select-Object -Last 7 }  # Last 7 days
-        'Weekly' { $Data | Sort-Object Week | Select-Object -Last 4 }  # Last 4 weeks
-        'Monthly' { $Data | Sort-Object Month | Select-Object -Last 3 }  # Last 3 months
-        default { $Data | Sort-Object Month | Select-Object -Last 3 }
-    }
-
-    # Process each type of data
-    $gatewayRegions = Process-ArrayData -Items $relevantData -JsonProperty 'GatewayRegions'
-    $transportTypes = Process-ArrayData -Items $relevantData -JsonProperty 'TransportTypes'
-    $clientTypes = Process-ArrayData -Items $relevantData -JsonProperty 'ClientTypes'
-    $clientOSs = Process-ArrayData -Items $relevantData -JsonProperty 'ClientOSs'
-
-    # Calculate time range description
-    $timeDesc = switch ($TimeRange) {
-        'Daily' { 
-            $start = ($relevantData | Select-Object -First 1).Date
-            $end = ($relevantData | Select-Object -Last 1).Date
-            "Daily view ($start to $end)" 
-        }
-        'Weekly' { 
-            $start = ($relevantData | Select-Object -First 1).Week
-            $end = ($relevantData | Select-Object -Last 1).Week
-            "Weekly view ($start to $end)" 
-        }
-        'Monthly' { 
-            $start = ($relevantData | Select-Object -First 1).Month
-            $end = ($relevantData | Select-Object -Last 1).Month
-            "Monthly view ($start to $end)" 
+        else {
+            $itemCounts[$item] = 1
         }
     }
+    
+    # Calculate percentages
+    $total = $items.Count
+    $percentages = $itemCounts.GetEnumerator() | ForEach-Object {
+        @{
+            Item       = $_.Key
+            Percentage = [math]::Round(($_.Value / $total) * 100, 2)
+        }
+    } | Sort-Object -Property Percentage -Descending
+    
+    return $percentages
+}
 
-    return @{
-        GatewayRegions = $gatewayRegions
-        TransportTypes = $transportTypes
-        ClientTypes = $clientTypes
-        ClientOSs = $clientOSs
-        TimeRange = $timeDesc
+# Function to parse JSON array string
+function Parse-JsonArray {
+    param (
+        [string]$jsonString
+    )
+    try {
+        return $jsonString | ConvertFrom-Json
+    }
+    catch {
+        Write-Warning "Error parsing JSON array: $_"
+        return @()
     }
 }
 
-function ConvertTo-StyledHTMLReport {
+# Function to process session data for a time period
+function Get-SessionMetrics {
     param (
         [Parameter(Mandatory = $true)]
-        [Object]$ReportData,
-        [string]$Title = "Report",
-        [string]$Description = "",
-        [string]$LogoUrl = "https://raw.githubusercontent.com/Get-Nerdio/NMM-SE/main/Azure%20Runbooks/Montly%20Avarage%20Users%20Report/Static/NerrdioMSPLogo.png"
+        [array]$Sessions,
+        
+        [Parameter(Mandatory = $true)]
+        [string]$GroupBy
     )
+    
+    $metrics = @{}
+    
+    $groupedSessions = $Sessions | Group-Object -Property $GroupBy
+    
+    foreach ($group in $groupedSessions) {
+        $periodSessions = $group.Group
+        
+        # Get unique values
+        $uniqueUsers = $periodSessions.UserPrincipalName | Select-Object -Unique
+        $activeSessionCount = ($periodSessions | Where-Object { $_.State -eq 'Active' }).Count
+        $completedSessionCount = ($periodSessions | Where-Object { $_.State -eq 'Completed' }).Count
+        $uniqueClients = $periodSessions.ClientType | Select-Object -Unique
+        $uniqueHosts = $periodSessions.SessionHostName | Select-Object -Unique
+        
+        # Get all client types, OS versions, and transport types for the period
+        $clientTypes = $periodSessions.ClientType
+        $clientOSs = $periodSessions.ClientOS
+        $transportTypes = $periodSessions.TransportType
+        $gatewayRegions = $periodSessions.GatewayRegion
+        
+        # Calculate average session duration for completed sessions
+        $completedSessions = $periodSessions | Where-Object { $_.State -eq 'Completed' -and $_.SessionDuration }
+        if ($completedSessions) {
+            $avgDuration = [TimeSpan]::FromTicks(($completedSessions.SessionDuration | Measure-Object -Average).Average)
+        }
+        else {
+            $avgDuration = [TimeSpan]::Zero
+        }
+        
+        # Store metrics for this period
+        $metrics[$group.Name] = @{
+            PeriodName         = $group.Name
+            Users              = $uniqueUsers.Count
+            ActiveSessions     = $activeSessionCount
+            CompletedSessions  = $completedSessionCount
+            TotalSessions      = $periodSessions.Count
+            UniqueClients      = $uniqueClients.Count
+            UniqueHosts        = $uniqueHosts.Count
+            ClientTypes        = $clientTypes
+            ClientOSs          = $clientOSs
+            TransportTypes     = $transportTypes
+            GatewayRegions     = $gatewayRegions
+            AvgSessionDuration = $avgDuration
+        }
+    }
+    
+    return $metrics
+}
 
-    # Read HTML template
+# Function to format data for Chart.js
+function Format-ChartData {
+    param (
+        [Parameter(Mandatory = $true)]
+        [array]$distributions
+    )
+    
+    return @{
+        labels = $distributions.Item
+        data   = $distributions.Percentage
+    }
+}
+
+# Function to process metrics for chart data
+function Process-MetricsForCharts {
+    param (
+        [Parameter(Mandatory = $true)]
+        [array]$stats
+    )
+    
+    $allTransportTypes = @()
+    $allGatewayRegions = @()
+    $allClientTypes = @()
+    $allClientOSs = @()
+    
+    foreach ($stat in $stats) {
+        $allTransportTypes += Parse-JsonArray $stat.TransportTypes
+        $allGatewayRegions += Parse-JsonArray $stat.GatewayRegions
+        $allClientTypes += Parse-JsonArray $stat.ClientTypes
+        $allClientOSs += Parse-JsonArray $stat.ClientOSs
+    }
+    
+    $transportDist = Get-DistributionPercentages -items $allTransportTypes
+    $gatewayDist = Get-DistributionPercentages -items $allGatewayRegions
+    $clientTypesDist = Get-DistributionPercentages -items $allClientTypes
+    $clientOSDist = Get-DistributionPercentages -items $allClientOSs
+    
+    return @{
+        transportTypes = Format-ChartData -distributions $transportDist
+        gatewayRegions = Format-ChartData -distributions $gatewayDist
+        clientTypes    = Format-ChartData -distributions $clientTypesDist
+        clientOSs      = Format-ChartData -distributions $clientOSDist
+    }
+}
+
+try {
+    # Get current date and start date
+    $endDate = Get-Date
+    $startDate = $endDate.AddDays(-$DaysToAnalyze)
+    
+    # Get session data
+    $sessions = Get-AzWvdUserSession -HostPoolName $HostPoolName -StartTime $startDate -EndTime $endDate
+    
+    if (-not $sessions) {
+        throw "No session data found for the specified time period"
+    }
+    
+    # Calculate metrics for different time periods
+    $monthlyMetrics = Get-SessionMetrics -Sessions $sessions -GroupBy 'Month1'
+    $weeklyMetrics = Get-SessionMetrics -Sessions $sessions -GroupBy 'Week1'
+    $dailyMetrics = Get-SessionMetrics -Sessions $sessions -GroupBy 'Date1'
+    
+    # Calculate averages
+    $avgMonthlyUsers = ($monthlyMetrics.Values.Users | Measure-Object -Average).Average
+    $avgWeeklyUsers = ($weeklyMetrics.Values.Users | Measure-Object -Average).Average
+    $avgDailyUsers = ($dailyMetrics.Values.Users | Measure-Object -Average).Average
+    $peakDailyUsers = ($dailyMetrics.Values.Users | Measure-Object -Maximum).Maximum
+    
+    # Get distribution data for the entire period
+    $allClientTypes = $sessions.ClientType
+    $allClientOSs = $sessions.ClientOS
+    $allTransportTypes = $sessions.TransportType
+    $allGatewayRegions = $sessions.GatewayRegion
+    
+    $clientTypesDist = Get-DistributionPercentages -items $allClientTypes
+    $clientOSDist = Get-DistributionPercentages -items $allClientOSs
+    $transportTypesDist = Get-DistributionPercentages -items $allTransportTypes
+    $gatewayRegionsDist = Get-DistributionPercentages -items $allGatewayRegions
+    
+    # Create report data object
+    $reportData = @{
+        TimeRange      = "$($startDate.ToString('yyyy-MM-dd')) to $($endDate.ToString('yyyy-MM-dd'))"
+        HostPoolName   = $HostPoolName
+        MonthlyMetrics = @{
+            PerformanceMetrics  = @{
+                AvgNetworkLatency = $null
+                AvgFrameRate      = $null
+                AvgBandwidth      = $null
+            }
+            AverageMonthlyUsers = $avgMonthlyUsers
+            Stats               = $monthlyMetrics.Values | ForEach-Object {
+                @{
+                    Month              = $_.PeriodName
+                    MonthlyUsers       = $_.Users.ToString()
+                    ActiveSessions     = $_.ActiveSessions.ToString()
+                    CompletedSessions  = $_.CompletedSessions.ToString()
+                    TotalSessions      = $_.TotalSessions.ToString()
+                    UniqueClients      = $_.UniqueClients.ToString()
+                    UniqueHosts        = $_.UniqueHosts.ToString()
+                    ClientOSs          = ConvertTo-Json $_.ClientOSs
+                    ClientTypes        = ConvertTo-Json $_.ClientTypes
+                    TransportTypes     = ConvertTo-Json $_.TransportTypes
+                    GatewayRegions     = ConvertTo-Json $_.GatewayRegions
+                    Month1             = $_.PeriodName
+                    AvgSessionDuration = $_.AvgSessionDuration.ToString()
+                }
+            }
+        }
+        WeeklyMetrics  = @{
+            AverageWeeklyUsers = $avgWeeklyUsers
+            PeakWeeklySessions = $null
+            Stats              = $weeklyMetrics.Values | ForEach-Object {
+                @{
+                    Week               = $_.PeriodName
+                    WeeklyUsers        = $_.Users.ToString()
+                    ActiveSessions     = $_.ActiveSessions.ToString()
+                    CompletedSessions  = $_.CompletedSessions.ToString()
+                    TotalSessions      = $_.TotalSessions.ToString()
+                    UniqueHosts        = $_.UniqueHosts.ToString()
+                    ClientOSs          = ConvertTo-Json $_.ClientOSs
+                    ClientTypes        = ConvertTo-Json $_.ClientTypes
+                    TransportTypes     = ConvertTo-Json $_.TransportTypes
+                    GatewayRegions     = ConvertTo-Json $_.GatewayRegions
+                    Week1              = $_.PeriodName
+                    AvgSessionDuration = $_.AvgSessionDuration.ToString()
+                }
+            }
+        }
+        DailyMetrics   = @{
+            PeakDailyUsers    = $peakDailyUsers
+            AverageDailyUsers = $avgDailyUsers
+            TrendAnalysis     = $dailyMetrics.Values | Sort-Object PeriodName | ForEach-Object {
+                @{
+                    Date               = $_.PeriodName
+                    DailyUsers         = $_.Users.ToString()
+                    ActiveSessions     = $_.ActiveSessions.ToString()
+                    CompletedSessions  = $_.CompletedSessions.ToString()
+                    TotalSessions      = $_.TotalSessions.ToString()
+                    UniqueClients      = $_.UniqueClients.ToString()
+                    UniqueHosts        = $_.UniqueHosts.ToString()
+                    ClientOSs          = ConvertTo-Json $_.ClientOSs
+                    ClientTypes        = ConvertTo-Json $_.ClientTypes
+                    TransportTypes     = ConvertTo-Json $_.TransportTypes
+                    GatewayRegions     = ConvertTo-Json $_.GatewayRegions
+                    Date1              = $_.PeriodName
+                    AvgSessionDuration = $_.AvgSessionDuration.ToString()
+                }
+            }
+            Stats             = $dailyMetrics.Values | Sort-Object PeriodName -Descending | Select-Object -First 7 | ForEach-Object {
+                @{
+                    Date               = $_.PeriodName
+                    DailyUsers         = $_.Users.ToString()
+                    ActiveSessions     = $_.ActiveSessions.ToString()
+                    CompletedSessions  = $_.CompletedSessions.ToString()
+                    TotalSessions      = $_.TotalSessions.ToString()
+                    UniqueClients      = $_.UniqueClients.ToString()
+                    UniqueHosts        = $_.UniqueHosts.ToString()
+                    ClientOSs          = ConvertTo-Json $_.ClientOSs
+                    ClientTypes        = ConvertTo-Json $_.ClientTypes
+                    TransportTypes     = ConvertTo-Json $_.TransportTypes
+                    GatewayRegions     = ConvertTo-Json $_.GatewayRegions
+                    Date1              = $_.PeriodName
+                    AvgSessionDuration = $_.AvgSessionDuration.ToString()
+                }
+            }
+        }
+    }
+    
+    # Save data to JSON file
+    $reportData | ConvertTo-Json -Depth 10 | Out-File "AVDUsageData_$(Get-Date -Format 'yyyyMMdd').json"
+    
+    # Read template
     $template = Get-Content -Path "template.html" -Raw
-
+    
     # Process data for different time ranges
     $monthlyAnalytics = Get-AggregatedData -Data $ReportData.MonthlyMetrics.Stats -TimeRange 'Monthly'
     $weeklyAnalytics = Get-AggregatedData -Data $ReportData.WeeklyMetrics.Stats -TimeRange 'Weekly'
@@ -104,24 +302,24 @@ function ConvertTo-StyledHTMLReport {
     $summaryMetrics = @"
         <div class="metric-card">
             <div class="metric-title">Average Monthly Users</div>
-            <div class="metric-value">$([math]::Round($ReportData.MonthlyMetrics.AverageMonthlyUsers, 1))</div>
+            <div class="metric-value">$([math]::Round($avgMonthlyUsers))</div>
         </div>
         <div class="metric-card">
             <div class="metric-title">Average Weekly Users</div>
-            <div class="metric-value">$([math]::Round($ReportData.WeeklyMetrics.AverageWeeklyUsers, 1))</div>
+            <div class="metric-value">$([math]::Round($avgWeeklyUsers, 1))</div>
         </div>
         <div class="metric-card">
             <div class="metric-title">Average Daily Users</div>
-            <div class="metric-value">$([math]::Round($ReportData.DailyMetrics.AverageDailyUsers, 1))</div>
+            <div class="metric-value">$([math]::Round($avgDailyUsers, 1))</div>
         </div>
         <div class="metric-card">
             <div class="metric-title">Peak Daily Users</div>
-            <div class="metric-value">$([math]::Round($ReportData.DailyMetrics.PeakDailyUsers, 1))</div>
+            <div class="metric-value">$([math]::Round($peakDailyUsers))</div>
         </div>
 "@
-
-    # Generate monthly stats table
-    $monthlyStats = @"
+    
+    # Create monthly statistics table
+    $monthlyStatsHtml = @"
         <table>
             <thead>
                 <tr>
@@ -135,29 +333,25 @@ function ConvertTo-StyledHTMLReport {
                     <th>Avg Session Duration</th>
                 </tr>
             </thead>
-            <tbody>
-"@
-    foreach ($stat in $ReportData.MonthlyMetrics.Stats) {
-        $monthlyStats += @"
-                <tr>
-                    <td>$($stat.Month)</td>
-                    <td>$($stat.MonthlyUsers)</td>
-                    <td>$($stat.ActiveSessions)</td>
-                    <td>$($stat.CompletedSessions)</td>
-                    <td>$($stat.TotalSessions)</td>
-                    <td>$($stat.UniqueClients)</td>
-                    <td>$($stat.UniqueHosts)</td>
-                    <td class="session-duration">$($stat.AvgSessionDuration)</td>
-                </tr>
-"@
-    }
-    $monthlyStats += @"
+            <tbody>$(
+        $monthlyMetrics.Values | Sort-Object PeriodName | ForEach-Object {
+            "                <tr>
+                    <td>$($_.PeriodName)</td>
+                    <td>$($_.Users)</td>
+                    <td>$($_.ActiveSessions)</td>
+                    <td>$($_.CompletedSessions)</td>
+                    <td>$($_.TotalSessions)</td>
+                    <td>$($_.UniqueClients)</td>
+                    <td>$($_.UniqueHosts)</td>
+                    <td class=`"session-duration`">$($_.AvgSessionDuration)</td>
+                </tr>"
+        })
             </tbody>
         </table>
 "@
-
-    # Generate weekly stats table
-    $weeklyStats = @"
+    
+    # Create weekly statistics table
+    $weeklyStatsHtml = @"
         <table>
             <thead>
                 <tr>
@@ -170,28 +364,24 @@ function ConvertTo-StyledHTMLReport {
                     <th>Avg Session Duration</th>
                 </tr>
             </thead>
-            <tbody>
-"@
-    foreach ($stat in $ReportData.WeeklyMetrics.Stats) {
-        $weeklyStats += @"
-                <tr>
-                    <td>$($stat.Week)</td>
-                    <td>$($stat.WeeklyUsers)</td>
-                    <td>$($stat.ActiveSessions)</td>
-                    <td>$($stat.CompletedSessions)</td>
-                    <td>$($stat.TotalSessions)</td>
-                    <td>$($stat.UniqueHosts)</td>
-                    <td class="session-duration">$($stat.AvgSessionDuration)</td>
-                </tr>
-"@
-    }
-    $weeklyStats += @"
+            <tbody>$(
+        $weeklyMetrics.Values | Sort-Object PeriodName | ForEach-Object {
+            "                <tr>
+                    <td>$($_.PeriodName)</td>
+                    <td>$($_.Users)</td>
+                    <td>$($_.ActiveSessions)</td>
+                    <td>$($_.CompletedSessions)</td>
+                    <td>$($_.TotalSessions)</td>
+                    <td>$($_.UniqueHosts)</td>
+                    <td class=`"session-duration`">$($_.AvgSessionDuration)</td>
+                </tr>"
+        })
             </tbody>
         </table>
 "@
-
-    # Generate daily stats table
-    $dailyStats = @"
+    
+    # Create daily statistics table (last 7 days)
+    $dailyStatsHtml = @"
         <table>
             <thead>
                 <tr>
@@ -204,82 +394,100 @@ function ConvertTo-StyledHTMLReport {
                     <th>Avg Session Duration</th>
                 </tr>
             </thead>
-            <tbody>
-"@
-    foreach ($stat in $ReportData.DailyMetrics.TrendAnalysis) {
-        $dailyStats += @"
-                <tr>
-                    <td>$($stat.Date)</td>
-                    <td>$($stat.DailyUsers)</td>
-                    <td>$($stat.ActiveSessions)</td>
-                    <td>$($stat.CompletedSessions)</td>
-                    <td>$($stat.TotalSessions)</td>
-                    <td>$($stat.UniqueClients)</td>
-                    <td class="session-duration">$($stat.AvgSessionDuration)</td>
-                </tr>
-"@
-    }
-    $dailyStats += @"
+            <tbody>$(
+        $dailyMetrics.Values | Sort-Object PeriodName -Descending | Select-Object -First 7 | ForEach-Object {
+            "                <tr>
+                    <td>$($_.PeriodName)</td>
+                    <td>$($_.Users)</td>
+                    <td>$($_.ActiveSessions)</td>
+                    <td>$($_.CompletedSessions)</td>
+                    <td>$($_.TotalSessions)</td>
+                    <td>$($_.UniqueClients)</td>
+                    <td class=`"session-duration`">$($_.AvgSessionDuration)</td>
+                </tr>"
+        })
             </tbody>
         </table>
 "@
-
-    # Generate chart data
-    $chartData = @"
+    
+    # Format chart data
+    $monthlyChartData = @{
+        transportTypes = Format-ChartData -distributions $transportTypesDist
+        gatewayRegions = Format-ChartData -distributions $gatewayRegionsDist
+        clientTypes    = Format-ChartData -distributions $clientTypesDist
+        clientOSs      = Format-ChartData -distributions $clientOSDist
+    }
+    
+    $weeklyChartData = @{
+        transportTypes = Format-ChartData -distributions (Get-DistributionPercentages -items ($weeklyMetrics.Values.TransportTypes | ForEach-Object { $_ }))
+        gatewayRegions = Format-ChartData -distributions (Get-DistributionPercentages -items ($weeklyMetrics.Values.GatewayRegions | ForEach-Object { $_ }))
+        clientTypes    = Format-ChartData -distributions (Get-DistributionPercentages -items ($weeklyMetrics.Values.ClientTypes | ForEach-Object { $_ }))
+        clientOSs      = Format-ChartData -distributions (Get-DistributionPercentages -items ($weeklyMetrics.Values.ClientOSs | ForEach-Object { $_ }))
+    }
+    
+    $dailyChartData = @{
+        transportTypes = Format-ChartData -distributions (Get-DistributionPercentages -items ($dailyMetrics.Values | Select-Object -Last 7).TransportTypes)
+        gatewayRegions = Format-ChartData -distributions (Get-DistributionPercentages -items ($dailyMetrics.Values | Select-Object -Last 7).GatewayRegions)
+        clientTypes    = Format-ChartData -distributions (Get-DistributionPercentages -items ($dailyMetrics.Values | Select-Object -Last 7).ClientTypes)
+        clientOSs      = Format-ChartData -distributions (Get-DistributionPercentages -items ($dailyMetrics.Values | Select-Object -Last 7).ClientOSs)
+    }
+    
+    # Create chart data JavaScript
+    $chartDataJs = @"
         const monthlyData = {
             transportTypes: {
-                labels: $($monthlyAnalytics.TransportTypes.Keys | ConvertTo-Json -Compress),
-                data: $($monthlyAnalytics.TransportTypes.Values | ConvertTo-Json -Compress)
+                labels: $(ConvertTo-Json @($monthlyChartData.transportTypes.labels)),
+                data: $(ConvertTo-Json @($monthlyChartData.transportTypes.data))
             },
             gatewayRegions: {
-                labels: $($monthlyAnalytics.GatewayRegions.Keys | ConvertTo-Json -Compress),
-                data: $($monthlyAnalytics.GatewayRegions.Values | ConvertTo-Json -Compress)
+                labels: $(ConvertTo-Json @($monthlyChartData.gatewayRegions.labels)),
+                data: $(ConvertTo-Json @($monthlyChartData.gatewayRegions.data))
             },
             clientTypes: {
-                labels: $($monthlyAnalytics.ClientTypes.Keys | ConvertTo-Json -Compress),
-                data: $($monthlyAnalytics.ClientTypes.Values | ConvertTo-Json -Compress)
+                labels: $(ConvertTo-Json @($monthlyChartData.clientTypes.labels)),
+                data: $(ConvertTo-Json @($monthlyChartData.clientTypes.data))
             },
             clientOSs: {
-                labels: $($monthlyAnalytics.ClientOSs.Keys | ConvertTo-Json -Compress),
-                data: $($monthlyAnalytics.ClientOSs.Values | ConvertTo-Json -Compress)
+                labels: $(ConvertTo-Json @($monthlyChartData.clientOSs.labels)),
+                data: $(ConvertTo-Json @($monthlyChartData.clientOSs.data))
             }
         };
 
         const weeklyData = {
             transportTypes: {
-                labels: $($weeklyAnalytics.TransportTypes.Keys | ConvertTo-Json -Compress),
-                data: $($weeklyAnalytics.TransportTypes.Values | ConvertTo-Json -Compress)
+                labels: $(ConvertTo-Json @($weeklyChartData.transportTypes.labels)),
+                data: $(ConvertTo-Json @($weeklyChartData.transportTypes.data))
             },
             gatewayRegions: {
-                labels: $($weeklyAnalytics.GatewayRegions.Keys | ConvertTo-Json -Compress),
-                data: $($weeklyAnalytics.GatewayRegions.Values | ConvertTo-Json -Compress)
+                labels: $(ConvertTo-Json @($weeklyChartData.gatewayRegions.labels)),
+                data: $(ConvertTo-Json @($weeklyChartData.gatewayRegions.data))
             },
             clientTypes: {
-                labels: $($weeklyAnalytics.ClientTypes.Keys | ConvertTo-Json -Compress),
-                data: $($weeklyAnalytics.ClientTypes.Values | ConvertTo-Json -Compress)
+                labels: $(ConvertTo-Json @($weeklyChartData.clientTypes.labels)),
+                data: $(ConvertTo-Json @($weeklyChartData.clientTypes.data))
             },
             clientOSs: {
-                labels: $($weeklyAnalytics.ClientOSs.Keys | ConvertTo-Json -Compress),
-                data: $($weeklyAnalytics.ClientOSs.Values | ConvertTo-Json -Compress)
+                labels: $(ConvertTo-Json @($weeklyChartData.clientOSs.labels)),
+                data: $(ConvertTo-Json @($weeklyChartData.clientOSs.data))
             }
         };
 
         const dailyData = {
             transportTypes: {
-                labels: $($dailyAnalytics.TransportTypes.Keys | ConvertTo-Json -Compress),
-                data: $($dailyAnalytics.TransportTypes.Values | ConvertTo-Json -Compress)
+                labels: $(ConvertTo-Json @($dailyChartData.transportTypes.labels)),
+                data: $(ConvertTo-Json @($dailyChartData.transportTypes.data))
             },
             gatewayRegions: {
-                labels: $($dailyAnalytics.GatewayRegions.Keys | ConvertTo-Json -Compress),
-                data: $($dailyAnalytics.GatewayRegions.Values | ConvertTo-Json -Compress)
+                labels: $(ConvertTo-Json @($dailyChartData.gatewayRegions.labels)),
+                data: $(ConvertTo-Json @($dailyChartData.gatewayRegions.data))
             },
             clientTypes: {
-                labels: $($dailyAnalytics.ClientTypes.Keys | ConvertTo-Json -Compress),
-                data: $($dailyAnalytics.ClientTypes.Values | ConvertTo-Json -Compress)
+                labels: $(ConvertTo-Json @($dailyChartData.clientTypes.labels)),
+                data: $(ConvertTo-Json @($dailyChartData.clientTypes.data))
             },
             clientOSs: {
-                labels: $($dailyAnalytics.ClientOSs.Keys | ConvertTo-Json -Compress),
-                data: $($dailyAnalytics.ClientOSs.Values | ConvertTo-Json -Compress)
+                labels: $(ConvertTo-Json @($dailyChartData.clientOSs.labels)),
+                data: $(ConvertTo-Json @($dailyChartData.clientOSs.data))
             }
         };
 "@
@@ -364,7 +572,7 @@ function ConvertTo-StyledHTMLReport {
         // Initialize charts with monthly data
         updateCharts('monthly');
 "@
-
+    
     # Replace placeholders in template
     $html = $template
     $html = $html.Replace('{TITLE}', $Title)
@@ -379,6 +587,10 @@ function ConvertTo-StyledHTMLReport {
     $html = $html.Replace('{CHART_FUNCTIONS}', $chartFunctions)
 
     return $html
+}
+catch {
+    Write-Error "Error generating report: $_"
+    return
 }
 
 function GetMAU {
