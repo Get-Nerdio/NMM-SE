@@ -16,17 +16,29 @@ function ConvertTo-HTMLReport {
         $chartConfigPath = Join-Path $PSScriptRoot ".." "Scripts" "chartConfig.js"
         $chartFunctionsPath = Join-Path $PSScriptRoot ".." "Scripts" "chartFunctions.js"
         $chartDataPath = Join-Path $PSScriptRoot ".." "Scripts" "chartData.js"
+        $configPath = Join-Path $PSScriptRoot ".." "Config" "config.json"
 
-        Write-Verbose "Reading template and scripts..."
+        Write-Verbose "Reading template, scripts, and config..."
         if (-not (Test-Path $templatePath)) { throw "Template file not found at: $templatePath" }
         if (-not (Test-Path $chartConfigPath)) { throw "Chart config file not found at: $chartConfigPath" }
         if (-not (Test-Path $chartFunctionsPath)) { throw "Chart functions file not found at: $chartFunctionsPath" }
         if (-not (Test-Path $chartDataPath)) { throw "Chart data file not found at: $chartDataPath" }
+        if (-not (Test-Path $configPath)) { throw "Config file not found at: $configPath" }
 
         $template = Get-Content -Path $templatePath -Raw
         $chartConfig = Get-Content -Path $chartConfigPath -Raw
         $chartFunctions = Get-Content -Path $chartFunctionsPath -Raw
         $chartDataTemplate = Get-Content -Path $chartDataPath -Raw
+        $config = Get-Content -Path $configPath -Raw | ConvertFrom-Json
+
+        # Get logo URL from config
+        $logoUrl = if ($config.LogoUrl) { 
+            $config.LogoUrl 
+        } else {
+            Write-Warning "Logo URL not found in config, using default path"
+            Join-Path $PSScriptRoot ".." "Static" "NerrdioMSPLogo.png"
+        }
+        Write-Verbose "Using logo URL: $logoUrl"
 
         # Process metrics for different time ranges
         Write-Verbose "Processing metrics for charts..."
@@ -341,7 +353,7 @@ function ConvertTo-HTMLReport {
         # Replace placeholders in template
         $html = $template
         $html = $html.Replace('{TITLE}', $Title)
-        $html = $html.Replace('{LOGO_URL}', (Join-Path $PSScriptRoot ".." "Static" "NerrdioMSPLogo.png"))
+        $html = $html.Replace('{LOGO_URL}', $logoUrl)
         $html = $html.Replace('{TIME_RANGE}', $ReportData.TimeRange)
         $html = $html.Replace('{HOST_POOL}', $ReportData.HostPoolName)
         $html = $html.Replace('{SUMMARY_METRICS}', $summaryMetrics)
