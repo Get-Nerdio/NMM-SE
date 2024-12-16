@@ -1,0 +1,7 @@
+{
+    "LogoUrl": "https://raw.githubusercontent.com/Get-Nerdio/NMM-SE/main/Azure%20Runbooks/Montly%20Avarage%20Users%20Report/Static/NerrdioMSPLogo.png",
+    "DefaultWorkspaceId": "",
+    "DefaultHostPoolName": "",
+    "ReportPath": "Reports",
+    "TemplatePath": "template.html"
+}
