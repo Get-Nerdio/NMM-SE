@@ -14,9 +14,9 @@ Import-Module Microsoft.Graph.Applications
 Connect-MgGraph -Scopes "Application.Read.All","Application-RemoteDesktopConfig.ReadWrite.All"
 
 # Define the dynamic group details
-$groupName = "Device|AVDHosts"
-$groupDescription = "This is a dynamic device group for EntraID joined AVD Hosts"
-$dynamicRule = '(device.devicePhysicalIds -any (_ -contains "[AzureResourceId]"))'   
+$groupName = "Device|AVD&W365Hosts"
+$groupDescription = "This is a dynamic device group for EntraID joined AVD & W365 Hosts"
+$dynamicRule = '(device.devicePhysicalIds -any (_ -contains "[AzureResourceId]")) or (device.deviceModel -startsWith "Cloud PC")'   
 
 # Create the dynamic group with correct parameter names
 New-MgGroup -DisplayName $groupName -Description $groupDescription -SecurityEnabled:$true -MailEnabled:$false -GroupTypes @("DynamicMembership") -MembershipRule $dynamicRule -MembershipRuleProcessingState "On" -mailNickname $groupName
