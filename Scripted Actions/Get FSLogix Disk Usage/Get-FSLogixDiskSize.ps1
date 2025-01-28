@@ -91,6 +91,7 @@ function Get-FSLogixDiskUsage {
         UsedSizeGB      = ($fsLogixVolume.Size - $fsLogixVolume.SizeRemaining) / 1GB
         FreeSpacePercent = $freeSpacePercent
         LastModified    = Get-Date
+        Source          = "Local Mounted Disk Volume"
     }
 
     # Save data to Azure Table Storage with retry logic
