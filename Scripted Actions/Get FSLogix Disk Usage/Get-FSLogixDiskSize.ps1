@@ -92,6 +92,8 @@ function Get-FSLogixDiskUsage {
         FreeSpacePercent = $freeSpacePercent
         LastModified    = Get-Date
         Source          = "Local Mounted Disk Volume"
+        CustomerName    = $EnvironmentVars.CustomerName
+        CustomerID      = $EnvironmentVars.CustomerID
     }
 
     # Save data to Azure Table Storage with retry logic

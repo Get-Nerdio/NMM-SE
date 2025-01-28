@@ -113,6 +113,8 @@ function Get-FSLogixProfilesFromAzFiles {
                         FreeSpacePercent = $freeSpacePercent
                         LastModified    = $vhdxFile.LastModified.UtcDateTime
                         Source          = "AzFiles"
+                        CustomerName    = $EnvironmentVars.CustomerName
+                        CustomerID      = $EnvironmentVars.CustomerID
                     }
 
                     # Create table entity
