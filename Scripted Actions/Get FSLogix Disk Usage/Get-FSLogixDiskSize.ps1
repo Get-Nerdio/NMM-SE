@@ -84,8 +84,8 @@ function Get-FSLogixDiskUsage {
     
     # Prepare data for Azure Table Storage
     $usageData = [PSCustomObject]@{
-        PartitionKey     = $fsLogixVolume.FileSystemLabel -replace "Profile-", ""
-        RowKey          = (Get-Date).ToString("yyyyMMddHHmmss")
+        PartitionKey     = $fsLogixVolume.FileSystemLabel -replace "Profile-", ""  # Using a constant partition key for better querying
+        RowKey          = $fsLogixVolume.FileSystemLabel  # Using full profile name as RowKey
         Username        = $fsLogixVolume.FileSystemLabel -replace "Profile-", ""
         TotalSizeGB     = $fsLogixVolume.Size / 1GB
         UsedSizeGB      = ($fsLogixVolume.Size - $fsLogixVolume.SizeRemaining) / 1GB
@@ -132,11 +132,11 @@ function Get-FSLogixDiskUsage {
             }
             $entity.Properties = $entityProperties
 
-            # Insert entity into table
-            $operation = [Microsoft.Azure.Cosmos.Table.TableOperation]::Insert($entity)
+            # Use InsertOrReplace operation to update existing records
+            $operation = [Microsoft.Azure.Cosmos.Table.TableOperation]::InsertOrReplace($entity)
             $table.CloudTable.Execute($operation)
 
-            Write-Output "Successfully saved FSLogix usage data to Azure Table Storage"
+            Write-Output "Successfully saved/updated FSLogix usage data in Azure Table Storage"
             break
         }
         catch {
