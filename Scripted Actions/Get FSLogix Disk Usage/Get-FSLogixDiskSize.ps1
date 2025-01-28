@@ -94,6 +94,7 @@ function Get-FSLogixDiskUsage {
         Source          = "Local Mounted Disk Volume"
         CustomerName    = $EnvironmentVars.CustomerName
         CustomerID      = $EnvironmentVars.CustomerID
+        HostPoolName = ((Invoke-RestMethod -Uri "http://169.254.169.254/metadata/instance?api-version=2021-02-01" -Headers @{"Metadata"="true"}).compute.tagslist | Where-Object { $_.Name -eq 'WAP_ARM_HOST_POOL' }).Value -split '/' | Select-Object -Last 1
     }
 
     # Save data to Azure Table Storage with retry logic

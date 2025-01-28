@@ -164,6 +164,7 @@ function CheckFSLogixTable {
                 <td>$([math]::Round($profile.Properties["FreeSpacePercent"].DoubleValue, 1))</td>
                 <td>$($profile.Properties["LastModified"].DateTime.ToString("yyyy-MM-dd HH:mm:ss"))</td>
                 <td>$($profile.Properties["CustomerName"].StringValue)</td>
+                <td>$($profile.Properties["HostPoolName"].StringValue)</td>
             </tr>
 "@
             }
