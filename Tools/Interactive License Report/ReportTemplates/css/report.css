@@ -1,0 +1,185 @@
+/* Microsoft 365 License Report Stylesheet */
+
+/* Additional styles beyond the inline styles in the template */
+.report-header {
+    background: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background-color: #0078D4;
+}
+
+#totalLicenses + .stat-label::before {
+    background-color: #0078D4;
+}
+
+#assignedLicenses + .stat-label::before {
+    background-color: #107C10;
+}
+
+#availableLicenses + .stat-label::before {
+    background-color: #FFB900;
+}
+
+.negative-available {
+    color: #E81123 !important;
+    font-weight: bold;
+}
+
+.low-available {
+    color: #FF8C00 !important;
+    font-weight: bold;
+}
+
+.dataTables_filter {
+    margin-bottom: 1rem;
+}
+
+.dataTables_filter input {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+}
+
+.table-responsive {
+    margin-bottom: 1rem;
+}
+
+.btn-export {
+    background-color: #0078D4;
+    color: white;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn-export:hover {
+    background-color: #106EBE;
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    body {
+        padding: 0;
+        margin: 0;
+    }
+    
+    .container {
+        max-width: 100%;
+        width: 100%;
+    }
+    
+    .report-header {
+        background-color: #333 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .chart-container {
+        page-break-inside: avoid;
+    }
+    
+    table {
+        page-break-inside: auto;
+    }
+    
+    tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+    
+    thead {
+        display: table-header-group;
+    }
+    
+    tfoot {
+        display: table-footer-group;
+    }
+}
+
+/* Custom styling for tables */
+#licenseSummaryTable th, 
+#userLicenseTable th {
+    position: sticky;
+    top: 0;
+    background-color: #f8f8f8;
+    z-index: 10;
+}
+
+/* Tenant name badge */
+.tenant-badge {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    font-size: 0.85em;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.375rem;
+    background-color: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* License type indicators */
+.license-type-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.license-type-enterprise {
+    background-color: #0078D4;
+}
+
+.license-type-business {
+    background-color: #107C10;
+}
+
+.license-type-frontline {
+    background-color: #FFB900;
+}
+
+.license-type-other {
+    background-color: #8661C5;
+}
+
+/* Additional animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.chart-container {
+    animation: fadeIn 0.6s ease-in-out;
+}
+
+.stat-number {
+    animation: fadeIn 0.8s ease-in-out;
+} 
