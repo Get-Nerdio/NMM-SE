@@ -7,7 +7,7 @@
     This script performs the following actions:
     1. Checks if FSLogix is installed
     2. Checks if the installed version of FSLogix is the latest version
-    3. If the version is older than the vurrent version or FSLogix is not installed, it will download/install FSLogix
+    3. If the version is older than the current version or FSLogix is not installed, it will download/install FSLogix
     4. If the latest version of FSLogix is already installed, the script will exit
 
 .EXECUTION MODE NMM
