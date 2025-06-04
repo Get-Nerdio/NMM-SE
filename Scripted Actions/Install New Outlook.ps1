@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Installs or updates the MS Teams client and enables Teams WVD Optimization mode.
+    Installs or updates New Outlook.
 
 .DESCRIPTION
     This script performs the following actions:
