@@ -1,130 +1,104 @@
 <#
 .SYNOPSIS
     Installs or updates the latest FSLogix Version.
-    NOTE: While this script does what it says, it's STRONGLY recommend to allow Nerdio to manage your FSLogix versions during reimaging/deployment.
 
 .DESCRIPTION
-    This script performs the following actions:
+    This script:
     1. Checks if FSLogix is installed
-    2. Checks if the installed version of FSLogix is the latest version
-    3. If the version is older than the current version or FSLogix is not installed, it will download/install FSLogix
-    4. If the latest version of FSLogix is already installed, the script will exit
-
-.EXECUTION MODE NMM
-    IndividualWithRestart
-
-.TAGS
-    Nerdio, Apps install, FSlogix
+    2. Compares installed version to the current version in the ZIP
+    3. Installs or upgrades if needed
 
 .NOTES
-This was found on a Reddit Post by u/TheScream
-All Credit goes to them for the script.
-https://www.reddit.com/r/fslogix/comments/137c9nm/fslogix_powershell_silent_install_script/?rdt=39769
-
-#> 
-
-
-## Install FSLogix Apps
-
-## This script checks the current version of FSLogix based on the short URL redirected filename
-## (eg: FSLogix_Apps_2.9.8440.42104.zip) and installs if FSLogix is not installed, or is older
-## than the currently installed version. Version comparison uses [System.Version] object type cast
-## to ensure any major version numbers are accounted for.
-
-## The script will extract just the 64 bit FSLogix Apps installer exe from the downloaded zip
-
-## Caveats: If MS changes the short URL, the redirection, or the path/filename within the zip
-##          then the script will break.
-##          It is strongly recommended not to autorun this script due to unexpected bugs in FSLogix
+    Credit: u/TheScream on Reddit
+    https://www.reddit.com/r/fslogix/comments/137c9nm/fslogix_powershell_silent_install_script/
+#>
 
 $FSLogixURL = "https://aka.ms/fslogix/download"
 $FSLogixDownload = "FSLogixSetup.zip"
-$FSLogixInstaller = "FSLogixAppsSetup.exe"
+$FSLogixInstallerName = "FSLogixAppsSetup.exe"
 $ZipFileToExtract = "x64/Release/FSLogixAppsSetup.exe"
-$Zip = "$env:temp\$FSLogixDownload"
-$Installer = "$env:temp\$FSLogixInstaller"
+$ZipPath = "$env:TEMP\$FSLogixDownload"
+$InstallerPath = "$env:TEMP\$FSLogixInstallerName"
+$TempExtractedForVersionCheck = "$env:TEMP\fslogix_temp_version.exe"
+
 $downloadAndInstall = $false
 
-$ProductName = "Microsoft FSLogix Apps"
+# STEP 1: Check installed version via registry
+$regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+$installedVersion = Get-ChildItem $regPath |
+    Where-Object {
+        ($_ | Get-ItemProperty).DisplayName -like "*FSLogix*"
+    } |
+    ForEach-Object {
+        ($_ | Get-ItemProperty).DisplayVersion
+    } |
+    Select-Object -First 1
 
-Write-Host "Checking registry for $ProductName"
-
-# Get FSLogix version number if installed
-$fslogixsearch = (get-wmiobject Win32_Product | where-object name -eq "Microsoft FSLogix Apps" | select-object Version)
-
-switch ($fslogixsearch.count) {
-    0 {
-        # Not found
-        $fslogixver = $null
-        $downloadAndInstall = $true
-    }
-    1 {
-        # One entry returned
-        $fslogixver = [System.Version]$fslogixsearch.Version
-        Write-Host "FSLogix version installed: $fslogixver"
-    }
-    {$_ -gt 1} {
-        # two or more returned
-        $fslogixver = [System.Version]$fslogixsearch[0].Version
-        Write-Host "FSLogix version installed: $fslogixver"
-    }
-
-}
-
-# Find current FSLogix version from short URL:
-$WebRequest = [System.Net.WebRequest]::create($FSLogixURL)
-$WebResponse = $WebRequest.GetResponse()
-$ActualDownloadURL = $WebResponse.ResponseUri.AbsoluteUri
-$WebResponse.Close()
-
-$FSLogixCurrentVersion = [System.Version]((Split-Path $ActualDownloadURL -leaf).Split("_")[2]).Replace(".zip","")
-
-Write-Host "Current FSLogix version: $FSLogixCurrentVersion"
-
-# See if the current version is newer than the installed version:
-if ($FSLogixCurrentVersion -gt $fslogixver) {
-    # Current version greater than installed version, install new version
-    Write-Host "New version will be downloaded and installed. ($FSLogixCurrentVersion > $fslogixver)"
+if ($installedVersion) {
+    $installedVersion = [System.Version]$installedVersion
+    Write-Host "Installed FSLogix version: $installedVersion"
+} else {
+    Write-Host "FSLogix not installed."
+    $installedVersion = [System.Version]"0.0.0.0"
     $downloadAndInstall = $true
 }
 
-# If $downloadAndInstall has been toggled true, download and install.
-if ($downloadAndInstall)
-{
-    Write-Host "Not installed... beginning install..."
-    # Download installer
-    Import-Module BitsTransfer
-    Write-Host "Downloading from: $FSLogixURL"
-    Write-Host "Saving file to: $Zip"
+# STEP 2: Download latest FSLogix ZIP to TEMP (clean if already exists)
+if (Test-Path $ZipPath) {
+    Remove-Item $ZipPath -Force
+}
+Write-Host "Downloading FSLogix ZIP..."
+Import-Module BitsTransfer
+Start-BitsTransfer -Source $FSLogixURL -Destination $ZipPath
 
-    Start-BitsTransfer -Source $FSLogixURL -Destination "$env:temp\$FSLogixDownload" -RetryInterval 60
+# STEP 3: Extract EXE for version checking
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$zipFile = [System.IO.Compression.ZipFile]::OpenRead($ZipPath)
 
-    # Extract file from zip: x64\Release\FSLogixAppsSetup.exe to $env:temp\FSLogixAppsSetup.exe
-    
-    # Open zip
-    Add-Type -Assembly System.IO.Compression.FileSystem
-    $zipFile = [IO.Compression.ZipFile]::OpenRead($Zip)
-    
-    # Retrieve the $ZipFileToExtract and extract to $Installer
-    $filetoextract = ($zipFile.Entries | Where-Object {$_.FullName -eq $ZipFileToExtract})
-    [System.IO.Compression.ZipFileExtensions]::ExtractToFile($filetoextract[0], $Installer, $true)
-    
-    # Run installer
-    Write-Host "Running $Installer /install /quiet /norestart"
-    Start-Process $Installer -wait -ArgumentList "/install /quiet /norestart"
+$entry = $zipFile.Entries | Where-Object { $_.FullName -eq $ZipFileToExtract }
 
-    # Wait for 5 minutes so that the files can be deleted because despite -wait being specified, it doesn't actually wait for all processes to finish
-    Start-Sleep -Seconds 300
+if (-not $entry) {
+    throw "Could not find $ZipFileToExtract in the ZIP archive."
+}
 
-    # Close the zip file so it can be deleted
+[System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $TempExtractedForVersionCheck, $true)
+
+# Read version from the EXE
+$zipVersion = [System.Version](Get-Item $TempExtractedForVersionCheck).VersionInfo.FileVersion
+Write-Host "FSLogix version in ZIP: $zipVersion"
+
+# Clean up version-check EXE and ZIP handle
+Remove-Item $TempExtractedForVersionCheck -Force
+$zipFile.Dispose()
+
+# STEP 4: Compare versions
+if ($zipVersion -gt $installedVersion) {
+    Write-Host "A newer version is available. Preparing to install."
+    $downloadAndInstall = $true
+} else {
+    Write-Host "FSLogix is up to date. No action required."
+}
+
+# STEP 5: Install new version if needed
+if ($downloadAndInstall) {
+    Write-Host "Extracting installer..."
+
+    # Reopen the ZIP
+    $zipFile = [System.IO.Compression.ZipFile]::OpenRead($ZipPath)
+    $entry = $zipFile.Entries | Where-Object { $_.FullName -eq $ZipFileToExtract }
+
+    [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $InstallerPath, $true)
     $zipFile.Dispose()
 
-    # Clean up
-    Write-Host "Cleaning up, deleting $Installer and $Zip."
-    Remove-Item -Path $Installer -Force
-    Remove-Item -Path $Zip -Force
-}
-else {
-    Write-Host "FSLogix already installed and up to date."
+    Write-Host "Running installer: $InstallerPath /install /quiet /norestart"
+    Start-Process $InstallerPath -Wait -ArgumentList "/install /quiet /norestart"
 
+    # Delay for processes to finish (some FSLogix installers spawn child processes)
+    Start-Sleep -Seconds 300
+
+    Write-Host "Cleaning up temporary files..."
+    Remove-Item $InstallerPath -Force
+    Remove-Item $ZipPath -Force
+
+    Write-Host "FSLogix installation complete."
 }
