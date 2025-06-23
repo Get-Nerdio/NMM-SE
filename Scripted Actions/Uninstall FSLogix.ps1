@@ -7,7 +7,7 @@
     1. Uninstalls existing FSlogix installations.
 
 .EXECUTION MODE NMM
-    Individual
+    Individual with Restart
 
 .TAGS
     Nerdio, Apps Uninstall, FSLogix
