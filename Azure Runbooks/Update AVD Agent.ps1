@@ -64,12 +64,12 @@ write-output "Execute download script on remote VM"
 $RunCommand = Invoke-AzVMRunCommand -ResourceGroupName $vm.ResourceGroupName -VMName "$AzureVMName" -CommandId 'RunPowerShellScript' -ScriptPath ".\Download-Installers-$($vm.Name).ps1"
 
 # Check for errors
-$errors = $RunCommand.Value | ? Code -eq 'ComponentStatus/StdErr/succeeded'
+$errors = $RunCommand.Value | Where-Object Code -eq 'ComponentStatus/StdErr/succeeded'
 if ($errors.message) {
     Throw "Error when downloading installers. $($errors.message)"
 }
 Write-output "Output from RunCommand:"
-$RunCommand.Value | ? Code -eq 'ComponentStatus/StdOut/succeeded' | select message -ExpandProperty message
+$RunCommand.Value | Where-Object Code -eq 'ComponentStatus/StdOut/succeeded' | Select-Object message -ExpandProperty message
 
 $Script = @"
 `$tempFolder = [environment]::GetEnvironmentVariable('TEMP', 'Machine')
@@ -103,17 +103,17 @@ write-output "Execute uninstall script on remote VM"
 $RunCommand = Invoke-AzVMRunCommand -ResourceGroupName $vm.ResourceGroupName -VMName "$AzureVMName" -CommandId 'RunPowerShellScript' -ScriptPath ".\Uninstall-AVDAgent-$($vm.Name).ps1"
 
 #Check runcommand output for errors
-$errors = $RunCommand.Value | ? Code -eq 'ComponentStatus/StdErr/succeeded'
+$errors = $RunCommand.Value | Where-Object Code -eq 'ComponentStatus/StdErr/succeeded'
 if ($errors.message) {
     Throw "Error when uninstalling software. $($errors.message)"
 }
 Write-output "Output from RunCommand:"
-$RunCommand.Value | ? Code -eq 'ComponentStatus/StdOut/succeeded' | select message -ExpandProperty message
+$RunCommand.Value | Where-Object Code -eq 'ComponentStatus/StdOut/succeeded' | Select-Object message -ExpandProperty message
 
 write-output "Restarting VM after uninstall"
 $vm | Restart-AzVM 
 
-$SessionHost = Get-AzWvdSessionHost -HostPoolName $hostpoolname -ResourceGroupName $HostPoolResourceGroupName | ? name -match $azureVMName
+$SessionHost = Get-AzWvdSessionHost -HostPoolName $hostpoolname -ResourceGroupName $HostPoolResourceGroupName | Where-Object name -match $azureVMName
 Remove-AzWvdSessionHost -ResourceGroupName $HostPoolResourceGroupName -HostPoolName $HostPoolName -Name ($SessionHost.name -split '/')[1]
 write-output "Removed session host from host pool"
 
@@ -171,12 +171,12 @@ write-output "Execute reinstall script on remote VM"
 $RunCommand = Invoke-AzVMRunCommand -ResourceGroupName $vm.ResourceGroupName -VMName "$AzureVMName" -CommandId 'RunPowerShellScript' -ScriptPath ".\Upgrade-AVDAgent-$($vm.Name).ps1"
 
 #Check runcommand output for errors
-$errors = $RunCommand.Value | ? Code -eq 'ComponentStatus/StdErr/succeeded'
+$errors = $RunCommand.Value | Where-Object Code -eq 'ComponentStatus/StdErr/succeeded'
 if ($errors.message) {
     Throw "Error when reinstalling RD components. $($errors.message)"
 }
 Write-output "Output from RunCommand:"
-$RunCommand.Value | ? Code -eq 'ComponentStatus/StdOut/succeeded' | select message -ExpandProperty message
+$RunCommand.Value | Where-Object Code -eq 'ComponentStatus/StdOut/succeeded' | Select-Object message -ExpandProperty message
 
 write-output "Restarting VM after reinstall"
 $vm | Restart-AzVM 
