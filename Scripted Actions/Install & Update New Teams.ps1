@@ -200,7 +200,7 @@ try {
             $dlink2 = 'https://aka.ms/msrdcwebrtcsvc/msi'
         }
         $false {
-            $dlink2 = 'https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RW1o9wm'
+            $dlink2 = 'https://aka.ms/msrdcwebrtcsvc/msi'
         }
     }
     
