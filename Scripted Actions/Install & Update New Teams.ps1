@@ -174,7 +174,7 @@ try {
  
     # Use installer to install Machine-Wide
     NMMLogOutput -Level 'Information' -Message 'Installing MS Teams' -return $true
-    Start-Process 'C:\Windows\Temp\msteams_sa\install\teamsbootstrapper.exe' -ArgumentList '-p' -Wait 2>&1
+    Start-Process 'C:\Windows\Temp\msteams_sa\install\teamsbootstrapper.exe' -ArgumentList '-p --installTMA' -Wait 2>&1
 
     # Set registry values for Teams to use VDI optimization
     NMMLogOutput -Level 'Information' -Message 'Setting Teams to WVD Environment mode' -return $true
