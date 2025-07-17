@@ -12,7 +12,7 @@ Requirements:
 #>
 
 # Define variables
-$groupName = "Device | AVD&W365Hosts"
+$groupName = "Device|AVD&W365Hosts"
 $groupDescription = "This is a dynamic device group for EntraID joined AVD & W365 Hosts"
 $dynamicRule = '(device.devicePhysicalIds -any (_ -contains "[AzureResourceId]")) or (device.deviceModel -startsWith "Cloud PC")'
 
