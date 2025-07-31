@@ -5,9 +5,10 @@
 .DESCRIPTION
     This script performs the following actions:
     1. Sets a registry value to enable MS Teams to operate in WVD Mode.
-    2. Uninstalls existing MS Teams and WebRTC programs, both per-user and machine-wide installations.
-    3. Downloads and installs the latest version of MS Teams with a machine-wide installation.
-    4. Downloads and installs the August 2024 version of the WebRTC component.
+    2. Uninstalls existing MS Teams, Teams Outlook Add-in, and WebRTC programs, both per-user and machine-wide installations.
+    3. Downloads and installs the latest version of MS Teams with a machine-wide installation and the Teams Meeting Add-in for Outlook.
+    4. Downloads and installs the latest version of the WebRTC component.
+    5. Disables automatic Teams updates
     5. Logs all actions to a specified log directory.
     6. Set the $MarchwebRTC variable to $true to install the March 2024 version of WebRTC.
 
@@ -143,6 +144,15 @@ if ($null -ne $GetTeams.IdentifyingNumber) {
     Start-Process C:\Windows\System32\msiexec.exe -ArgumentList "/x $($GetTeams.IdentifyingNumber) /qn /norestart" -Wait 2>&1
 
     NMMLogOutput -Level 'Information' -Message 'Teams per-machine Install Found, uninstalling teams' -return $true
+    
+# Per-Machine Teams Meeting Add-in uninstall logic
+$GetTeamsAddin = Get-CimInstance -ClassName Win32_Product | Where-Object { $_.Name -like "*Teams Meeting Add-in*" -and $_.Vendor -eq "Microsoft" }
+
+if ($null -ne $GetTeamsAddin.IdentifyingNumber) {
+    Start-Process C:\Windows\System32\msiexec.exe -ArgumentList "/x $($GetTeamsAddin.IdentifyingNumber) /qn /norestart" -Wait 2>&1
+
+    NMMLogOutput -Level 'Information' -Message 'Teams Meeting Add-in Found, uninstalling Teams Meeting Add-in' -return $true
+    
 }
 
 #Check for New Teams being Installed
@@ -172,7 +182,7 @@ try {
     # Grab MSI installer for MSTeams
     Invoke-WebRequest -Uri $DLink -OutFile 'C:\Windows\Temp\msteams_sa\install\teamsbootstrapper.exe' -UseBasicParsing
  
-    # Use installer to install Machine-Wide
+    # Use installer to install Machine-Wide with the Teams Meeting Add-in for Outlook
     NMMLogOutput -Level 'Information' -Message 'Installing MS Teams' -return $true
     Start-Process 'C:\Windows\Temp\msteams_sa\install\teamsbootstrapper.exe' -ArgumentList '-p --installTMA' -Wait 2>&1
 
@@ -181,6 +191,8 @@ try {
 
     New-Item -Path "HKLM:\SOFTWARE\Microsoft\Teams" -Force
     New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Teams" -Name IsWVDEnvironment -PropertyType DWORD -Value 1 -Force
+    New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Teams" -Name "disableAutoUpdate" -Value 1 -PropertyType DWord -Force
+
  
 }
 catch {
