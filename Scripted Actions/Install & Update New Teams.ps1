@@ -144,7 +144,7 @@ if ($null -ne $GetTeams.IdentifyingNumber) {
     Start-Process C:\Windows\System32\msiexec.exe -ArgumentList "/x $($GetTeams.IdentifyingNumber) /qn /norestart" -Wait 2>&1
 
     NMMLogOutput -Level 'Information' -Message 'Teams per-machine Install Found, uninstalling teams' -return $true
-    
+}    
 # Per-Machine Teams Meeting Add-in uninstall logic
 $GetTeamsAddin = Get-CimInstance -ClassName Win32_Product | Where-Object { $_.Name -like "*Teams Meeting Add-in*" -and $_.Vendor -eq "Microsoft" }
 
