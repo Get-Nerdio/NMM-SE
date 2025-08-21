@@ -1,4 +1,4 @@
-# MSIX App Attach Script Toolkit for Azure Virtual Desktop (AVD)
+# App Attach Script Toolkit for Azure Virtual Desktop (AVD)
 
 This toolkit includes PowerShell scripts designed to automate the preparation, conversion, and deployment of Microsoft Store applications for use with App Attach in Azure Virtual Desktop (AVD) environments.
 
