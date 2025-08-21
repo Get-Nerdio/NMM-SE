@@ -9,6 +9,9 @@ The scripts support a full lifecycle:
 4. Install necessary runtime dependencies on the AVD image  
 5. Remove built-in apps on the AVD image to avoid duplication or conflicts
 
+
+Once complete with the 5 steps, you can Create an App Attach Applicaiton (https://learn.microsoft.com/en-us/azure/virtual-desktop/app-attach-setup?tabs=portal#add-an-application) or Update an Existing App Attach Application (https://learn.microsoft.com/en-us/azure/virtual-desktop/app-attach-setup?tabs=portal#update-an-existing-package) to have the assigned Host Pool/Users have the application at the next logon.
+
 ---
 
 ## Script Overview
@@ -53,7 +56,7 @@ If you prefer to install the Azure modules manually before running the scripts, 
 
 ```powershell
 Install-Module -Name Az.Accounts, Az.Storage -Scope CurrentUser -AllowClobber
-
+```
 
 ---
 
