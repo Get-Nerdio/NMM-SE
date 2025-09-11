@@ -27,33 +27,43 @@ $HostPoolName = $Hostpool.Name
 $AvdAgentUrl = 'https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RWrmXv'
 $BootLoaderUrl = 'https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RWrxrH'
 
-$Script = @"
-`$ErrorActionPreference = 'Stop'
-`$TLS12Protocol = [System.Net.SecurityProtocolType] 'Ssl3 , Tls12'
-[System.Net.ServicePointManager]::SecurityProtocol = `$TLS12Protocol
+$Script = @'
+$ErrorActionPreference = 'Stop'
+[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
 
+# Ensure download directory exists
+$destDir = 'C:\Program Files\Microsoft RDInfra\'
+if (-not (Test-Path -Path $destDir)) {
+    New-Item -Path 'C:\Program Files' -Name 'Microsoft RDInfra' -ItemType Directory -Force | Out-Null
+}
+
+# Download Agent
 Try {
-    `$AvdAgentRequest = Invoke-WebRequest $AvdAgentUrl -UseBasicParsing
-    `$AvdAgentFilename = (`$AvdAgentRequest.headers['content-disposition'] -split 'filename=')[1]
-    Invoke-WebRequest -uri $AvdAgentUrl -UseBasicParsing -outfile "C:\Program Files\Microsoft RDInfra\`$AvdAgentFilename"
+    $req = Invoke-WebRequest -Uri 'https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RWrmXv' -UseBasicParsing -Method Head -MaximumRedirection 5
+    $filename = if ($req.Headers['Content-Disposition'] -match 'filename="?([^"]+)"?') { $matches[1] } else { [System.IO.Path]::GetFileName($req.BaseResponse.ResponseUri.AbsoluteUri) }
+    $path = Join-Path $destDir $filename
+    Invoke-WebRequest -Uri 'https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RWrmXv' -UseBasicParsing -OutFile $path
 }
 Catch {
-    Throw "Unable to download new agent from $AvdAgentUrl. `$_"
+    Throw "Unable to download RD Agent from https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RWrmXv. Error: $($_.Exception.Message)"
 }
 
+# Download BootLoader
 Try {
-    `$AgentBootLoaderRequest = Invoke-WebRequest $BootLoaderUrl -UseBasicParsing
-    `$AgentBootLoaderFilename = (`$AgentBootLoaderRequest.headers['content-disposition'] -split 'filename=')[1]
-    if (`$AgentBootLoaderFilename -match '\(' ) {
-        `$AgentBootLoaderFilename = "Microsoft.RDInfra.RDAgentBootLoader.Installer-x64.msi"
-    } 
-    Invoke-WebRequest -uri $BootLoaderUrl -UseBasicParsing -outfile "C:\Program Files\Microsoft RDInfra\`$AgentBootLoaderFilename"
+    $req = Invoke-WebRequest -Uri 'https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RWrxrH' -UseBasicParsing -Method Head -MaximumRedirection 5
+    if ($req.Headers['Content-Disposition'] -match 'filename="?([^"]+)"?') {
+        $blFilename = $matches[1]
+    } else {
+        $blFilename = [System.IO.Path]::GetFileName($req.BaseResponse.ResponseUri.AbsoluteUri)
+    }
+    $path = Join-Path $destDir $blFilename
+    Invoke-WebRequest -Uri 'https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RWrxrH' -UseBasicParsing -OutFile $path
 }
 Catch {
-    Throw "Unable to download new bootloader from $BootLoaderUrl. `$_"
+    Throw "Unable to download BootLoader from https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RWrxrH. Error: $($_.Exception.Message)"
 }
+'@
 
-"@
 
 $VM = get-azvm -VMName $azureVMName
 
