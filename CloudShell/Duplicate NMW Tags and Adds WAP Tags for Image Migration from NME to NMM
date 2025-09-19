@@ -1,0 +1,64 @@
+# ------------------------------------------------------------
+# Azure Resource Tagging Script
+# Original contribution and approach credited to:
+#   Tom Biscardi, C3 Integrated Solutions
+# ------------------------------------------------------------
+# This script loops through all Azure subscriptions, finds 
+# resources tagged with "NMW_" prefixes (Desktop Images, NICs),
+# and duplicates those tags with a "WAP_" prefix for consistency.
+# ------------------------------------------------------------
+
+Foreach ($sub in Get-AzSubscription) {
+    # Switch context to the current subscription
+    Set-AzContext -SubscriptionId $sub.Id | Out-Null
+    Write-Output "Processing subscription: $($sub.Name) ($($sub.Id))"
+
+    # Collect resources tagged as desktop images or image VMs
+    $nmeImgRsrcs = (Get-AzResource | ?{
+        if ($_.Tags) {
+            ($_.Tags["NMW_OBJECT_TYPE"] -eq "DESKTOP_IMAGE") -or 
+            ($_.Tags["NMW_OBJECT_TYPE"] -eq "DESKTOP_IMAGE_VM")
+        }
+    })
+
+    # Initialize collection of NME-related resources
+    $nmeRsrcs = @()
+    $nmeRsrcs += $nmeImgRsrcs
+
+    # Look up related NICs based on the shared NMW_JOB_GUID tag
+    $nmeRsrcs.Tags."NMW_JOB_GUID" | Sort-Object -Unique | % {
+        $nic = Get-AzResource -ResourceType Microsoft.Network/networkInterfaces -TagName "NMW_JOB_GUID" -TagValue $_ 
+        if ($nic.ResourceId -notin $nmeRsrcs.ResourceId) { 
+            $nmeRsrcs += $nic 
+        }
+    }
+
+    # Skip subscriptions with no relevant resources
+    if ($nmeRsrcs.Count -eq 0) {
+        Write-Output "`tNo NME resources found, skipping subscription."
+        Continue
+    }
+
+    # Process each matching resource
+    Foreach ($rsc in $nmeRsrcs) {
+        Write-Output "Processing resource: $($rsc.Name) ($($rsc.ResourceType))"
+
+        # Get all current tags and filter to NMW_ prefixed tags
+        $oldTagsHT = $rsc.Tags
+        $oldTags = $rsc.Tags.Keys | Where-Object { $_.StartsWith("NMW_") }
+
+        # Duplicate tags, changing NMW_ prefix to WAP_
+        Foreach ($tag in $oldTags) {
+            $newName = $tag.Replace("NMW_", "WAP_")
+            $oldTagsHT += @{$newName = $rsc.Tags.$tag}
+            Write-Output "`t`tAdding tag: $newName = $($rsc.Tags.$tag)"
+        }
+
+        # Update resource with combined tag set
+        Write-Output "`tUpdating resource tags..."
+        Set-AzResource -ResourceId $rsc.ResourceId -Tag $oldTagsHT -Force #| Out-Null
+    }
+
+    # Reset resource collection before moving to next subscription
+    $nmeRsrcs = @()
+}
