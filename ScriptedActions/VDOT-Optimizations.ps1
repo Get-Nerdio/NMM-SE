@@ -2,13 +2,13 @@
 .SYNOPSIS
     Runs the Virtual Desktop Optimization Tool (VDOT) from the VDOT GitHub (https://github.com/The-Virtual-Desktop-Team/Virtual-Desktop-Optimization-Tool) by utilizing Inherited Variables for the installer arguments that can be adjusted at the Account level in NMM.
     ***WARNING***
-    This script just calls the lated version of the VDOT script.
-    If there are any issues with the VDOT script itself, please create an issue in the the Virtuaal Desktop Team GitHub repo.
+    This script just calls the latest version of the VDOT script.
+    If there are any issues with the VDOT script itself, please create an issue in the Virtual Desktop Team GitHub repo.
 
 .REQUIREMENTS
     The following Inherited Variables are required to be created at the MSP Level of Nerdio Manager for MSP
     The values listed are the recommended default actions.
-    You can change these values at the Account Level. You can read more abotu the parameters HERE (https://github.com/The-Virtual-Desktop-Team/Virtual-Desktop-Optimization-Tool?tab=readme-ov-file#-optimizations-parameter-and-new--advancedoptimizations-parameters)
+    You can change these values at the Account Level. You can read more about the parameters HERE (https://github.com/The-Virtual-Desktop-Team/Virtual-Desktop-Optimization-Tool?tab=readme-ov-file#-optimizations-parameter-and-new--advancedoptimizations-parameters)
 
     Inherited Variables:
     VDOTopt = All
@@ -18,7 +18,7 @@
     NOTE: If you want to use different variable names, you will need to update lines 64-66 accordingly.
 
 .EXECUTION MODE
-    Individual or Indivdual with Restart
+    Individual or Individual with Restart
 #>
 
 # Define GitHub ZIP download URL
