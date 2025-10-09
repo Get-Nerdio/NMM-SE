@@ -15,11 +15,13 @@ The ShareFile Outlook add-in allows users to securely share files directly from 
 ## Features
 
 - **Automatic Detection**: Checks for existing installations using multiple product name variations
+- **Version Checking**: Compares installed version against latest available version
 - **Safe Installation**: Closes Outlook before installation to prevent conflicts
 - **Version Management**: Uninstalls existing versions before installing the latest
 - **Silent Installation**: Performs installations without user interaction
 - **Comprehensive Logging**: Uses Nerdio's Context.Log for detailed operation logging
 - **Error Handling**: Robust error handling with appropriate exit codes
+- **Fallback Logic**: Gracefully handles version checking failures by assuming current installation is acceptable
 
 ## Installation Process
 
@@ -31,16 +33,46 @@ The ShareFile Outlook add-in allows users to securely share files directly from 
 
 ## Detection Logic
 
-The detection script checks for applications with names containing:
+The detection script performs comprehensive checks to ensure the ShareFile Outlook add-in is installed and up-to-date:
+
+### Installation Detection
+Checks for applications with names containing:
 - "ShareFile Outlook"
 - "Citrix Files for Outlook" 
 - "ShareFile" AND "Outlook"
 
+### Version Checking
+The script includes advanced version checking capabilities:
+
+1. **Installed Version Detection**:
+   - Retrieves version from Win32_Product information
+   - Falls back to registry lookup in common ShareFile locations:
+     - `HKLM:\SOFTWARE\Microsoft\Office\Outlook\Addins\ShareFile.OutlookAddin`
+     - `HKLM:\SOFTWARE\WOW6432Node\Microsoft\Office\Outlook\Addins\ShareFile.OutlookAddin`
+     - `HKLM:\SOFTWARE\Citrix\ShareFile\OutlookAddin`
+
+2. **Latest Version Detection**:
+   - Attempts to fetch latest version from ShareFile's official installer URL
+   - Checks HTTP headers for version information
+   - Extracts version from Content-Disposition headers if available
+
+3. **Version Comparison**:
+   - Compares installed version against latest available version
+   - Uses proper System.Version comparison for accurate results
+   - Falls back to assuming current installation is acceptable if version checking fails
+
+### Detection Results
+The script provides detailed logging of:
+- Installation status
+- Installed version number
+- Latest available version
+- Whether update is required
+
 ## Exit Codes
 
 - **Detection Script**: 
-  - 0 = Application detected/installed
-  - 1 = Application not detected/not installed
+  - 0 = Application detected/installed and up-to-date
+  - 1 = Application not detected/not installed OR needs update
 - **Install/Uninstall Scripts**: 
   - 0 = Success
   - Non-zero = Error occurred
