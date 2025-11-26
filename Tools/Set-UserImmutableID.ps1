@@ -54,13 +54,21 @@
 
 # Check that Graph module is installed and install it if not 
 if (-not (Get-Module -ListAvailable -Name Microsoft.Graph)) { 
+    Write-Host "Installing Microsoft.Graph module..." -ForegroundColor Yellow
     Install-Module -Name Microsoft.Graph -Scope CurrentUser -Force 
 } 
-# Import the Users sub-module which contains Update-MgUser cmdlet
+
+# Import the main Microsoft.Graph module (contains Connect-MgGraph)
+Import-Module Microsoft.Graph -ErrorAction Stop
+
+# Check that Graph Users sub-module is installed and install it if not
 if (-not (Get-Module -ListAvailable -Name Microsoft.Graph.Users)) { 
+    Write-Host "Installing Microsoft.Graph.Users module..." -ForegroundColor Yellow
     Install-Module -Name Microsoft.Graph.Users -Scope CurrentUser -Force 
 } 
-Import-Module Microsoft.Graph.Users 
+
+# Import the Users sub-module which contains Update-MgUser cmdlet
+Import-Module Microsoft.Graph.Users -ErrorAction Stop
 
 # Connect to Microsoft Graph 
 Connect-MgGraph -Scopes "User.ReadWrite.All" 
