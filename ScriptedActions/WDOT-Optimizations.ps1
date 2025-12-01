@@ -8,7 +8,7 @@
 .REQUIREMENTS
     The following Inherited Variables are required to be created at the MSP Level of Nerdio Manager for MSP
     The values listed are the recommended default actions.
-    You can change these values at the Account Level. You can read more about the parameters HERE (https://github.com/The-Virtual-Desktop-Team/Windows-Desktop-Optimization-Tool#-optimizations-parameter-and-new--advancedoptimizations-parameters)
+    You can change these values at the Account Level. You can read more about the parameters HERE (https://github.com/The-Virtual-Desktop-Team/Windows-Desktop-Optimization-Tool?tab=readme-ov-file#-windows_optimizationps1---main-script)
 
     Inherited Variables:
     WDOTConfigProfile = Windows11_24H2 (or any valid config profile name)
