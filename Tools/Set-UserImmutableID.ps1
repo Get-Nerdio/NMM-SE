@@ -7,6 +7,9 @@
     by setting the ImmutableID attribute. The ImmutableID is derived from the on-premises user's ObjectGUID, 
     converted to a Base64-encoded string. This is essential for directory synchronization and hybrid identity scenarios.
 
+    Additionally, the script provides an option to process multiple users in bulk from a selected Organizational Unit (OU)
+    in Active Directory.
+
     The script will:
     - Automatically install Microsoft Graph PowerShell modules if not present
     - Connect to Microsoft Graph with User.ReadWrite.All permissions
@@ -109,17 +112,74 @@ function Set-UserImmutableID {
     } 
 } 
 
-# Get user input with validation
-$ADUsername = Read-Host "Enter the on-premises AD username (sAMAccountName)" 
-if ([string]::IsNullOrWhiteSpace($ADUsername)) {
-    Write-Error "On-premises username cannot be empty."
-    exit 1
+# Create menu
+function ShowMenu {
+    param (
+        [string]$MenuTitle,
+        [string[]]$MenuOptions
+    )
+    Write-Host "=== $MenuTitle ===" -ForegroundColor Yellow
+    for ($i = 0; $i -lt $MenuOptions.Count; $i++) {
+        Write-Host "[$($i + 1)] $($MenuOptions[$i])"
+    }
+    $selection = Read-Host "Please select an option (1-$($MenuOptions.Count))"
+    if (-not ($selection -as [int]) -or [int]$selection -lt 1 -or [int]$selection -gt $MenuOptions.Count) {
+        Write-Error "Invalid selection. Please enter a number between 1 and $($MenuOptions.Count)."
+        exit 1
+    }
+    $selectedOption = $MenuOptions[[int]$selection - 1]
+    return $selectedOption
 }
 
-$365Username = Read-Host "Enter the cloud username (UserPrincipalName)" 
-if ([string]::IsNullOrWhiteSpace($365Username)) {
-    Write-Error "Cloud username cannot be empty."
-    exit 1
+# Handle single user option
+function SingleUser {
+    # Get user input with validation
+    $ADUsername = Read-Host "Enter the on-premises AD username (sAMAccountName)" 
+    if ([string]::IsNullOrWhiteSpace($ADUsername)) {
+        Write-Error "On-premises username cannot be empty."
+        exit 1
+    }
+
+    $365Username = Read-Host "Enter the cloud username (UserPrincipalName)" 
+    if ([string]::IsNullOrWhiteSpace($365Username)) {
+        Write-Error "Cloud username cannot be empty."
+        exit 1
+    }
+
+    Set-UserImmutableID -onPremUsername $ADUsername -cloudUsername $365Username
 }
 
-Set-UserImmutableID -onPremUsername $ADUsername -cloudUsername $365Username
+# Handle bulk user option
+function BulkUsers {
+    Write-Host "Warning: You are about to set the ImutableID for all users in a selected OU.  Ensure that each user has the Email Address attribute correctly set." -ForegroundColor Red
+    $confirmation = Read-Host "Type 'YES' to proceed or anything else to cancel. (Case Sensitive)"
+    if ($confirmation -ne "YES") {
+        Write-Host "Operation cancelled by user." -ForegroundColor Yellow
+        exit 0
+    }
+    else {
+        $OUs = Get-ADOrganizationalUnit -Filter * | Select-Object -ExpandProperty DistinguishedName
+        $selectedOU = ShowMenu -MenuTitle "Select an OU for bulk processing" -MenuOptions $OUs
+        $users = Get-ADUser -Filter * -SearchBase $selectedOU -Properties *
+        foreach ($user in $users) {
+            $onPremUsername = $user.SamAccountName
+            $cloudUsername = $user.EmailAddress
+            if ([string]::IsNullOrWhiteSpace($cloudUsername)) {
+                Write-Warning "Skipping user '$onPremUsername' as no cloud username (EmailAddress) is found."
+                continue
+            }
+            else {
+            Set-UserImmutableID -onPremUsername $onPremUsername -cloudUsername $cloudUsername
+            }
+        }
+    }
+}
+
+# Present menu to select single or bulk user processing
+$menuOptions = @("Run for Single User", "Run for Bulk Users in an OU")
+$choice = ShowMenu -MenuTitle "ImmutableID Setting Options.  Select if running for a single user or bulk users:" -MenuOptions $menuOptions
+switch ($choice) {
+    "Run for Single User" { SingleUser }
+    "Run for Bulk Users in an OU" { BulkUsers }
+    Default { exit 0}
+}
