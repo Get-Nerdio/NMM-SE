@@ -61,8 +61,8 @@ if (-not (Get-Module -ListAvailable -Name Microsoft.Graph)) {
     Install-Module -Name Microsoft.Graph -Scope CurrentUser -Force 
 } 
 
-# Import the main Microsoft.Graph module (contains Connect-MgGraph)
-Import-Module Microsoft.Graph -ErrorAction Stop
+# Import the Microsoft Graph Authentication module (Contains Connect-MgGraph cmdlet)
+Import-Module Microsoft.Graph.Authentication -ErrorAction Stop
 
 # Check that Graph Users sub-module is installed and install it if not
 if (-not (Get-Module -ListAvailable -Name Microsoft.Graph.Users)) { 
