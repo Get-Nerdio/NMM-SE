@@ -66,8 +66,8 @@ $advOpt = "$($InheritedVars.VDOTAdvOpt)"
 $restart = "$($InheritedVars.VDOTRestart)"
 
 # Validate required arguments
-if ([string]::IsNullOrWhiteSpace($opt) -or [string]::IsNullOrWhiteSpace($advOpt)) {
-    Write-Error "Missing required variables: VDOT-Opt or VDOT-AdvOpt."
+if ([string]::IsNullOrWhiteSpace($opt)) {
+    Write-Error "Missing required variable: VDOT-Opt."
     exit 1
 }
 
@@ -77,13 +77,22 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 # Build full argument string
 $arguments = @(
     "-Optimizations $opt"
-    "-AdvancedOptimizations $advOpt"
     "-Verbose"
     "-AcceptEULA"
 )
 
-# Add restart flag if provided
-if ($restart -and $restart -ieq "-Restart") {
+# Add advanced optimizations if provided (exclude if blank, "No", or "None")
+$advOptTrimmed = $advOpt.Trim()
+if (-not [string]::IsNullOrWhiteSpace($advOptTrimmed) -and 
+    $advOptTrimmed -notmatch '^(?i)(No|None)$') {
+    $arguments += "-AdvancedOptimizations $advOptTrimmed"
+}
+
+# Add restart flag if provided (exclude if blank, "No", or "None")
+$restartTrimmed = $restart.Trim()
+if (-not [string]::IsNullOrWhiteSpace($restartTrimmed) -and 
+    $restartTrimmed -notmatch '^(?i)(No|None)$' -and 
+    $restartTrimmed -ieq "-Restart") {
     $arguments += "-Restart"
 }
 

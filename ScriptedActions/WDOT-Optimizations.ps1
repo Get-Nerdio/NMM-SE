@@ -90,11 +90,13 @@ $optArray = if ($opt -match ',') {
 
 # Parse advanced optimizations if provided
 $advOptArray = @()
-if (-not [string]::IsNullOrWhiteSpace($advOpt)) {
-    $advOptArray = if ($advOpt -match ',') { 
-        $advOpt -split ',' | ForEach-Object { $_.Trim() }
+$advOptTrimmed = $advOpt.Trim()
+if (-not [string]::IsNullOrWhiteSpace($advOptTrimmed) -and 
+    $advOptTrimmed -notmatch '^(?i)(No|None)$') {
+    $advOptArray = if ($advOptTrimmed -match ',') { 
+        $advOptTrimmed -split ',' | ForEach-Object { $_.Trim() }
     } else { 
-        @($advOpt.Trim())
+        @($advOptTrimmed)
     }
 }
 
@@ -111,8 +113,11 @@ if ($advOptArray.Count -gt 0) {
     $scriptParams['AdvancedOptimizations'] = $advOptArray
 }
 
-# Add restart flag if provided
-if ($restart -and $restart -ieq "-Restart") {
+# Add restart flag if provided (exclude if blank, "No", or "None")
+$restartTrimmed = $restart.Trim()
+if (-not [string]::IsNullOrWhiteSpace($restartTrimmed) -and 
+    $restartTrimmed -notmatch '^(?i)(No|None)$' -and 
+    $restartTrimmed -ieq "-Restart") {
     $scriptParams['Restart'] = $true
 }
 
