@@ -31,17 +31,7 @@ function NMMLogOutput {
     }
 }
 
-function Convert-AzureAdObjectIdToSid {
-    param([String] $ObjectId)
-    
-    $bytes = [Guid]::Parse($ObjectId).ToByteArray()
-    $array = New-Object 'UInt32[]' 4
-    
-    [Buffer]::BlockCopy($bytes, 0, $array, 0, 16)
-    $sid = "S-1-12-1-$array".Replace(' ', '-')
-    
-    return $sid
-}
+# Note: EntraID users are now handled using UPN format directly, no SID conversion needed
 
 function Get-ADUserSid {
     param([String] $Username)
@@ -64,16 +54,38 @@ function Get-ADUserSid {
 }
 
 try {
-    # Configuration: Set the user identifier here
-    # For Active Directory users: Use the SAMAccountName (e.g., "jdoe" or "DOMAIN\jdoe")
-    # For EntraID users: Use the Object ID (e.g., "12345678-1234-1234-1234-123456789012")
-    # Multiple users can be specified as comma-separated values (e.g., "jdoe,asmith,12345678-1234-1234-1234-123456789012")
-    # You can also use InheritedVars or SecureVars if configured in Nerdio Manager
-    # Example: $UserIdentifier = $InheritedVars.UserToExclude
-    # Example: $UserIdentifier = $SecureVars.UserToExclude
+    # ============================================================================================
+    # CONFIGURATION: Set the user identifier here
+    # ============================================================================================
+    #
+    # ACTIVE DIRECTORY USERS:
+    #   - Format: SAMAccountName (e.g., "jdoe" or "DOMAIN\jdoe")
+    #   - Example: "CONTOSO\jdoe" or "jdoe"
+    #
+    # ENTRAID USERS:
+    #   - Format: "AzureAD\UserName@tenant.onmicrosoft.com" or "AzureAD\UserName@domain.com"
+    #   - Example: "AzureAD\jdoe@contoso.onmicrosoft.com"
+    #   - The UPN (User Principal Name) is typically the user's email address
+    #   - How to find UPN:
+    #     1. Go to Azure Portal (https://portal.azure.com)
+    #     2. Navigate to: Microsoft Entra ID > Users
+    #     3. Select the user you want to add
+    #     4. Copy the "User principal name" value (e.g., jdoe@contoso.onmicrosoft.com)
+    #     5. Format it as: AzureAD\jdoe@contoso.onmicrosoft.com
+    #
+    # MULTIPLE USERS:
+    #   - Comma-separated values (e.g., "jdoe,asmith,AzureAD\user1@contoso.onmicrosoft.com")
+    #   - Mixed AD and EntraID users are supported
+    #   - The script will auto-detect EntraID users by the "AzureAD\" prefix if UserType is not specified
+    #
+    # NERDIO MANAGER VARIABLES:
+    #   - You can use InheritedVars or SecureVars if configured in Nerdio Manager
+    #   - Example: Set InheritedVars.UserToExclude = "jdoe,12345678-1234-1234-1234-123456789012"
+    #   - Example: Set InheritedVars.UserType = "AD" or "EntraID" (optional - auto-detected if not set)
+    # ============================================================================================
     
-    $UserIdentifier = ""  # Set this to the user's SAMAccountName (AD) or Object ID (EntraID), or comma-separated list
-    $UserType = ""  # Set to "AD" for Active Directory users or "EntraID" for EntraID users (applies to all if specified)
+    $UserIdentifier = ""  # Set this to the user's SAMAccountName (AD) or UPN format for EntraID (AzureAD\UserName@domain.com), or comma-separated list
+    $UserType = ""  # Optional: Set to "AD" or "EntraID" to force type (applies to all if specified). If empty, auto-detects based on AzureAD\ prefix.
     
     # Alternative: Use variables from Nerdio Manager if provided
     if ($InheritedVars.UserToExclude) {
@@ -121,8 +133,8 @@ try {
             # Determine user type for this specific user
             $currentUserType = $UserType
             if ([string]::IsNullOrWhiteSpace($currentUserType)) {
-                # Try to auto-detect: if it's a GUID format, assume EntraID; otherwise assume AD
-                if ($userIdentifierItem -match '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') {
+                # Try to auto-detect: if it has AzureAD\ prefix, assume EntraID; otherwise assume AD
+                if ($userIdentifierItem -match '^AzureAD\\') {
                     $currentUserType = "EntraID"
                 }
                 else {
@@ -130,19 +142,26 @@ try {
                 }
             }
             
-            # Get the SID based on user type
-            $userSid = $null
+            # Process based on user type
             $userDisplayName = $userIdentifierItem
+            $memberToAdd = $userIdentifierItem
+            $userSid = $null
             
             if ($currentUserType -eq "EntraID") {
-                NMMLogOutput -Level Information -Message "Processing EntraID user with Object ID: $userIdentifierItem"
-                $userSid = Convert-AzureAdObjectIdToSid -ObjectId $userIdentifierItem
-                NMMLogOutput -Level Information -Message "Converted EntraID Object ID to SID: $userSid"
+                NMMLogOutput -Level Information -Message "Processing EntraID user with UPN: $userIdentifierItem"
+                # EntraID users use UPN format directly: AzureAD\UserName@domain.com
+                # No SID conversion needed - use the UPN format directly
             }
             elseif ($currentUserType -eq "AD") {
                 NMMLogOutput -Level Information -Message "Processing Active Directory user: $userIdentifierItem"
-                $userSid = Get-ADUserSid -Username $userIdentifierItem
-                NMMLogOutput -Level Information -Message "Retrieved AD user SID: $userSid"
+                # Try to get SID for AD users for more reliable membership checking
+                try {
+                    $userSid = Get-ADUserSid -Username $userIdentifierItem
+                    NMMLogOutput -Level Information -Message "Retrieved AD user SID: $userSid"
+                }
+                catch {
+                    NMMLogOutput -Level Warning -Message "Could not resolve AD user SID for $userIdentifierItem, will use name-based check"
+                }
                 
                 # Try to get the display name for better logging
                 try {
@@ -161,18 +180,30 @@ try {
             }
             
             # Check if user is already a member
-            $isAlreadyMember = $existingMembers | Where-Object { $_.SID.Value -eq $userSid }
+            $isAlreadyMember = $false
+            if ($currentUserType -eq "AD" -and $null -ne $userSid) {
+                # Check by SID for AD users when SID is available
+                $isAlreadyMember = $existingMembers | Where-Object { $_.SID.Value -eq $userSid }
+            }
+            else {
+                # Check by name for EntraID users or AD users without SID
+                $userNameOnly = ($userIdentifierItem -split '\\')[-1]  # Get the part after the backslash
+                $isAlreadyMember = $existingMembers | Where-Object { 
+                    $memberName = ($_.Name -split '\\')[-1]
+                    $memberName -eq $userNameOnly -or $_.Name -eq $userIdentifierItem -or $_.Name -like "*\$userNameOnly"
+                }
+            }
             
             if ($isAlreadyMember) {
-                NMMLogOutput -Level Warning -Message "User $userDisplayName (SID: $userSid) is already a member of $FSLogixExclusionGroup"
+                NMMLogOutput -Level Warning -Message "User $userDisplayName is already a member of $FSLogixExclusionGroup"
                 Write-Output "  - ${userDisplayName}: Already a member (skipped)"
                 $skipCount++
             }
             else {
-                # Add the user to the group
-                Write-Output "  - Adding $userDisplayName (SID: $userSid)..."
-                Add-LocalGroupMember -Group $FSLogixExclusionGroup -Member $userSid -ErrorAction Stop
-                NMMLogOutput -Level Information -Message "Successfully added $userDisplayName (SID: $userSid) to $FSLogixExclusionGroup"
+                # Add the user to the group using UPN format for EntraID or username for AD
+                Write-Output "  - Adding $userDisplayName..."
+                Add-LocalGroupMember -Group $FSLogixExclusionGroup -Member $memberToAdd -ErrorAction Stop
+                NMMLogOutput -Level Information -Message "Successfully added $userDisplayName to $FSLogixExclusionGroup"
                 Write-Output "    Successfully added $userDisplayName"
                 $successCount++
             }
