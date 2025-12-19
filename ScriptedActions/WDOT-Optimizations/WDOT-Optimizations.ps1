@@ -12,9 +12,16 @@
 
     Required Inherited Variables:
     WDOTConfigProfile = 2009 (or any valid config profile name - common: 2009, Templates, Windows11_24H2)
+        - Standard profiles (2009, Windows11_24H2, etc.) will be automatically downloaded from GitHub if missing
+        - Custom profile names will be created from Templates if not found
     WDOTopt = All (or array like: Services,AppxPackages,ScheduledTasks)
     WDOTadvopt = (leave empty or specify: All,Edge,RemoveLegacyIE,RemoveOneDrive)
     WDOTrestart = -Restart (or leave empty to skip restart)
+    
+    Automatic Feature (No Configuration Required):
+    - Standard profiles (2009, Windows11_24H2, Templates, etc.) are automatically downloaded from GitHub if missing
+    - Uses GitHub API to fetch latest JSON files from the official WDOT repository
+    - No inherited variables needed - just specify the standard profile name in WDOTConfigProfile
     
     Optional Inherited Variables (for custom configuration profiles):
     
@@ -58,10 +65,13 @@
           * ScheduledTasks.json=\\storageaccount.file.core.windows.net\share\ScheduledTasks.json
     
     NOTE: The script will process in this order:
-    1. First try WDOTConfigProfileURL (if set) - simplest method
+    0. First, if profile is missing, try downloading standard profiles (like 2009, Windows11_24H2) directly from GitHub
+    1. Then try WDOTConfigProfileURL (if set) - simplest method for custom profiles
     2. Then try WDOTConfigSource (AzureBlob or URL/UNC method)
     3. If not found, automatically create the specified configuration profile from Templates
     4. Finally, apply any individual JSON file overrides from WDOTConfigFiles
+    
+    NOTE: When using standard profile names like "2009", the script will automatically download the latest JSON files from GitHub if the profile is missing from the extracted repository.
 
     NOTE: If you want to use different variable names, you will need to update the script accordingly.
 
@@ -163,6 +173,64 @@ $newConfigScript = Join-Path $wdotScriptPath.FullName "New-WVDConfigurationFiles
 $customConfigDownloaded = $false
 
 if (-not (Test-Path $configPath)) {
+    # Priority 0: Try downloading standard profile directly from GitHub (for profiles like 2009, Windows11_24H2, etc.)
+    # This ensures we get the latest version even if it's missing from the extracted ZIP
+    if (-not $customConfigDownloaded) {
+        try {
+            Write-Host "Profile '$configProfile' not found locally. Attempting to download from GitHub..."
+            $githubBaseUrl = "https://api.github.com/repos/The-Virtual-Desktop-Team/Windows-Desktop-Optimization-Tool/contents/Configurations/$configProfile"
+            
+            # Try to get the folder contents from GitHub API
+            $headers = @{}
+            if ($env:GITHUB_TOKEN) {
+                $headers['Authorization'] = "token $env:GITHUB_TOKEN"
+            }
+            
+            try {
+                $folderContents = Invoke-RestMethod -Uri $githubBaseUrl -Headers $headers -ErrorAction Stop
+                
+                # Create the profile directory
+                $finalConfigPath = Join-Path $configurationsPath $configProfile
+                New-Item -ItemType Directory -Path $finalConfigPath -Force | Out-Null
+                
+                # Download each file from the folder
+                $filesDownloaded = 0
+                foreach ($item in $folderContents) {
+                    if ($item.type -eq "file" -and ($item.name -match '\.(json|xml|Json|JSON|Xml|XML)$')) {
+                        try {
+                            $fileUrl = $item.download_url
+                            $filePath = Join-Path $finalConfigPath $item.name
+                            Write-Host "  Downloading $($item.name) from GitHub..."
+                            Invoke-WebRequest -Uri $fileUrl -OutFile $filePath -ErrorAction Stop
+                            $filesDownloaded++
+                        }
+                        catch {
+                            Write-Warning "  Failed to download $($item.name): $_"
+                        }
+                    }
+                }
+                
+                if ($filesDownloaded -gt 0) {
+                    Write-Host "Successfully downloaded $filesDownloaded file(s) for profile '$configProfile' from GitHub."
+                    $customConfigDownloaded = $true
+                }
+                else {
+                    Write-Warning "No JSON/XML files found in GitHub folder for profile '$configProfile'."
+                    Remove-Item -Path $finalConfigPath -Force -ErrorAction SilentlyContinue
+                }
+            }
+            catch {
+                # GitHub API call failed - profile might not exist in GitHub or API is unavailable
+                # This is not an error, just means we'll try other methods
+                Write-Host "Profile '$configProfile' not found in GitHub repository (or GitHub API unavailable). Trying other methods..."
+            }
+        }
+        catch {
+            # Silently continue to other methods
+            Write-Host "Could not download profile from GitHub. Trying other methods..."
+        }
+    }
+    
     # Priority 1: Try WDOTConfigProfileURL (direct URL or UNC path - simplest method)
     if (-not [string]::IsNullOrWhiteSpace($configProfileURL)) {
         try {

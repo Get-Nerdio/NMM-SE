@@ -6,8 +6,9 @@ The WDOT-Optimizations.ps1 script supports downloading custom configuration prof
 
 ## Configuration Profile Sources
 
-The script supports four methods for obtaining configuration profiles:
+The script supports five methods for obtaining configuration profiles:
 
+0. **Automatic GitHub Download** - Automatically downloads standard profiles (like 2009, Windows11_24H2) directly from the official WDOT GitHub repository
 1. **Templates (Default)** - Uses WDOT's built-in Templates folder (automatically created if profile doesn't exist)
 2. **Direct URL/UNC (Recommended)** - Download from HTTP/HTTPS URL or UNC file share path
 3. **Azure Blob Storage** - Download from Azure Storage Account
@@ -15,10 +16,43 @@ The script supports four methods for obtaining configuration profiles:
 
 ## Setup Options
 
+### Option 0: Use Standard Profiles from GitHub (Automatic - Recommended for Standard Profiles)
+
+**Inherited Variables:**
+- `WDOTConfigProfile` = `2009` (or `Windows11_24H2`, or any standard profile name from the WDOT GitHub repository)
+- `WDOTopt` = `All`
+- `WDOTadvopt` = (optional)
+- `WDOTrestart` = `-Restart` (optional)
+
+**How it works:**
+- Script automatically downloads the latest JSON files directly from the official WDOT GitHub repository
+- No additional setup required - just specify the standard profile name
+- Always gets the latest version from GitHub, even if missing from the extracted repository
+- Works for standard profiles like: `2009`, `Windows11_24H2`, `Templates`, etc.
+- Falls back to other methods if GitHub is unavailable
+
+**Benefits:**
+- Always uses the latest configuration files from the official repository
+- No need to host or maintain your own copies of standard profiles
+- Automatic updates when the WDOT team releases new versions
+- Works seamlessly - just specify the profile name, no additional setup required
+
+**How it works:**
+- Script uses the GitHub API to list files in the profile folder
+- Downloads each JSON/XML file directly from GitHub's raw content
+- Creates the profile directory and places all files automatically
+- Falls back to other methods (Templates, custom URLs, etc.) if GitHub is unavailable
+- No authentication required for public repositories (GitHub API rate limits apply)
+
+**GitHub API Notes:**
+- Uses unauthenticated GitHub API (60 requests/hour limit)
+- If you have a GitHub token, set it as environment variable `GITHUB_TOKEN` for higher rate limits
+- Automatically handles API failures gracefully by falling back to other methods
+
 ### Option 1: Use Default Templates (No Custom Config)
 
 **Inherited Variables:**
-- `WDOTConfigProfile` = `2009` (or any name - will be created from Templates)
+- `WDOTConfigProfile` = `MyCustomProfile` (or any name - will be created from Templates)
 - `WDOTopt` = `All`
 - `WDOTadvopt` = (optional)
 - `WDOTrestart` = `-Restart` (optional)
@@ -28,7 +62,7 @@ The script supports four methods for obtaining configuration profiles:
 - No additional setup required
 - **Note:** Templates profile has all optimizations set to "Skip" by default - you'll need to customize the JSON files to set items to "Apply"
 
-### Option 2: Direct URL/UNC Path (Simplest Method - Recommended)
+### Option 2: Direct URL/UNC Path (Simplest Method - Recommended for Custom Profiles)
 
 **Inherited Variables:**
 - `WDOTConfigProfile` = `CustomerA-Production` (your profile name)
@@ -108,7 +142,7 @@ Container: wdot-configs
 ### Option 4: Individual JSON File Overrides
 
 **Inherited Variables:**
-- `WDOTConfigProfile` = `2009` (or any existing profile)
+- `WDOTConfigProfile` = `2009` (or any existing profile - can use standard profiles from GitHub)
 - `WDOTConfigFiles` = `Services.json=https://url1,AppxPackages.json=\\server\share\AppxPackages.json`
 - `WDOTopt` = `All`
 
@@ -126,15 +160,19 @@ WDOTConfigFiles = Services.json=https://raw.githubusercontent.com/yourorg/config
 - Applied AFTER the profile is downloaded/created
 - Overrides specific JSON files without replacing the entire profile
 - Useful for fine-tuning specific configuration files
+- Can be combined with standard profiles from GitHub (e.g., use 2009 from GitHub but override specific files)
 
 ## Processing Order
 
 The script processes configuration sources in this priority order:
 
-1. **WDOTConfigProfileURL** (if set) - Direct URL or UNC path (simplest method)
+0. **Automatic GitHub Download** - If profile is missing, attempts to download standard profiles (like 2009, Windows11_24H2) directly from the official WDOT GitHub repository
+1. **WDOTConfigProfileURL** (if set) - Direct URL or UNC path (simplest method for custom profiles)
 2. **WDOTConfigSource** (if set) - AzureBlob or URL/UNC method
 3. **Templates** - Automatically creates profile from Templates if not found
 4. **WDOTConfigFiles** - Applies individual JSON file overrides (if specified)
+
+**Note:** When using standard profile names like "2009" or "Windows11_24H2", the script will automatically download the latest JSON files from GitHub if the profile is missing from the extracted repository. This ensures you always get the latest configuration files without needing to host them yourself.
 
 ## Creating Custom Configuration Profiles
 
@@ -195,6 +233,7 @@ WDOTopt = All
 WDOTadvopt = 
 WDOTrestart = -Restart
 ```
+**Note:** The `2009` profile will be automatically downloaded from the official WDOT GitHub repository if it's missing from the extracted repository. No additional configuration needed!
 
 ### Customer A Account-Level Variables
 ```
@@ -227,10 +266,12 @@ WDOTConfigFiles = Services.json=\\fileserver\configs\Services-Custom.json,AppxPa
 
 ### Profile Not Found
 - Check that the profile name matches exactly (case-sensitive)
-- Verify the blob/URL/UNC path exists
+- For standard profiles (2009, Windows11_24H2), verify GitHub API access is available
+- Verify the blob/URL/UNC path exists (for custom profiles)
 - Check storage account key is correct (if using Azure Blob)
-- Verify network connectivity for UNC paths
+- Verify network connectivity for UNC paths and GitHub API
 - Review script output for specific error messages
+- Standard profiles will automatically download from GitHub if missing - check script logs for download status
 
 ### Configuration Not Applied
 - Verify JSON files have `OptimizationState: "Apply"` for items you want optimized
