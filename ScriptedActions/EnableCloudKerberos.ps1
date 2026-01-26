@@ -13,9 +13,6 @@
     Requires administrator privileges to modify HKLM registry keys.
 #>
  
-[CmdletBinding()]
-param()
- 
 #Requires -RunAsAdministrator
  
 # region Helper Functions
