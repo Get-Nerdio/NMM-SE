@@ -193,7 +193,38 @@ try {
     New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Teams" -Name IsWVDEnvironment -PropertyType DWORD -Value 1 -Force
     New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Teams" -Name "disableAutoUpdate" -Value 1 -PropertyType DWord -Force
 
- 
+    # Verify Teams and Teams Meeting Add-in are installed; retry once if not, then throw if still missing
+    $maxRetries = 1
+    $retryCount = 0
+    $teamsInstalled = $false
+    $addinInstalled = $false
+
+    do {
+        Start-Sleep -Seconds 5
+        # New Teams installs as AppX (MSIX); same detection as uninstall logic
+        $teamsInstalled = [bool](Get-AppxPackage -AllUsers -ErrorAction SilentlyContinue | Where-Object { $_.Name -like '*Teams*' -and $_.Publisher -like '*Microsoft Corporation*' })
+        # Teams Meeting Add-in for Outlook (MSI)
+        $addinInstalled = [bool](Get-CimInstance -ClassName Win32_Product -ErrorAction SilentlyContinue | Where-Object { $_.Name -like '*Teams Meeting Add-in*' -and $_.Vendor -eq 'Microsoft' })
+
+        if (-not $teamsInstalled -or -not $addinInstalled) {
+            if ($retryCount -lt $maxRetries) {
+                NMMLogOutput -Level 'Warning' -Message "Verification failed: Teams=$teamsInstalled, Add-in=$addinInstalled. Retrying installation (attempt $($retryCount + 2))..." -return $true
+                Start-Process 'C:\Windows\Temp\msteams_sa\install\teamsbootstrapper.exe' -ArgumentList '-p --installTMA' -Wait 2>&1
+                $retryCount++
+            }
+            else {
+                $missing = @()
+                if (-not $teamsInstalled) { $missing += 'Teams (machine-wide)' }
+                if (-not $addinInstalled) { $missing += 'Teams Meeting Add-in for Outlook' }
+                $errMsg = "Installation verification failed after retry. Missing: $($missing -join ', ')."
+                NMMLogOutput -Level 'Error' -Message $errMsg -throw $true
+            }
+        }
+        else {
+            NMMLogOutput -Level 'Information' -Message 'Teams and Teams Meeting Add-in verified successfully.' -return $true
+            break
+        }
+    } while ($retryCount -le $maxRetries)
 }
 catch {
     NMMLogOutput -Level 'Warning' -Message "Teams installation failed with exception $($_.exception.message)" -throw $true
