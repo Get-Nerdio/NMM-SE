@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FrxProfileFolderRedirection>
+<Includes>
+    <Include>Appdata\Local\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude</Include>
+    <Include>Appdata\Local\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude-3p</Include>
+</Includes>
+</FrxProfileFolderRedirection>
