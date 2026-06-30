@@ -1,0 +1,191 @@
+<#
+.SYNOPSIS
+  Adds recommended FSLogix Defender exclusions for FSLogix services, binaries, data folders, and container storage.
+
+.DESCRIPTION
+  This script configures Windows Defender Antivirus exclusions to match the FSLogix
+  prerequisites guidance for file and folder exclusions.
+
+.NOTES
+  Requires administrative privileges.
+  The script is safe to run multiple times and will skip exclusions that already exist.
+  Windows Defender does not support direct registry exclusions via Add-MpPreference,
+  so HKLM\SOFTWARE\FSLogix and HKLM\SOFTWARE\Policies\FSLogix must be handled
+  through your security product if supported.
+#>
+
+$ErrorActionPreference = 'Stop'
+
+$logFolder = 'C:\Temp'
+if (-not (Test-Path -Path $logFolder)) {
+    New-Item -Path $logFolder -ItemType Directory -Force | Out-Null
+}
+
+$timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+$scriptName = 'Add-DefenderExclusionsFSLogix.ps1'
+$logFile = Join-Path $logFolder "$($scriptName -replace '[^a-zA-Z0-9_.-]', '_')_$timestamp.log"
+$transcriptStarted = $false
+
+try {
+    Start-Transcript -Path $logFile -Force -ErrorAction Stop
+    $transcriptStarted = $true
+    Write-Host "==> Logging script output to $logFile" -ForegroundColor Green
+}
+catch {
+    Write-Warning "Unable to start transcript log '$logFile': $_"
+}
+
+try {
+    $vhdLocation = Get-ItemProperty -Path 'HKLM:\SOFTWARE\FSLogix\Profiles' -Name 'VHDLocations' -ErrorAction SilentlyContinue
+    if ($vhdLocation) {
+        Write-Host "==> Detected FSLogix VHD location from registry: $vhdLocation" -ForegroundColor Green
+    }
+    else {
+        Write-Host "==> No FSLogix VHD location found in registry. Exiting." -ForegroundColor Yellow
+        return
+    }
+
+    function Assert-RunningAsAdministrator {
+        $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+        if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+            throw 'This script must be run elevated as Administrator.'
+        }
+    }
+
+    function Check-ManagedEnvironment {
+        Write-Host '==> Checking whether this machine is Intune managed or tamper protection is enabled' -ForegroundColor Yellow
+
+        $isIntuneManaged = $false
+        try {
+            $enrollment = Get-CimInstance -Namespace 'root\cimv2\mdm\dmmap' -ClassName 'MDM_EnrollmentInformation' -ErrorAction Stop
+            if ($enrollment) {
+                $isIntuneManaged = $true
+            }
+        }
+        catch {
+            # Ignore errors when the MDM namespace or class does not exist.
+        }
+
+        if (-not $isIntuneManaged) {
+            $enrollmentsKey = 'HKLM:\SOFTWARE\Microsoft\Enrollments'
+            if (Test-Path $enrollmentsKey) {
+                $subkeys = Get-ChildItem -Path $enrollmentsKey -ErrorAction SilentlyContinue
+                foreach ($subkey in $subkeys) {
+                    $enrollmentType = Get-ItemProperty -Path $subkey.PSPath -Name 'EnrollmentType' -ErrorAction SilentlyContinue
+                    if ($enrollmentType -and $enrollmentType.EnrollmentType -eq 1) {
+                        $isIntuneManaged = $true
+                        break
+                    }
+                }
+            }
+        }
+
+        if ($isIntuneManaged) {
+            return $true
+        }
+
+        $tamperProtectionEnabled = $false
+        try {
+            $mpStatus = Get-MpComputerStatus -ErrorAction Stop
+            if ($mpStatus.IsTamperProtected -eq $true) {
+                $tamperProtectionEnabled = $true
+            }
+        }
+        catch {
+            # If Defender status cannot be queried, do not treat it as a failure.
+        }
+
+        if ($tamperProtectionEnabled) {
+            return $true
+        }
+
+        return $false
+    }
+
+    function Add-DefenderExclusion {
+        param(
+            [ValidateSet('Path','Process','Extension')]
+            [string]$Type,
+            [string[]]$Values
+        )
+
+        $preferences = Get-MpPreference
+        switch ($Type) {
+            'Path'      { $existing = $preferences.ExclusionPath }
+            'Process'   { $existing = $preferences.ExclusionProcess }
+            'Extension' { $existing = $preferences.ExclusionExtension }
+        }
+
+        foreach ($value in $Values | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique) {
+            if ($null -eq $existing -or -not ($existing -contains $value)) {
+                Write-Host "==> Adding Defender $Type exclusion: $value" -ForegroundColor Cyan
+                switch ($Type) {
+                    'Path'      { Add-MpPreference -ExclusionPath $value }
+                    'Process'   { Add-MpPreference -ExclusionProcess $value }
+                    'Extension' { Add-MpPreference -ExclusionExtension $value }
+                }
+            }
+            else {
+                Write-Host "==> Defender $Type exclusion already present: $value" -ForegroundColor DarkGray
+            }
+        }
+    }
+
+    Assert-RunningAsAdministrator
+    if (Check-ManagedEnvironment) {
+        return
+    }
+
+    Write-Host '==> Applying FSLogix Defender exclusions' -ForegroundColor Green
+
+    $processExclusions = @(
+        Join-Path $env:ProgramFiles 'FSLogix\Apps\frxsvc.exe',
+        Join-Path $env:ProgramFiles 'FSLogix\Apps\frxccds.exe'
+    )
+
+    $pathExclusions = @(
+        Join-Path $env:ProgramFiles 'FSLogix\Apps',
+        Join-Path $env:ProgramData 'FSLogix',
+        Join-Path $env:ProgramData 'FSLogix\Cache',
+        Join-Path $env:ProgramData 'FSLogix\Proxy',
+        'C:\Users\%username%\AppData\Local\FSLogix',
+        Join-Path $vhdLocation '\*\*.VHD',
+        Join-Path $vhdLocation '\*\*.VHD.lock',
+        Join-Path $vhdLocation '\*\*.VHD.meta',
+        Join-Path $vhdLocation '\*\*.VHD.metadata',
+        Join-Path $vhdLocation '\*\*.VHDX',
+        Join-Path $vhdLocation '\*\*.VHDX.lock',
+        Join-Path $vhdLocation '\*\*.VHDX.meta',
+        Join-Path $vhdLocation '\*\*.VHDX.metadata'
+    )
+
+    If ((Check-ManagedEnvironment) -eq $false) {
+        Add-DefenderExclusion -Type Path -Values $pathExclusions
+        Add-DefenderExclusion -Type Process -Values $processExclusions
+        If ($null -ne $vhdLocation) {
+            Write-Host "==> Adding environment variable for FSLogix VHD location: $vhdLocation" -ForegroundColor Cyan
+            [Environment]::SetEnvironmentVariable('VHDLOCATION', $vhdLocation, [EnvironmentVariableTarget]::Machine)
+            Write-Host '==> FSLogix Defender exclusions configuration complete.' -ForegroundColor Green
+        }   
+        
+    }
+    Else {
+        Write-Host '==> Skipping adding Defender exclusions due to managed environment or tamper protection.' -ForegroundColor Yellow
+        Write-Host '==> Adding environment variables for FSLogix paths to be used in Defender exclusions via security product.' -ForegroundColor Yellow
+        If ($null -ne $vhdLocation) {
+            Write-Host "==> Adding environment variable for FSLogix VHD location: $vhdLocation" -ForegroundColor Cyan
+            [Environment]::SetEnvironmentVariable('VHDLOCATION', $vhdLocation, [EnvironmentVariableTarget]::Machine)
+            Write-Host '==> FSLogix Defender exclusions configuration complete.' -ForegroundColor Green
+        }   
+    }
+}
+finally {
+    if ($transcriptStarted) {
+        try {
+            Stop-Transcript | Out-Null
+        }
+        catch {
+            Write-Warning "Failed to stop transcript: $_"
+        }
+    }
+}

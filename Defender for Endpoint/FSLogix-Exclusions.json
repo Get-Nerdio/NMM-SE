@@ -1,0 +1,133 @@
+{
+    "description": "Recommended Defender exclusions for FSLogix.",
+    "name": "FSLogix Exclusions",
+    "platforms": "windows10",
+    "settingCount": 2,
+    "settings": [
+        {
+            "id": "0",
+            "settingInstance": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance",
+                "settingDefinitionId": "device_vendor_msft_policy_config_defender_excludedprocesses",
+                "settingInstanceTemplateReference": {
+                    "settingInstanceTemplateId": "96b046ed-f138-4250-9ae0-b0772a93d16f"
+                },
+                "simpleSettingCollectionValue": [
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%ProgramFiles%\\FSLogix\\Apps\\frxsvc.exe"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%ProgramFiles%\\FSLogix\\Apps\\frxccds.exe"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%ProgramFiles%\\FSLogix\\Apps\\frxdrv.sys"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%ProgramFiles%\\FSLogix\\Apps\\frxdrvvt.sys"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%ProgramFiles%\\FSLogix\\Apps\\frxccd.sys"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "1",
+            "settingInstance": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance",
+                "settingDefinitionId": "device_vendor_msft_policy_config_defender_excludedpaths",
+                "settingInstanceTemplateReference": {
+                    "settingInstanceTemplateId": "aaf04adc-c639-464f-b4a7-152e784092e8"
+                },
+                "simpleSettingCollectionValue": [
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%ProgramFiles%\\FSLogix\\Apps\\"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%ProgramData%\\FSLogix\\"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "C:\\Users\\%username%\\AppData\\Local\\FSLogix\\"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%TEMP%\\*\\*.VHD"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%ProgramData%\\FSLogix\\Cache\\*"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%ProgramData%\\FSLogix\\Proxy\\*"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%TEMP%\\*\\*.VHDX"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%WINDIR%\\TEMP\\*\\*.VHD"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%WINDIR%\\TEMP\\*\\*.VHDX"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "HKLM\\SOFTWARE\\FSLogix\\"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "HKLM\\SOFTWARE\\Policies\\FSLogix\\"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%VHDLocation%\\*\\*.VHD"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%VHDLocation%\\*\\*.VHD.lock"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%VHDLocation%\\*\\*.VHD.meta"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%VHDLocation%\\*\\*.VHD.metadata"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%VHDLocation%\\*\\*.VHDX"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%VHDLocation%\\*\\*.VHDX.lock"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%VHDLocation%\\*\\*.VHDX.meta"
+                    },
+                    {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "%VHDLocation%\\*\\*.VHDX.metadata"
+                    }
+                ]
+            }
+        }
+    ],
+    "technologies": "mdm,microsoftSense",
+    "templateReference": {
+        "templateFamily": "endpointSecurityAntivirus",
+        "templateId": "45fea5e9-280d-4da1-9792-fb5736da0ca9_1"
+    }
+}
